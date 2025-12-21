@@ -10,6 +10,10 @@
  * All data is ABT (Administrasi Bisnis Terapan) focused
  * 
  * DEMO DATA: 4 sample students representing each status type
+ * - Dimas Pratama: Mahasiswa Aktif
+ * - Ahmad Rizki Pratama: Alumni
+ * - Sinta Maharani: Mahasiswa Cuti
+ * - Bayu Nugroho: Mahasiswa Dropout
  */
 
 import type {
@@ -41,13 +45,13 @@ export const studentProfiles: StudentProfile[] = [
   // DEMO 2: Mahasiswa Aktif - Achievements only (no career history)
   {
     id: 's5',
-    nama: 'Eko Prasetyo',
+    nama: 'Dimas Pratama',
     nim: '20210001',
     jurusan: 'Administrasi Bisnis',
     prodi: 'Administrasi Bisnis Terapan',
     status: 'active',
     tahunMasuk: 2021,
-    email: 'eko.prasetyo@student.polines.ac.id',
+    email: 'dimas.pratama@student.polines.ac.id',
     noHp: '081234567894',
     createdAt: new Date('2021-08-15'),
     updatedAt: new Date('2024-09-01'),
@@ -55,13 +59,13 @@ export const studentProfiles: StudentProfile[] = [
   // DEMO 3: Mahasiswa Cuti - Achievements only (no career history)
   {
     id: 's8',
-    nama: 'Hana Safira',
+    nama: 'Sinta Maharani',
     nim: '20220002',
     jurusan: 'Administrasi Bisnis',
     prodi: 'Administrasi Bisnis Terapan',
     status: 'on_leave',
     tahunMasuk: 2022,
-    email: 'hana.safira@student.polines.ac.id',
+    email: 'sinta.maharani@student.polines.ac.id',
     noHp: '081234567897',
     createdAt: new Date('2022-08-15'),
     updatedAt: new Date('2024-06-01'),
@@ -69,13 +73,13 @@ export const studentProfiles: StudentProfile[] = [
   // DEMO 4: Mahasiswa Dropout - Read-only achievements
   {
     id: 's13',
-    nama: 'Rudi Hermawan',
+    nama: 'Bayu Nugroho',
     nim: '20200005',
     jurusan: 'Administrasi Bisnis',
     prodi: 'Administrasi Bisnis Terapan',
     status: 'dropout',
     tahunMasuk: 2020,
-    email: 'rudi.hermawan@gmail.com',
+    email: 'bayu.nugroho@gmail.com',
     noHp: '081234567912',
     createdAt: new Date('2020-08-15'),
     updatedAt: new Date('2023-03-01'),
@@ -369,7 +373,7 @@ export const achievementRecords: NonAcademicAchievement[] = [
     createdAt: new Date('2022-10-01'),
     updatedAt: new Date('2022-10-01'),
   },
-  // Achievements for Demo Student 2 (Active - Eko)
+  // Achievements for Demo Student 2 (Active - Dimas)
   {
     id: 'a4',
     studentId: 's5',
@@ -400,7 +404,7 @@ export const achievementRecords: NonAcademicAchievement[] = [
     createdAt: new Date('2024-06-15'),
     updatedAt: new Date('2024-06-15'),
   },
-  // Achievements for Demo Student 3 (On Leave - Hana)
+  // Achievements for Demo Student 3 (On Leave - Sinta)
   {
     id: 'a10',
     studentId: 's8',
@@ -417,7 +421,7 @@ export const achievementRecords: NonAcademicAchievement[] = [
     createdAt: new Date('2023-11-20'),
     updatedAt: new Date('2023-11-20'),
   },
-  // Achievements for Demo Student 4 (Dropout - Rudi)
+  // Achievements for Demo Student 4 (Dropout - Bayu)
   {
     id: 'a11',
     studentId: 's13',
@@ -520,10 +524,10 @@ export function getStudentStatusColor(status: StudentStatus): {
   border: string;
 } {
   const colors: Record<StudentStatus, { bg: string; text: string; border: string }> = {
-    active: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/30' },
+    active: { bg: 'bg-info/10', text: 'text-info', border: 'border-info/30' },
     on_leave: { bg: 'bg-warning/10', text: 'text-warning', border: 'border-warning/30' },
     dropout: { bg: 'bg-destructive/10', text: 'text-destructive', border: 'border-destructive/30' },
-    alumni: { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/30' },
+    alumni: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/30' },
   };
   return colors[status];
 }
@@ -540,4 +544,11 @@ export function isCareerHistoryVisible(status: StudentStatus): boolean {
  */
 export function isAchievementsEditable(status: StudentStatus): boolean {
   return status !== 'dropout';
+}
+
+/**
+ * Get demo students by status type for testing
+ */
+export function getDemoStudentByStatus(status: StudentStatus): StudentProfile | undefined {
+  return studentProfiles.find(s => s.status === status);
 }
