@@ -214,29 +214,30 @@ export default function CareerHistoryPage() {
   const alumniHistory = getAlumniDataByMasterId(selectedAlumni.id);
 
   // Transform career history data
-  const careerItems: CareerItem[] = alumniHistory.map((data, index) => {
+  const careerItems: CareerItem[] = alumniHistory.map((data) => {
     let title = '';
     let subtitle = '';
     let location = '';
     let industry = '';
     let period = '';
+    const isActiveStatus = data.isActive !== undefined ? data.isActive : true;
 
     if (data.status === 'bekerja') {
       title = data.namaPerusahaan || 'Perusahaan';
       subtitle = data.jabatan || 'Karyawan';
       location = data.lokasiPerusahaan || '';
       industry = data.bidangIndustri || '';
-      period = data.tahunMulaiKerja ? `${data.tahunMulaiKerja} - Sekarang` : '';
+      period = data.tahunMulaiKerja ? `${data.tahunMulaiKerja} - ${isActiveStatus ? 'Sekarang' : 'Selesai'}` : '';
     } else if (data.status === 'wirausaha') {
       title = data.namaUsaha || 'Usaha';
       subtitle = data.jenisUsaha || 'Bisnis';
       location = data.lokasiUsaha || '';
-      period = data.tahunMulaiUsaha ? `${data.tahunMulaiUsaha} - Sekarang` : '';
+      period = data.tahunMulaiUsaha ? `${data.tahunMulaiUsaha} - ${isActiveStatus ? 'Sekarang' : 'Selesai'}` : '';
     } else if (data.status === 'studi') {
       title = data.namaKampus || 'Kampus';
       subtitle = `${data.jenjang || ''} ${data.programStudi || ''}`.trim();
       location = data.lokasiKampus || '';
-      period = data.tahunMulaiStudi ? `${data.tahunMulaiStudi} - Sekarang` : '';
+      period = data.tahunMulaiStudi ? `${data.tahunMulaiStudi} - ${isActiveStatus ? 'Sekarang' : 'Selesai'}` : '';
     } else if (data.status === 'mencari') {
       title = 'Mencari Pekerjaan';
       subtitle = `Target: ${data.bidangDiincar || 'Berbagai bidang'}`;
@@ -252,7 +253,7 @@ export default function CareerHistoryPage() {
       location,
       industry,
       period,
-      isActive: index === alumniHistory.length - 1,
+      isActive: data.isActive !== undefined ? data.isActive : true, // Default to true if not set
     };
   });
 
