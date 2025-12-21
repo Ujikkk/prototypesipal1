@@ -138,8 +138,12 @@ export default function CareerHistoryPage() {
   // Dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<EditFormErrors>({});
+  
+  // Original form data for comparison
+  const [originalFormData, setOriginalFormData] = useState<EditFormData | null>(null);
   const [editFormData, setEditFormData] = useState<EditFormData>({
     status: 'bekerja',
     title: '',
@@ -160,6 +164,19 @@ export default function CareerHistoryPage() {
       navigate('/dashboard');
     }
   }, [selectedAlumni, navigate]);
+
+  // Check if form has unsaved changes
+  const hasUnsavedChanges = useMemo(() => {
+    if (!originalFormData) return false;
+    return (
+      editFormData.status !== originalFormData.status ||
+      editFormData.title !== originalFormData.title ||
+      editFormData.subtitle !== originalFormData.subtitle ||
+      editFormData.location !== originalFormData.location ||
+      editFormData.industry !== originalFormData.industry ||
+      editFormData.year !== originalFormData.year
+    );
+  }, [editFormData, originalFormData]);
 
   if (!selectedAlumni) return null;
 
@@ -235,15 +252,37 @@ export default function CareerHistoryPage() {
     e.stopPropagation();
     setSelectedItemId(item.id);
     setFormErrors({});
-    setEditFormData({
+    const formData = {
       status: item.status,
       title: item.title,
       subtitle: item.subtitle || '',
       location: item.location || '',
       industry: item.industry || '',
       year: item.year,
-    });
+    };
+    setEditFormData(formData);
+    setOriginalFormData(formData); // Store original for comparison
     setEditDialogOpen(true);
+  };
+
+  const handleCloseEditDialog = () => {
+    if (hasUnsavedChanges) {
+      setDiscardDialogOpen(true);
+    } else {
+      closeEditDialog();
+    }
+  };
+
+  const closeEditDialog = () => {
+    setEditDialogOpen(false);
+    setSelectedItemId(null);
+    setFormErrors({});
+    setOriginalFormData(null);
+  };
+
+  const handleDiscardConfirm = () => {
+    setDiscardDialogOpen(false);
+    closeEditDialog();
   };
 
   const validateForm = (): boolean => {
@@ -303,12 +342,10 @@ export default function CareerHistoryPage() {
       updateAlumniData(selectedItemId, updates);
       toast({
         title: "Riwayat karir diperbarui",
-        description: "Data riwayat karir berhasil diperbarui.",
+        description: "Perubahan akan langsung terlihat di Dashboard.",
       });
     }
-    setEditDialogOpen(false);
-    setSelectedItemId(null);
-    setFormErrors({});
+    closeEditDialog();
   };
 
   const handleFormChange = (field: keyof EditFormData, value: string | number) => {
@@ -613,8 +650,17 @@ export default function CareerHistoryPage() {
       </AlertDialog>
 
       {/* Edit Dialog */}
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+      <Dialog open={editDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          handleCloseEditDialog();
+        }
+      }}>
+        <DialogContent className="sm:max-w-[500px]" onInteractOutside={(e) => {
+          if (hasUnsavedChanges) {
+            e.preventDefault();
+            handleCloseEditDialog();
+          }
+        }}>
           <DialogHeader>
             <DialogTitle>Edit Riwayat Karir</DialogTitle>
             <DialogDescription>
@@ -727,10 +773,7 @@ export default function CareerHistoryPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setEditDialogOpen(false);
-              setFormErrors({});
-            }}>
+            <Button variant="outline" onClick={handleCloseEditDialog}>
               Batal
             </Button>
             <Button onClick={handleEditSave}>
@@ -739,6 +782,29 @@ export default function CareerHistoryPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Discard Changes Confirmation Dialog */}
+      <AlertDialog open={discardDialogOpen} onOpenChange={setDiscardDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-warning" />
+              Buang Perubahan?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin membatalkan dan kehilangan perubahan tersebut?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDiscardDialogOpen(false)}>
+              Kembali Edit
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDiscardConfirm}>
+              Buang Perubahan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
