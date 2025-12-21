@@ -5,12 +5,41 @@ import { Button } from '@/components/ui/button';
 import { useAlumni } from '@/contexts/AlumniContext';
 import { 
   Briefcase, Rocket, GraduationCap, Search, ChevronLeft, 
-  MapPin, Calendar, Building2, User, Plus, Pencil, Trash2, Clock
+  MapPin, Calendar, Building2, User, Plus, Pencil, Trash2, Clock,
+  AlertTriangle
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { isCareerHistoryVisible } from '@/data/student-seed-data';
 import type { StudentStatus } from '@/types/student.types';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
 
 // Career status configuration
 const STATUS_CONFIG = {
@@ -60,10 +89,33 @@ interface CareerItem {
   isActive?: boolean;
 }
 
+interface EditFormData {
+  status: 'bekerja' | 'wirausaha' | 'studi' | 'mencari';
+  title: string;
+  subtitle: string;
+  location: string;
+  industry: string;
+  year: number;
+}
+
 export default function CareerHistoryPage() {
   const navigate = useNavigate();
-  const { selectedAlumni, getAlumniDataByMasterId } = useAlumni();
+  const { selectedAlumni, getAlumniDataByMasterId, deleteAlumniData, updateAlumniData } = useAlumni();
+  const { toast } = useToast();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  
+  // Dialog states
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState<EditFormData>({
+    status: 'bekerja',
+    title: '',
+    subtitle: '',
+    location: '',
+    industry: '',
+    year: new Date().getFullYear(),
+  });
 
   useEffect(() => {
     if (!selectedAlumni) {
@@ -127,6 +179,93 @@ export default function CareerHistoryPage() {
   const handleToggle = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
   };
+
+  const handleDeleteClick = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setSelectedItemId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (selectedItemId) {
+      deleteAlumniData(selectedItemId);
+      toast({
+        title: "Riwayat karir dihapus",
+        description: "Data riwayat karir berhasil dihapus dari sistem.",
+      });
+      setExpandedId(null);
+    }
+    setDeleteDialogOpen(false);
+    setSelectedItemId(null);
+  };
+
+  const handleEditClick = (e: React.MouseEvent, item: CareerItem) => {
+    e.stopPropagation();
+    setSelectedItemId(item.id);
+    setEditFormData({
+      status: item.status,
+      title: item.title,
+      subtitle: item.subtitle || '',
+      location: item.location || '',
+      industry: item.industry || '',
+      year: item.year,
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSave = () => {
+    if (selectedItemId && editFormData) {
+      // Map form data back to alumni data structure based on status
+      const updates: Record<string, any> = {
+        status: editFormData.status,
+        tahunPengisian: editFormData.year,
+      };
+
+      if (editFormData.status === 'bekerja') {
+        updates.namaPerusahaan = editFormData.title;
+        updates.jabatan = editFormData.subtitle;
+        updates.lokasiPerusahaan = editFormData.location;
+        updates.bidangIndustri = editFormData.industry;
+      } else if (editFormData.status === 'wirausaha') {
+        updates.namaUsaha = editFormData.title;
+        updates.jenisUsaha = editFormData.subtitle;
+        updates.lokasiUsaha = editFormData.location;
+      } else if (editFormData.status === 'studi') {
+        updates.namaKampus = editFormData.title;
+        updates.programStudi = editFormData.subtitle;
+        updates.lokasiKampus = editFormData.location;
+      } else if (editFormData.status === 'mencari') {
+        updates.bidangDiincar = editFormData.subtitle;
+        updates.lokasiTujuan = editFormData.location;
+      }
+
+      updateAlumniData(selectedItemId, updates);
+      toast({
+        title: "Riwayat karir diperbarui",
+        description: "Data riwayat karir berhasil diperbarui.",
+      });
+    }
+    setEditDialogOpen(false);
+    setSelectedItemId(null);
+  };
+
+  const getFieldLabels = (status: string) => {
+    switch (status) {
+      case 'bekerja':
+        return { title: 'Nama Perusahaan', subtitle: 'Jabatan', industry: 'Bidang Industri' };
+      case 'wirausaha':
+        return { title: 'Nama Usaha', subtitle: 'Jenis Usaha', industry: '' };
+      case 'studi':
+        return { title: 'Nama Kampus', subtitle: 'Program Studi', industry: '' };
+      case 'mencari':
+        return { title: 'Status', subtitle: 'Bidang yang Diincar', industry: '' };
+      default:
+        return { title: 'Judul', subtitle: 'Deskripsi', industry: 'Industri' };
+    }
+  };
+
+  const selectedItem = careerItems.find(item => item.id === selectedItemId);
+  const fieldLabels = getFieldLabels(editFormData.status);
 
   return (
     <div className="min-h-screen bg-background">
@@ -329,10 +468,7 @@ export default function CareerHistoryPage() {
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          navigate('/form');
-                                        }}
+                                        onClick={(e) => handleEditClick(e, item)}
                                       >
                                         <Pencil className="w-3.5 h-3.5 mr-1.5" />
                                         Edit
@@ -341,10 +477,7 @@ export default function CareerHistoryPage() {
                                         variant="ghost"
                                         size="sm"
                                         className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          // Delete functionality would go here
-                                        }}
+                                        onClick={(e) => handleDeleteClick(e, item.id)}
                                       >
                                         <Trash2 className="w-3.5 h-3.5 mr-1.5" />
                                         Hapus
@@ -383,6 +516,129 @@ export default function CareerHistoryPage() {
         </div>
       </main>
       <Footer />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              Hapus Riwayat Karir?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus riwayat karir ini? 
+              Tindakan ini tidak dapat dibatalkan dan data akan dihapus secara permanen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Riwayat Karir</DialogTitle>
+            <DialogDescription>
+              Perbarui informasi riwayat karir Anda. Klik simpan setelah selesai.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="status">Status</Label>
+              <Select
+                value={editFormData.status}
+                onValueChange={(value: 'bekerja' | 'wirausaha' | 'studi' | 'mencari') => 
+                  setEditFormData(prev => ({ ...prev, status: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bekerja">Bekerja</SelectItem>
+                  <SelectItem value="wirausaha">Wirausaha</SelectItem>
+                  <SelectItem value="studi">Studi Lanjut</SelectItem>
+                  <SelectItem value="mencari">Mencari Kerja</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="title">{fieldLabels.title}</Label>
+              <Input
+                id="title"
+                value={editFormData.title}
+                onChange={(e) => setEditFormData(prev => ({ ...prev, title: e.target.value }))}
+                placeholder={`Masukkan ${fieldLabels.title.toLowerCase()}`}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="subtitle">{fieldLabels.subtitle}</Label>
+              <Input
+                id="subtitle"
+                value={editFormData.subtitle}
+                onChange={(e) => setEditFormData(prev => ({ ...prev, subtitle: e.target.value }))}
+                placeholder={`Masukkan ${fieldLabels.subtitle.toLowerCase()}`}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="location">Lokasi</Label>
+              <Input
+                id="location"
+                value={editFormData.location}
+                onChange={(e) => setEditFormData(prev => ({ ...prev, location: e.target.value }))}
+                placeholder="Masukkan lokasi"
+              />
+            </div>
+
+            {fieldLabels.industry && (
+              <div className="grid gap-2">
+                <Label htmlFor="industry">{fieldLabels.industry}</Label>
+                <Input
+                  id="industry"
+                  value={editFormData.industry}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, industry: e.target.value }))}
+                  placeholder={`Masukkan ${fieldLabels.industry.toLowerCase()}`}
+                />
+              </div>
+            )}
+
+            <div className="grid gap-2">
+              <Label htmlFor="year">Tahun</Label>
+              <Input
+                id="year"
+                type="number"
+                value={editFormData.year}
+                onChange={(e) => setEditFormData(prev => ({ ...prev, year: parseInt(e.target.value) || new Date().getFullYear() }))}
+                placeholder="Tahun"
+                min={2000}
+                max={new Date().getFullYear() + 5}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Batal
+            </Button>
+            <Button onClick={handleEditSave}>
+              Simpan Perubahan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

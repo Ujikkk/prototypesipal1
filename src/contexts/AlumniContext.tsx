@@ -35,6 +35,8 @@ interface AlumniContextActions {
   
   // Data operations
   addAlumniData: (data: AlumniData) => void;
+  updateAlumniData: (id: string, data: Partial<AlumniData>) => void;
+  deleteAlumniData: (id: string) => void;
   getAlumniDataByMasterId: (masterId: string) => AlumniData[];
   searchAlumni: (nama: string, tahunLulus: number) => AlumniMaster[];
   
@@ -91,6 +93,20 @@ export function AlumniProvider({ children }: AlumniProviderProps) {
     setAlumniData((prev) => [...prev, data]);
   }, []);
 
+  // Update alumni data
+  const updateAlumniData = useCallback((id: string, updates: Partial<AlumniData>) => {
+    setAlumniData((prev) => 
+      prev.map((item) => 
+        item.id === id ? { ...item, ...updates } : item
+      )
+    );
+  }, []);
+
+  // Delete alumni data
+  const deleteAlumniData = useCallback((id: string) => {
+    setAlumniData((prev) => prev.filter((item) => item.id !== id));
+  }, []);
+
   // Get alumni data by master ID
   const getAlumniDataByMasterId = useCallback(
     (masterId: string): AlumniData[] => {
@@ -124,6 +140,8 @@ export function AlumniProvider({ children }: AlumniProviderProps) {
     // Actions
     setSelectedAlumni,
     addAlumniData,
+    updateAlumniData,
+    deleteAlumniData,
     getAlumniDataByMasterId,
     searchAlumni,
     toggleDarkMode,
