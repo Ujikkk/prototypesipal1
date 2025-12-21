@@ -19,6 +19,8 @@ interface SummaryCardProps {
   ctaVariant?: 'default' | 'secondary' | 'outline';
   onCtaClick: () => void;
   className?: string;
+  /** Allows the card to span multiple columns */
+  colSpan?: number;
 }
 
 export function SummaryCard({

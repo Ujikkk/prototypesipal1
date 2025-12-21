@@ -8,17 +8,22 @@
  * - Prisma seed script for initial data
  * 
  * All data is ABT (Administrasi Bisnis Terapan) focused
+ * 
+ * DEMO DATA: 4 sample students representing each status type
  */
 
 import type {
   StudentProfile,
   TracerStudyData,
   NonAcademicAchievement,
+  StudentStatus,
 } from '@/types/student.types';
 
 // ============ Student Profiles (ABT Students) ============
+// Demo students for each status type
 
 export const studentProfiles: StudentProfile[] = [
+  // DEMO 1: Alumni - Full access (career + achievements visible)
   {
     id: 's1',
     nama: 'Ahmad Rizki Pratama',
@@ -33,6 +38,49 @@ export const studentProfiles: StudentProfile[] = [
     createdAt: new Date('2019-08-15'),
     updatedAt: new Date('2024-03-15'),
   },
+  // DEMO 2: Mahasiswa Aktif - Achievements only (no career history)
+  {
+    id: 's5',
+    nama: 'Eko Prasetyo',
+    nim: '20210001',
+    jurusan: 'Administrasi Bisnis',
+    prodi: 'Administrasi Bisnis Terapan',
+    status: 'active',
+    tahunMasuk: 2021,
+    email: 'eko.prasetyo@student.polines.ac.id',
+    noHp: '081234567894',
+    createdAt: new Date('2021-08-15'),
+    updatedAt: new Date('2024-09-01'),
+  },
+  // DEMO 3: Mahasiswa Cuti - Achievements only (no career history)
+  {
+    id: 's8',
+    nama: 'Hana Safira',
+    nim: '20220002',
+    jurusan: 'Administrasi Bisnis',
+    prodi: 'Administrasi Bisnis Terapan',
+    status: 'on_leave',
+    tahunMasuk: 2022,
+    email: 'hana.safira@student.polines.ac.id',
+    noHp: '081234567897',
+    createdAt: new Date('2022-08-15'),
+    updatedAt: new Date('2024-06-01'),
+  },
+  // DEMO 4: Mahasiswa Dropout - Read-only achievements
+  {
+    id: 's13',
+    nama: 'Rudi Hermawan',
+    nim: '20200005',
+    jurusan: 'Administrasi Bisnis',
+    prodi: 'Administrasi Bisnis Terapan',
+    status: 'dropout',
+    tahunMasuk: 2020,
+    email: 'rudi.hermawan@gmail.com',
+    noHp: '081234567912',
+    createdAt: new Date('2020-08-15'),
+    updatedAt: new Date('2023-03-01'),
+  },
+  // Additional alumni for variety
   {
     id: 's2',
     nama: 'Siti Nurhaliza',
@@ -76,19 +124,6 @@ export const studentProfiles: StudentProfile[] = [
     updatedAt: new Date('2024-07-10'),
   },
   {
-    id: 's5',
-    nama: 'Eko Prasetyo',
-    nim: '20210001',
-    jurusan: 'Administrasi Bisnis',
-    prodi: 'Administrasi Bisnis Terapan',
-    status: 'active',
-    tahunMasuk: 2021,
-    email: 'eko.prasetyo@student.polines.ac.id',
-    noHp: '081234567894',
-    createdAt: new Date('2021-08-15'),
-    updatedAt: new Date('2024-09-01'),
-  },
-  {
     id: 's6',
     nama: 'Fitri Handayani',
     nim: '20210002',
@@ -113,19 +148,6 @@ export const studentProfiles: StudentProfile[] = [
     noHp: '081234567896',
     createdAt: new Date('2022-08-15'),
     updatedAt: new Date('2024-09-01'),
-  },
-  {
-    id: 's8',
-    nama: 'Hana Safira',
-    nim: '20220002',
-    jurusan: 'Administrasi Bisnis',
-    prodi: 'Administrasi Bisnis Terapan',
-    status: 'on_leave',
-    tahunMasuk: 2022,
-    email: 'hana.safira@student.polines.ac.id',
-    noHp: '081234567897',
-    createdAt: new Date('2022-08-15'),
-    updatedAt: new Date('2024-06-01'),
   },
   {
     id: 's9',
@@ -315,6 +337,7 @@ export const tracerStudyRecords: TracerStudyData[] = [
 // ============ Non-Academic Achievements ============
 
 export const achievementRecords: NonAcademicAchievement[] = [
+  // Achievements for Demo Student 1 (Alumni - Ahmad)
   {
     id: 'a1',
     studentId: 's1',
@@ -346,20 +369,7 @@ export const achievementRecords: NonAcademicAchievement[] = [
     createdAt: new Date('2022-10-01'),
     updatedAt: new Date('2022-10-01'),
   },
-  {
-    id: 'a3',
-    studentId: 's2',
-    category: 'entrepreneurship',
-    subcategory: 'active_business',
-    title: 'Founder Siti Creative Agency',
-    description: 'Mendirikan agensi digital marketing untuk UMKM.',
-    tanggal: new Date('2023-01-15'),
-    lokasi: 'Semarang',
-    tingkat: 'lokal',
-    verified: true,
-    createdAt: new Date('2023-02-01'),
-    updatedAt: new Date('2023-02-01'),
-  },
+  // Achievements for Demo Student 2 (Active - Eko)
   {
     id: 'a4',
     studentId: 's5',
@@ -389,6 +399,54 @@ export const achievementRecords: NonAcademicAchievement[] = [
     verified: true,
     createdAt: new Date('2024-06-15'),
     updatedAt: new Date('2024-06-15'),
+  },
+  // Achievements for Demo Student 3 (On Leave - Hana)
+  {
+    id: 'a10',
+    studentId: 's8',
+    category: 'event_participation',
+    subcategory: 'competition',
+    title: 'Finalis Lomba Presentasi Bisnis',
+    description: 'Kompetisi presentasi bisnis tingkat regional.',
+    tanggal: new Date('2023-11-15'),
+    lokasi: 'Semarang',
+    penyelenggara: 'Politeknik Negeri Semarang',
+    tingkat: 'regional',
+    peringkat: 'Finalis',
+    verified: true,
+    createdAt: new Date('2023-11-20'),
+    updatedAt: new Date('2023-11-20'),
+  },
+  // Achievements for Demo Student 4 (Dropout - Rudi)
+  {
+    id: 'a11',
+    studentId: 's13',
+    category: 'event_participation',
+    subcategory: 'seminar',
+    title: 'Peserta Workshop Entrepreneurship',
+    description: 'Workshop kewirausahaan untuk mahasiswa.',
+    tanggal: new Date('2021-09-10'),
+    lokasi: 'Semarang',
+    penyelenggara: 'HIPMI Jateng',
+    tingkat: 'regional',
+    verified: true,
+    createdAt: new Date('2021-09-15'),
+    updatedAt: new Date('2021-09-15'),
+  },
+  // Additional achievements for variety
+  {
+    id: 'a3',
+    studentId: 's2',
+    category: 'entrepreneurship',
+    subcategory: 'active_business',
+    title: 'Founder Siti Creative Agency',
+    description: 'Mendirikan agensi digital marketing untuk UMKM.',
+    tanggal: new Date('2023-01-15'),
+    lokasi: 'Semarang',
+    tingkat: 'lokal',
+    verified: true,
+    createdAt: new Date('2023-02-01'),
+    updatedAt: new Date('2023-02-01'),
   },
   {
     id: 'a6',
@@ -437,3 +495,49 @@ export const achievementRecords: NonAcademicAchievement[] = [
     updatedAt: new Date('2024-08-05'),
   },
 ];
+
+// ============ Helper Functions ============
+
+/**
+ * Get student status label in Indonesian
+ */
+export function getStudentStatusLabel(status: StudentStatus): string {
+  const labels: Record<StudentStatus, string> = {
+    active: 'Mahasiswa Aktif',
+    on_leave: 'Mahasiswa Cuti',
+    dropout: 'Mahasiswa Dropout',
+    alumni: 'Alumni',
+  };
+  return labels[status];
+}
+
+/**
+ * Get student status color class
+ */
+export function getStudentStatusColor(status: StudentStatus): {
+  bg: string;
+  text: string;
+  border: string;
+} {
+  const colors: Record<StudentStatus, { bg: string; text: string; border: string }> = {
+    active: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/30' },
+    on_leave: { bg: 'bg-warning/10', text: 'text-warning', border: 'border-warning/30' },
+    dropout: { bg: 'bg-destructive/10', text: 'text-destructive', border: 'border-destructive/30' },
+    alumni: { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/30' },
+  };
+  return colors[status];
+}
+
+/**
+ * Check if career history should be visible for a student status
+ */
+export function isCareerHistoryVisible(status: StudentStatus): boolean {
+  return status === 'alumni';
+}
+
+/**
+ * Check if achievements are editable for a student status
+ */
+export function isAchievementsEditable(status: StudentStatus): boolean {
+  return status !== 'dropout';
+}

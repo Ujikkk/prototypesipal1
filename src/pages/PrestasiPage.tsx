@@ -9,9 +9,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAlumni } from '@/contexts/AlumniContext';
 import { useToast } from '@/hooks/use-toast';
 import { FileUpload } from '@/components/shared';
-import { CategorySidebar, AchievementTimelineView, AchievementDetailModal } from '@/components/prestasi';
+import { CategorySidebar, AchievementTimelineView, type CategoryFilter } from '@/components/prestasi';
 import {
-  ChevronLeft, Plus, X, Check, Paperclip, Trophy
+  ChevronLeft, Plus, X, Check, Paperclip
 } from 'lucide-react';
 import {
   Achievement,
@@ -24,16 +24,15 @@ import {
   getAchievementStats,
   deleteAchievement,
 } from '@/services/achievement.service';
-import { cn } from '@/lib/utils';
 
 export default function PrestasiPage() {
   const navigate = useNavigate();
   const { selectedAlumni } = useAlumni();
   const { toast } = useToast();
   
-  const [activeCategory, setActiveCategory] = useState<AchievementCategory>('kegiatan');
+  const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [stats, setStats] = useState<Record<AchievementCategory, number>>({
     kegiatan: 0, publikasi: 0, haki: 0, magang: 0, portofolio: 0, wirausaha: 0, pengembangan: 0
@@ -53,18 +52,19 @@ export default function PrestasiPage() {
     setStats(getAchievementStats(selectedAlumni.id));
   };
 
-  const handleDelete = (id: string) => {
-    if (deleteAchievement(id)) {
-      toast({ title: 'Data berhasil dihapus' });
-      setSelectedAchievement(null);
-      refreshData();
-    }
+  const handleItemClick = (achievement: Achievement) => {
+    setExpandedId(prev => prev === achievement.id ? null : achievement.id);
   };
 
   if (!selectedAlumni) return null;
 
-  const filteredAchievements = achievements.filter(a => a.category === activeCategory);
+  const filteredAchievements = activeCategory === 'all' 
+    ? achievements 
+    : achievements.filter(a => a.category === activeCategory);
   const totalAchievements = Object.values(stats).reduce((a, b) => a + b, 0);
+
+  // Get category for form (default to kegiatan if 'all' is selected)
+  const formCategory: AchievementCategory = activeCategory === 'all' ? 'kegiatan' : activeCategory;
 
   return (
     <div className="min-h-screen bg-background">
@@ -108,7 +108,7 @@ export default function PrestasiPage() {
                   {/* Category Header */}
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-lg font-semibold text-foreground">
-                      {ACHIEVEMENT_CATEGORIES[activeCategory].label}
+                      {activeCategory === 'all' ? 'Semua Prestasi' : ACHIEVEMENT_CATEGORIES[activeCategory].label}
                     </h2>
                     <Button onClick={() => setIsFormOpen(true)} size="sm" className="sm:hidden">
                       <Plus className="w-4 h-4" />
@@ -119,7 +119,8 @@ export default function PrestasiPage() {
                   <AchievementTimelineView
                     achievements={filteredAchievements}
                     category={activeCategory}
-                    onItemClick={setSelectedAchievement}
+                    expandedId={expandedId}
+                    onItemClick={handleItemClick}
                     onAddNew={() => setIsFormOpen(true)}
                   />
                 </div>
@@ -135,19 +136,10 @@ export default function PrestasiPage() {
               <Plus className="w-6 h-6" />
             </Button>
 
-            {/* Detail Modal */}
-            {selectedAchievement && (
-              <AchievementDetailModal
-                achievement={selectedAchievement}
-                onClose={() => setSelectedAchievement(null)}
-                onDelete={() => handleDelete(selectedAchievement.id)}
-              />
-            )}
-
             {/* Form Modal */}
             {isFormOpen && (
               <AchievementForm
-                category={activeCategory}
+                category={formCategory}
                 masterId={selectedAlumni.id}
                 onClose={() => setIsFormOpen(false)}
                 onSuccess={() => {
@@ -165,7 +157,7 @@ export default function PrestasiPage() {
   );
 }
 
-// Achievement Form Component (simplified inline form fields)
+// Achievement Form Component
 function AchievementForm({
   category,
   masterId,
@@ -202,7 +194,6 @@ function AchievementForm({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Dynamic form fields based on category */}
           {category === 'kegiatan' && <KegiatanFields formData={formData} updateField={updateField} />}
           {category === 'publikasi' && <PublikasiFields formData={formData} updateField={updateField} />}
           {category === 'haki' && <HakiFields formData={formData} updateField={updateField} />}
@@ -211,7 +202,6 @@ function AchievementForm({
           {category === 'wirausaha' && <WirausahaFields formData={formData} updateField={updateField} />}
           {category === 'pengembangan' && <PengembanganFields formData={formData} updateField={updateField} />}
 
-          {/* File Upload */}
           <div className="pt-4 border-t border-border">
             <Label className="flex items-center gap-2 mb-3">
               <Paperclip className="w-4 h-4" />
