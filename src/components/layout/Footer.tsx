@@ -1,78 +1,106 @@
-import { GraduationCap, Mail, Phone, MapPin } from 'lucide-react';
+import { GraduationCap, Mail, Phone, MapPin, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function Footer() {
   return (
-    <footer className="bg-card border-t border-border">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer className="bg-sidebar text-sidebar-foreground">
+      <div className="container mx-auto px-4 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Brand */}
-          <div className="md:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-                <GraduationCap className="w-5 h-5 text-primary-foreground" />
+          <div className="lg:col-span-2">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-12 h-12 rounded-xl bg-sidebar-primary flex items-center justify-center">
+                <GraduationCap className="w-6 h-6 text-sidebar-primary-foreground" />
               </div>
-              <span className="font-bold text-lg text-foreground">SIPAL</span>
+              <div>
+                <span className="font-bold text-xl text-sidebar-foreground block">SIPAL</span>
+                <span className="text-xs text-sidebar-foreground/60">Politeknik Negeri Semarang</span>
+              </div>
             </div>
-            <p className="text-muted-foreground text-sm max-w-md mb-4">
-              Sistem Informasi Pelacakan Alumni Politeknik Negeri Semarang. 
-              Menghubungkan kampus dengan alumni untuk membangun jejaring yang lebih kuat.
+            <p className="text-sidebar-foreground/70 text-sm max-w-md mb-6 leading-relaxed">
+              Sistem Informasi Pelacakan Alumni — Arsip digital resmi Program Studi 
+              Administrasi Bisnis Terapan (ABT). Menghubungkan kampus dengan alumni 
+              untuk membangun jejaring profesional yang lebih kuat.
             </p>
-            <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                <span>Jl. Prof. Sudarto, SH, Tembalang, Semarang</span>
+            <div className="flex flex-col gap-3 text-sm text-sidebar-foreground/70">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-sidebar-accent flex items-center justify-center">
+                  <MapPin className="w-4 h-4" />
+                </div>
+                <span>Jl. Prof. Sudarto, SH, Tembalang, Semarang 50275</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4" />
-                <span>alumni@polines.ac.id</span>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-sidebar-accent flex items-center justify-center">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <span>prodi-abt@polines.ac.id</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4" />
-                <span>(024) 7473417</span>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-sidebar-accent flex items-center justify-center">
+                  <Phone className="w-4 h-4" />
+                </div>
+                <span>(024) 7473417 ext. 123</span>
               </div>
             </div>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Tautan Cepat</h4>
-            <div className="flex flex-col gap-2">
-              <Link to="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+            <h4 className="font-semibold text-sidebar-foreground mb-5">Tautan Cepat</h4>
+            <div className="flex flex-col gap-3">
+              <Link to="/" className="text-sm text-sidebar-foreground/70 hover:text-sidebar-primary transition-colors">
                 Beranda
               </Link>
-              <Link to="/validasi" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              <Link to="/validasi" className="text-sm text-sidebar-foreground/70 hover:text-sidebar-primary transition-colors">
                 Input Data Alumni
               </Link>
-              <Link to="/admin" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              <Link to="/admin" className="text-sm text-sidebar-foreground/70 hover:text-sidebar-primary transition-colors">
                 Dashboard Admin
+              </Link>
+              <Link to="/admin/ai-insight" className="text-sm text-sidebar-foreground/70 hover:text-sidebar-primary transition-colors">
+                AI Insight
               </Link>
             </div>
           </div>
 
           {/* Resources */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Sumber Daya</h4>
-            <div className="flex flex-col gap-2">
-              <a href="https://www.polines.ac.id" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+            <h4 className="font-semibold text-sidebar-foreground mb-5">Sumber Daya</h4>
+            <div className="flex flex-col gap-3">
+              <a 
+                href="https://www.polines.ac.id" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-sm text-sidebar-foreground/70 hover:text-sidebar-primary transition-colors inline-flex items-center gap-1"
+              >
                 Website Polines
+                <ExternalLink className="w-3 h-3" />
               </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              <a 
+                href="https://abt.polines.ac.id" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-sm text-sidebar-foreground/70 hover:text-sidebar-primary transition-colors inline-flex items-center gap-1"
+              >
+                Prodi ABT
+                <ExternalLink className="w-3 h-3" />
+              </a>
+              <a href="#" className="text-sm text-sidebar-foreground/70 hover:text-sidebar-primary transition-colors">
                 Panduan Penggunaan
               </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                FAQ
+              <a href="#" className="text-sm text-sidebar-foreground/70 hover:text-sidebar-primary transition-colors">
+                Kebijakan Privasi
               </a>
             </div>
           </div>
         </div>
 
-        <div className="border-t border-border mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} SIPAL - Politeknik Negeri Semarang. All rights reserved.
+        <div className="border-t border-sidebar-border mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-sm text-sidebar-foreground/50">
+            © {new Date().getFullYear()} SIPAL — Politeknik Negeri Semarang. Hak cipta dilindungi.
           </p>
-          <p className="text-sm text-muted-foreground">
-            Dibuat dengan ❤️ untuk Alumni Polines
+          <p className="text-sm text-sidebar-foreground/50">
+            Program Studi Administrasi Bisnis Terapan (ABT)
           </p>
         </div>
       </div>
