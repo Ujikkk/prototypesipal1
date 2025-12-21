@@ -103,6 +103,9 @@ export interface AlumniData extends AlumniContactInfo, AlumniAdditionalInfo {
   status: AlumniStatus;
   tahunPengisian: number;
   createdAt: Date;
+  
+  // Active status - indicates if still active in current position
+  isActive?: boolean;
 
   // Status-specific data (only one should be populated based on status)
   // Employment (bekerja)
