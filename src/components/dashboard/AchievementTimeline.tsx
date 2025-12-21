@@ -9,6 +9,7 @@ import { Achievement, AchievementCategory } from '@/types/achievement.types';
 interface AchievementTimelineProps {
   achievements: Achievement[];
   maxItems?: number;
+  contextText?: string;
   onViewAll?: () => void;
   onAddNew?: () => void;
   className?: string;
@@ -68,6 +69,7 @@ function getAchievementSubtitle(achievement: Achievement): string | undefined {
 export function AchievementTimeline({ 
   achievements, 
   maxItems = 5, 
+  contextText,
   onViewAll, 
   onAddNew,
   className 
@@ -78,7 +80,7 @@ export function AchievementTimeline({
   const hasMore = achievements.length > maxItems;
 
   return (
-    <div className={cn('glass-card rounded-2xl p-6', className)}>
+    <div className={cn('glass-card rounded-2xl p-6 flex flex-col', className)}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -97,7 +99,7 @@ export function AchievementTimeline({
 
       {/* Timeline */}
       {displayItems.length > 0 ? (
-        <>
+        <div className="flex-1">
           <div className="relative">
             {/* Timeline line */}
             <div className="absolute left-[19px] top-0 bottom-0 w-0.5 bg-border" />
@@ -127,7 +129,7 @@ export function AchievementTimeline({
                     {/* Content */}
                     <div 
                       className={cn(
-                        'flex-1 p-3 rounded-xl transition-all duration-200',
+                        'flex-1 p-3 rounded-xl transition-all duration-200 min-w-0',
                         'hover:shadow-soft hover:-translate-y-0.5 cursor-pointer',
                         'bg-muted/50 hover:bg-muted/70'
                       )}
@@ -137,13 +139,13 @@ export function AchievementTimeline({
                           <Icon className={cn('w-4 h-4', config.color)} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-foreground text-sm truncate">{title}</h4>
+                          <h4 className="font-medium text-foreground text-sm break-words">{title}</h4>
                           {subtitle && (
-                            <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
+                            <p className="text-xs text-muted-foreground break-words">{subtitle}</p>
                           )}
                           {hasAttachments && (
                             <div className="flex items-center gap-1 mt-1">
-                              <Paperclip className="w-3 h-3 text-muted-foreground" />
+                              <Paperclip className="w-3 h-3 text-muted-foreground flex-shrink-0" />
                               <span className="text-xs text-muted-foreground">Sertifikat tersedia</span>
                             </div>
                           )}
@@ -156,9 +158,14 @@ export function AchievementTimeline({
             </div>
           </div>
 
+          {/* Context Text */}
+          {contextText && (
+            <p className="text-xs text-muted-foreground italic mt-4">{contextText}</p>
+          )}
+
           {/* Actions */}
-          <div className="flex gap-2 mt-5">
-            {hasMore && onViewAll && (
+          <div className="flex gap-2 mt-4">
+            {(hasMore || onViewAll) && (
               <Button variant="ghost" className="flex-1" onClick={onViewAll}>
                 Lihat semua prestasi
                 <ChevronRight className="w-4 h-4 ml-1" />
@@ -170,7 +177,7 @@ export function AchievementTimeline({
               </Button>
             )}
           </div>
-        </>
+        </div>
       ) : (
         /* Empty State */
         <div className="text-center py-8">

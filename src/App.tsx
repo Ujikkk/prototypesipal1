@@ -9,6 +9,7 @@ import ValidasiPage from "./pages/ValidasiPage";
 import UserDashboard from "./pages/UserDashboard";
 import FormPage from "./pages/FormPage";
 import PrestasiPage from "./pages/PrestasiPage";
+import CareerHistoryPage from "./pages/CareerHistoryPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AIInsightPage from "./pages/AIInsightPage";
 import NotFound from "./pages/NotFound";
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/dashboard" element={<UserDashboard />} />
             <Route path="/form" element={<FormPage />} />
             <Route path="/prestasi" element={<PrestasiPage />} />
+            <Route path="/riwayat-karir" element={<CareerHistoryPage />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/ai-insight" element={<AIInsightPage />} />
             <Route path="*" element={<NotFound />} />

@@ -1,4 +1,4 @@
-import { Briefcase, Rocket, GraduationCap, Search, ChevronRight, Building2, MapPin } from 'lucide-react';
+import { Briefcase, Rocket, GraduationCap, Search, ChevronRight, MapPin, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -14,7 +14,9 @@ interface CareerTimelineItem {
 interface CareerTimelineProps {
   items: CareerTimelineItem[];
   maxItems?: number;
+  contextText?: string;
   onViewAll?: () => void;
+  onAddNew?: () => void;
   className?: string;
 }
 
@@ -53,32 +55,32 @@ const STATUS_CONFIG = {
   },
 };
 
-export function CareerTimeline({ items, maxItems = 4, onViewAll, className }: CareerTimelineProps) {
+export function CareerTimeline({ items, maxItems = 4, contextText, onViewAll, onAddNew, className }: CareerTimelineProps) {
   const displayItems = items.slice(0, maxItems);
   const hasMore = items.length > maxItems;
 
   if (items.length === 0) return null;
 
   return (
-    <div className={cn('glass-card rounded-2xl p-6', className)}>
+    <div className={cn('glass-card rounded-2xl p-6 flex flex-col', className)}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
             <Briefcase className="w-5 h-5 text-primary" />
           </div>
-          <div>
-            <h3 className="font-semibold text-foreground">Riwayat Karir</h3>
-            <p className="text-sm text-muted-foreground">Tracer study Anda</p>
+          <div className="min-w-0">
+            <h3 className="font-semibold text-foreground truncate">Riwayat Karir</h3>
+            <p className="text-sm text-muted-foreground truncate">Tracer study Anda</p>
           </div>
         </div>
-        <span className="text-sm text-muted-foreground px-3 py-1 rounded-full bg-muted">
+        <span className="text-sm text-muted-foreground px-3 py-1 rounded-full bg-muted flex-shrink-0">
           {items.length} entri
         </span>
       </div>
 
       {/* Timeline */}
-      <div className="relative">
+      <div className="relative flex-1">
         {/* Timeline line */}
         <div className="absolute left-[19px] top-0 bottom-0 w-0.5 bg-border" />
 
@@ -105,7 +107,7 @@ export function CareerTimeline({ items, maxItems = 4, onViewAll, className }: Ca
                 {/* Content Card */}
                 <div 
                   className={cn(
-                    'flex-1 p-4 rounded-xl border transition-all duration-200',
+                    'flex-1 p-4 rounded-xl border transition-all duration-200 min-w-0',
                     'hover:shadow-soft hover:-translate-y-0.5 cursor-pointer',
                     config.bgColor, config.borderColor
                   )}
@@ -115,19 +117,19 @@ export function CareerTimeline({ items, maxItems = 4, onViewAll, className }: Ca
                       <Icon className={cn('w-4 h-4', config.color)} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full', config.bgColor, config.color)}>
                           {config.label}
                         </span>
                       </div>
-                      <h4 className="font-semibold text-foreground truncate">{item.title}</h4>
+                      <h4 className="font-semibold text-foreground break-words">{item.title}</h4>
                       {item.subtitle && (
-                        <p className="text-sm text-muted-foreground truncate">{item.subtitle}</p>
+                        <p className="text-sm text-muted-foreground break-words">{item.subtitle}</p>
                       )}
                       {item.location && (
                         <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                          <MapPin className="w-3 h-3" />
-                          <span>{item.location}</span>
+                          <MapPin className="w-3 h-3 flex-shrink-0" />
+                          <span className="break-words">{item.location}</span>
                         </div>
                       )}
                     </div>
@@ -139,13 +141,26 @@ export function CareerTimeline({ items, maxItems = 4, onViewAll, className }: Ca
         </div>
       </div>
 
-      {/* View All */}
-      {hasMore && onViewAll && (
-        <Button variant="ghost" className="w-full mt-4" onClick={onViewAll}>
-          Lihat riwayat lengkap
-          <ChevronRight className="w-4 h-4 ml-1" />
-        </Button>
+      {/* Context Text */}
+      {contextText && (
+        <p className="text-xs text-muted-foreground italic mt-4">{contextText}</p>
       )}
+
+      {/* Actions */}
+      <div className="flex gap-2 mt-4">
+        {(hasMore || onViewAll) && (
+          <Button variant="ghost" className="flex-1" onClick={onViewAll}>
+            Lihat semua karir
+            <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
+        )}
+        {onAddNew && (
+          <Button variant="outline" className="flex-1" onClick={onAddNew}>
+            <Plus className="w-4 h-4 mr-1" />
+            Tambah Karir
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
