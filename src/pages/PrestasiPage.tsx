@@ -8,15 +8,17 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useAlumni } from '@/contexts/AlumniContext';
 import { useToast } from '@/hooks/use-toast';
+import { FileUpload } from '@/components/shared';
 import {
   Trophy, BookOpen, Shield, Briefcase, FolderOpen, Rocket, GraduationCap,
   Plus, ChevronLeft, ChevronRight, X, Check, Calendar, Building2, MapPin,
-  FileText, Link as LinkIcon, Award, User
+  FileText, Link as LinkIcon, Award, User, Paperclip
 } from 'lucide-react';
 import {
   Achievement,
   AchievementCategory,
   ACHIEVEMENT_CATEGORIES,
+  AchievementAttachment,
   KegiatanAchievement,
   PublikasiAchievement,
   HakiAchievement,
@@ -245,6 +247,8 @@ function AchievementCard({ achievement, onDelete }: { achievement: Achievement; 
     }
   };
 
+  const hasAttachments = achievement.attachments && achievement.attachments.length > 0;
+
   return (
     <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/50 hover:bg-muted/70 transition-colors group">
       <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -256,6 +260,12 @@ function AchievementCard({ achievement, onDelete }: { achievement: Achievement; 
       <div className="flex-1 min-w-0">
         <h4 className="font-semibold text-foreground truncate">{getTitle()}</h4>
         <p className="text-sm text-muted-foreground truncate">{getSubtitle()}</p>
+        {hasAttachments && (
+          <div className="flex items-center gap-1 mt-1">
+            <Paperclip className="w-3 h-3 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">{achievement.attachments!.length} file</span>
+          </div>
+        )}
       </div>
       <Button
         variant="ghost"
@@ -333,6 +343,20 @@ function AchievementForm({
           {category === 'pengembangan' && (
             <PengembanganFormFields formData={formData} updateField={updateField} />
           )}
+
+          {/* File Upload Section */}
+          <div className="pt-4 border-t border-border">
+            <Label className="flex items-center gap-2 mb-3">
+              <Paperclip className="w-4 h-4" />
+              Lampiran (Sertifikat / Dokumentasi)
+            </Label>
+            <FileUpload
+              value={formData.attachments || []}
+              onChange={(attachments) => updateField('attachments', attachments)}
+              maxFiles={5}
+              maxSizeInMB={5}
+            />
+          </div>
 
           <div className="flex gap-3 pt-4">
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">

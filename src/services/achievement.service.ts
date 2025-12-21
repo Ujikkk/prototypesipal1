@@ -11,13 +11,19 @@ import {
   WirausahaAchievement,
   PengembanganAchievement
 } from '@/types/achievement.types';
+import { achievementSeedData } from '@/data/achievement-seed-data';
 
-// In-memory storage (will be replaced with database later)
-let achievements: Achievement[] = [];
+// In-memory storage - pre-seeded with sample data
+let achievements: Achievement[] = [...achievementSeedData];
 
 // Generate unique ID
 const generateId = (): string => {
   return `ach_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+};
+
+// Get all achievements
+export const getAllAchievements = (): Achievement[] => {
+  return [...achievements];
 };
 
 // Get all achievements for a student
@@ -87,6 +93,48 @@ export const getAchievementStats = (masterId: string): Record<AchievementCategor
   };
 };
 
+// Get global achievement statistics (for admin dashboard)
+export const getGlobalAchievementStats = (): { 
+  total: number; 
+  byCategory: Record<AchievementCategory, number>;
+  topCategories: { category: AchievementCategory; count: number; label: string }[];
+} => {
+  const byCategory: Record<AchievementCategory, number> = {
+    kegiatan: achievements.filter(a => a.category === 'kegiatan').length,
+    publikasi: achievements.filter(a => a.category === 'publikasi').length,
+    haki: achievements.filter(a => a.category === 'haki').length,
+    magang: achievements.filter(a => a.category === 'magang').length,
+    portofolio: achievements.filter(a => a.category === 'portofolio').length,
+    wirausaha: achievements.filter(a => a.category === 'wirausaha').length,
+    pengembangan: achievements.filter(a => a.category === 'pengembangan').length,
+  };
+
+  const categoryLabels: Record<AchievementCategory, string> = {
+    kegiatan: 'Kegiatan',
+    publikasi: 'Publikasi',
+    haki: 'HAKI',
+    magang: 'Magang',
+    portofolio: 'Portofolio',
+    wirausaha: 'Wirausaha',
+    pengembangan: 'Pengembangan',
+  };
+
+  const topCategories = (Object.entries(byCategory) as [AchievementCategory, number][])
+    .map(([category, count]) => ({ category, count, label: categoryLabels[category] }))
+    .sort((a, b) => b.count - a.count);
+
+  return {
+    total: achievements.length,
+    byCategory,
+    topCategories,
+  };
+};
+
+// Get unique students with achievements
+export const getStudentsWithAchievements = (): string[] => {
+  return [...new Set(achievements.map(a => a.masterId))];
+};
+
 // Get total achievement count
 export const getTotalAchievements = (masterId: string): number => {
   return getAchievementsByMasterId(masterId).length;
@@ -99,4 +147,8 @@ export const seedAchievements = (data: Achievement[]): void => {
 
 export const clearAchievements = (): void => {
   achievements = [];
+};
+
+export const resetToSeedData = (): void => {
+  achievements = [...achievementSeedData];
 };

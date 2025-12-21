@@ -9,10 +9,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useAlumni } from '@/contexts/AlumniContext';
 import { jurusanList, prodiList, tahunLulusList } from '@/lib/data';
 import { StatCard, StatusBadge, ChartCard, DataTable } from '@/components/shared';
+import { getGlobalAchievementStats, getStudentsWithAchievements } from '@/services/achievement.service';
+import { ACHIEVEMENT_CATEGORIES, AchievementCategory } from '@/types/achievement.types';
 import {
   Search, Download, Filter, Users, Briefcase, Rocket, BookOpen, TrendingUp,
   User, Mail, Phone, Building2, MapPin, Calendar, ExternalLink, Sparkles,
-  BarChart3, PieChart as PieChartIcon, LineChart as LineChartIcon, X
+  BarChart3, PieChart as PieChartIcon, LineChart as LineChartIcon, X,
+  Trophy, Shield, FolderOpen, GraduationCap, Award
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -57,6 +60,32 @@ export default function AdminDashboard() {
     const mencari = alumniData.filter(d => d.status === 'mencari').length;
     return { filled, bekerja, wirausaha, studi, mencari };
   }, [alumniData]);
+
+  // Achievement statistics
+  const achievementStats = useMemo(() => {
+    return getGlobalAchievementStats();
+  }, []);
+
+  const studentsWithAchievements = useMemo(() => {
+    return getStudentsWithAchievements().length;
+  }, []);
+
+  const achievementChartData = useMemo(() => {
+    const colors = [
+      'hsl(38, 92%, 50%)',   // kegiatan - warning
+      'hsl(222, 60%, 35%)',  // publikasi - primary
+      'hsl(145, 65%, 39%)',  // haki - success
+      'hsl(199, 89%, 48%)',  // magang - info
+      'hsl(262, 83%, 58%)',  // portofolio - secondary
+      'hsl(0, 72%, 51%)',    // wirausaha - destructive
+      'hsl(174, 72%, 40%)',  // pengembangan - accent
+    ];
+    return achievementStats.topCategories.map((item, index) => ({
+      name: item.label,
+      value: item.count,
+      color: colors[index] || colors[0],
+    }));
+  }, [achievementStats]);
 
   // Chart data
   const statusChartData = [
@@ -184,6 +213,48 @@ export default function AdminDashboard() {
             <StatCard title="Wirausaha" value={stats.wirausaha} icon={Rocket} color="success" />
             <StatCard title="Studi Lanjut" value={stats.studi} icon={BookOpen} color="destructive" />
             <StatCard title="Mencari Kerja" value={stats.mencari} icon={Search} color="warning" />
+          </div>
+
+          {/* Achievement Stats Summary */}
+          <div className="glass-card rounded-2xl p-6 mb-8 animate-fade-up" style={{ animationDelay: '0.15s' }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center">
+                  <Award className="w-5 h-5 text-warning" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Prestasi Non-Akademik</h3>
+                  <p className="text-sm text-muted-foreground">Rekam jejak prestasi mahasiswa & alumni</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-bold text-foreground">{achievementStats.total}</p>
+                <p className="text-xs text-muted-foreground">Total Prestasi</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+              {(Object.entries(ACHIEVEMENT_CATEGORIES) as [AchievementCategory, typeof ACHIEVEMENT_CATEGORIES[AchievementCategory]][]).map(([key, cat]) => {
+                const count = achievementStats.byCategory[key];
+                const iconMap: Record<AchievementCategory, React.ElementType> = {
+                  kegiatan: Trophy,
+                  publikasi: BookOpen,
+                  haki: Shield,
+                  magang: Briefcase,
+                  portofolio: FolderOpen,
+                  wirausaha: Rocket,
+                  pengembangan: GraduationCap,
+                };
+                const Icon = iconMap[key];
+                return (
+                  <div key={key} className="p-3 rounded-xl bg-muted/50 text-center">
+                    <Icon className="w-5 h-5 text-primary mx-auto mb-1" />
+                    <p className="text-lg font-bold text-foreground">{count}</p>
+                    <p className="text-xs text-muted-foreground truncate">{cat.label}</p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Charts */}
