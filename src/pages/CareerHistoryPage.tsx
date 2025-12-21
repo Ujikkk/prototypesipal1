@@ -6,7 +6,7 @@ import { useAlumni } from '@/contexts/AlumniContext';
 import { 
   Briefcase, Rocket, GraduationCap, Search, ChevronLeft, 
   MapPin, Calendar, Building2, User, Plus, Pencil, Trash2, Clock,
-  AlertTriangle, Loader2, Filter, ArrowUpDown, X, CheckCircle2
+  AlertTriangle, Loader2, Filter, ArrowUpDown, X, CheckCircle2, XCircle
 } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
@@ -683,11 +683,14 @@ export default function CareerHistoryPage() {
                                       <span className="text-xs text-muted-foreground font-medium">
                                         {item.year}
                                       </span>
-                                      {item.isActive && (
-                                        <span className="text-xs px-2 py-0.5 rounded-full bg-success/10 text-success font-medium">
-                                          Aktif
-                                        </span>
-                                      )}
+                                      <span className={cn(
+                                        'text-xs px-2 py-0.5 rounded-full font-medium',
+                                        item.isActive 
+                                          ? 'bg-success/10 text-success' 
+                                          : 'bg-destructive/10 text-destructive'
+                                      )}>
+                                        {item.isActive ? 'Aktif' : 'Selesai'}
+                                      </span>
                                     </div>
 
                                     <h4 className="font-semibold text-foreground text-lg break-words">
@@ -968,28 +971,34 @@ export default function CareerHistoryPage() {
 
             <div 
               className={cn(
-                "flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-colors",
+                "flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-all",
                 editFormData.isActive 
                   ? "bg-success/10 border-success/30" 
-                  : "bg-muted/50 border-border"
+                  : "bg-destructive/10 border-destructive/30"
               )}
               onClick={() => handleFormChange('isActive', !editFormData.isActive)}
             >
               <div className="flex items-center gap-3">
-                <CheckCircle2 className={cn(
-                  "w-5 h-5 transition-colors",
-                  editFormData.isActive ? "text-success" : "text-muted-foreground"
-                )} />
+                {editFormData.isActive ? (
+                  <CheckCircle2 className="w-5 h-5 text-success transition-colors" />
+                ) : (
+                  <XCircle className="w-5 h-5 text-destructive transition-colors" />
+                )}
                 <div>
-                  <p className="font-medium text-foreground">Status Aktif</p>
+                  <p className={cn(
+                    "font-medium transition-colors",
+                    editFormData.isActive ? "text-success" : "text-destructive"
+                  )}>
+                    {editFormData.isActive ? "Aktif" : "Selesai"}
+                  </p>
                   <p className="text-sm text-muted-foreground">
-                    {editFormData.isActive ? "Masih aktif di posisi ini" : "Sudah tidak aktif"}
+                    {editFormData.isActive ? "Masih aktif di posisi ini" : "Sudah tidak bekerja di sini"}
                   </p>
                 </div>
               </div>
               <div className={cn(
                 "w-11 h-6 rounded-full transition-colors relative",
-                editFormData.isActive ? "bg-success" : "bg-muted-foreground/30"
+                editFormData.isActive ? "bg-success" : "bg-destructive"
               )}>
                 <div className={cn(
                   "absolute top-1 w-4 h-4 rounded-full bg-background transition-all",
