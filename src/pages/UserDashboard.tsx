@@ -144,6 +144,16 @@ export default function UserDashboard() {
       <main className="pt-24 pb-20">
         <div className="container mx-auto px-4">
           <div className="max-w-5xl mx-auto">
+            {/* Page Title */}
+            <div className="mb-8 animate-fade-up">
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
+                Dashboard Mahasiswa / Alumni
+              </h1>
+              <p className="text-muted-foreground">
+                Ringkasan akademik dan perjalanan karirmu
+              </p>
+            </div>
+
             {/* Student Identity Header */}
             <StudentIdentityHeader
               nama={selectedAlumni.nama}
@@ -155,10 +165,10 @@ export default function UserDashboard() {
               careerStatus={careerStatus}
             />
 
-            {/* Summary Cards */}
+            {/* Summary Cards - 4 Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-8 animate-fade-up" style={{ animationDelay: '0.1s' }}>
-              {/* Card A - Status Alumni (Only visible for Alumni) */}
-              {showCareerHistory && (
+              {/* Card 1 - Status Alumni */}
+              {showCareerHistory ? (
                 <SummaryCard
                   title="Status Alumni Saat Ini"
                   icon={<Briefcase className="w-6 h-6 text-primary" />}
@@ -175,15 +185,30 @@ export default function UserDashboard() {
                   ctaVariant="default"
                   onCtaClick={() => navigate('/form')}
                 />
+              ) : (
+                <div className="glass-card rounded-2xl p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
+                      <Briefcase className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                  </div>
+                  <h3 className="font-semibold text-foreground mb-4">Riwayat Karir</h3>
+                  <div className="text-center py-6">
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Riwayat karir akan muncul setelah kamu berstatus alumni.
+                    </p>
+                  </div>
+                </div>
               )}
 
-              {/* Card B - Prestasi (Visible for all) */}
+              {/* Card 2 - Prestasi Non-Akademik */}
               <SummaryCard
                 title="Prestasi Non-Akademik"
                 icon={<Award className="w-6 h-6 text-success" />}
                 iconBgClass="bg-success/10"
                 primaryLabel="Total Prestasi"
                 primaryValue={totalAchievements.toString()}
+                contextText={`Menampilkan ${Math.min(achievements.length, 5)} dari ${totalAchievements} prestasi`}
                 highlight={latestAchievement ? {
                   label: 'Prestasi terbaru',
                   value: `${latestAchievement.title} (${latestAchievement.year})`
@@ -191,57 +216,76 @@ export default function UserDashboard() {
                 ctaLabel={canEditAchievements ? "Tambah Prestasi" : "Lihat Prestasi"}
                 ctaVariant="secondary"
                 onCtaClick={() => navigate('/prestasi')}
-                className={!showCareerHistory ? 'md:col-span-2' : ''}
               />
             </div>
 
-            {/* History Section */}
-            <div className={`grid grid-cols-1 ${showCareerHistory ? 'lg:grid-cols-2' : ''} gap-5 mt-6 animate-fade-up`} style={{ animationDelay: '0.2s' }}>
-              {/* Career Timeline - Only for Alumni */}
-              {showCareerHistory && (
-                <>
-                  {alumniHistory.length > 0 ? (
-                    <CareerTimeline 
-                      items={careerTimelineItems}
-                      maxItems={4}
-                      onViewAll={() => navigate('/form')}
-                    />
-                  ) : (
-                    <div className="glass-card rounded-2xl p-6">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                          <Briefcase className="w-5 h-5 text-primary" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-foreground">Riwayat Karir</h3>
-                          <p className="text-sm text-muted-foreground">Tracer study Anda</p>
-                        </div>
+            {/* History Section - 2 Cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-6 animate-fade-up" style={{ animationDelay: '0.2s' }}>
+              {/* Card 3 - Riwayat Karir */}
+              {showCareerHistory ? (
+                alumniHistory.length > 0 ? (
+                  <CareerTimeline 
+                    items={careerTimelineItems}
+                    maxItems={4}
+                    contextText={`Menampilkan ${Math.min(careerTimelineItems.length, 4)} dari ${careerTimelineItems.length} riwayat karir`}
+                    onViewAll={() => navigate('/riwayat-karir')}
+                    onAddNew={() => navigate('/form')}
+                  />
+                ) : (
+                  <div className="glass-card rounded-2xl p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Briefcase className="w-5 h-5 text-primary" />
                       </div>
-                      <div className="text-center py-8">
-                        <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
-                          <Clock className="w-7 h-7 text-muted-foreground" />
-                        </div>
-                        <h4 className="font-semibold text-foreground mb-1">Belum Ada Riwayat</h4>
-                        <p className="text-sm text-muted-foreground mb-4 max-w-xs mx-auto">
-                          Mulai isi form status alumni untuk membangun timeline karir Anda.
-                        </p>
-                        <Button onClick={() => navigate('/form')}>
-                          <FileEdit className="w-4 h-4 mr-2" />
-                          Isi Form Status
-                        </Button>
+                      <div>
+                        <h3 className="font-semibold text-foreground">Riwayat Karir</h3>
+                        <p className="text-sm text-muted-foreground">Tracer study Anda</p>
                       </div>
                     </div>
-                  )}
-                </>
+                    <div className="text-center py-8">
+                      <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+                        <Clock className="w-7 h-7 text-muted-foreground" />
+                      </div>
+                      <h4 className="font-semibold text-foreground mb-1">Belum Ada Riwayat</h4>
+                      <p className="text-sm text-muted-foreground mb-4 max-w-xs mx-auto">
+                        Mulai isi form status alumni untuk membangun timeline karir Anda.
+                      </p>
+                      <Button onClick={() => navigate('/form')}>
+                        <FileEdit className="w-4 h-4 mr-2" />
+                        Isi Form Status
+                      </Button>
+                    </div>
+                  </div>
+                )
+              ) : (
+                <div className="glass-card rounded-2xl p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                      <Briefcase className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground">Riwayat Karir</h3>
+                      <p className="text-sm text-muted-foreground">Tracer study</p>
+                    </div>
+                  </div>
+                  <div className="text-center py-8">
+                    <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+                      <Clock className="w-7 h-7 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                      Riwayat karir akan muncul setelah kamu berstatus alumni.
+                    </p>
+                  </div>
+                </div>
               )}
 
-              {/* Achievement Timeline - Visible for All */}
+              {/* Card 4 - Riwayat Prestasi */}
               <AchievementTimeline
                 achievements={achievements}
                 maxItems={5}
+                contextText={`Menampilkan ${Math.min(achievements.length, 5)} dari ${totalAchievements} prestasi`}
                 onViewAll={() => navigate('/prestasi')}
                 onAddNew={canEditAchievements ? () => navigate('/prestasi') : undefined}
-                className={!showCareerHistory ? 'lg:max-w-2xl lg:mx-auto w-full' : ''}
               />
             </div>
           </div>

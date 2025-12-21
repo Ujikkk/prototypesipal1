@@ -15,12 +15,12 @@ interface SummaryCardProps {
     label: string;
     value: string;
   };
+  /** Contextual text like "Menampilkan X dari Y" */
+  contextText?: string;
   ctaLabel: string;
   ctaVariant?: 'default' | 'secondary' | 'outline';
   onCtaClick: () => void;
   className?: string;
-  /** Allows the card to span multiple columns */
-  colSpan?: number;
 }
 
 export function SummaryCard({
@@ -32,6 +32,7 @@ export function SummaryCard({
   secondaryLabel,
   secondaryValue,
   highlight,
+  contextText,
   ctaLabel,
   ctaVariant = 'default',
   onCtaClick,
@@ -40,49 +41,53 @@ export function SummaryCard({
   return (
     <div 
       className={cn(
-        'glass-card rounded-2xl p-6 transition-all duration-300 hover:shadow-elevated group',
+        'glass-card rounded-2xl p-6 transition-all duration-300 hover:shadow-elevated group flex flex-col',
         className
       )}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
-        <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center', iconBgClass)}>
+        <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0', iconBgClass)}>
           {icon}
         </div>
-        <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+        <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform flex-shrink-0" />
       </div>
 
       {/* Title */}
-      <h3 className="font-semibold text-foreground mb-4">{title}</h3>
+      <h3 className="font-semibold text-foreground mb-4 break-words">{title}</h3>
 
-      {/* Content */}
-      <div className="space-y-3 mb-5">
+      {/* Content - auto-expand */}
+      <div className="space-y-3 mb-5 flex-1">
         {primaryLabel && primaryValue && (
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">{primaryLabel}</span>
-            <span className="font-semibold text-foreground">{primaryValue}</span>
+          <div className="flex items-start justify-between gap-2">
+            <span className="text-sm text-muted-foreground flex-shrink-0">{primaryLabel}</span>
+            <span className="font-semibold text-foreground text-right break-words">{primaryValue}</span>
           </div>
         )}
 
         {secondaryLabel && secondaryValue && (
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">{secondaryLabel}</span>
-            <span className="text-sm text-foreground">{secondaryValue}</span>
+          <div className="flex items-start justify-between gap-2">
+            <span className="text-sm text-muted-foreground flex-shrink-0">{secondaryLabel}</span>
+            <span className="text-sm text-foreground text-right break-words">{secondaryValue}</span>
           </div>
         )}
 
         {highlight && (
           <div className="p-3 rounded-xl bg-muted/50">
             <p className="text-xs text-muted-foreground mb-0.5">{highlight.label}</p>
-            <p className="font-medium text-foreground text-sm line-clamp-1">{highlight.value}</p>
+            <p className="font-medium text-foreground text-sm break-words">{highlight.value}</p>
           </div>
+        )}
+
+        {contextText && (
+          <p className="text-xs text-muted-foreground italic pt-1">{contextText}</p>
         )}
       </div>
 
       {/* CTA */}
       <Button 
         variant={ctaVariant} 
-        className="w-full" 
+        className="w-full flex-shrink-0" 
         onClick={onCtaClick}
       >
         {ctaLabel}
