@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { FileUpload } from '@/components/shared';
 import { CategorySidebar, AchievementTimelineView, type CategoryFilter } from '@/components/prestasi';
 import {
-  ChevronLeft, Plus, X, Check, Paperclip
+  ChevronLeft, Plus, X, Check, Paperclip, GraduationCap
 } from 'lucide-react';
 import {
   Achievement,
@@ -23,7 +23,15 @@ import {
   getAchievementsByMasterId,
   getAchievementStats,
   deleteAchievement,
+  updateAchievement,
 } from '@/services/achievement.service';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export default function PrestasiPage() {
   const navigate = useNavigate();
@@ -34,6 +42,7 @@ export default function PrestasiPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [editingAchievement, setEditingAchievement] = useState<Achievement | null>(null);
   const [stats, setStats] = useState<Record<AchievementCategory, number>>({
     kegiatan: 0, publikasi: 0, haki: 0, magang: 0, portofolio: 0, wirausaha: 0, pengembangan: 0
   });
@@ -56,80 +65,131 @@ export default function PrestasiPage() {
     setExpandedId(prev => prev === achievement.id ? null : achievement.id);
   };
 
+  const handleEdit = (achievement: Achievement) => {
+    setEditingAchievement(achievement);
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = (achievement: Achievement) => {
+    if (window.confirm('Apakah Anda yakin ingin menghapus prestasi ini?')) {
+      deleteAchievement(achievement.id);
+      refreshData();
+      setExpandedId(null);
+      toast({ title: 'Prestasi berhasil dihapus' });
+    }
+  };
+
   if (!selectedAlumni) return null;
 
   const filteredAchievements = activeCategory === 'all' 
     ? achievements 
-    : achievements.filter(a => a.category === activeCategory);
+    : achievements.filter(a => {
+        // Include portofolio in pengembangan category
+        if (activeCategory === 'pengembangan') {
+          return a.category === 'pengembangan' || a.category === 'portofolio';
+        }
+        return a.category === activeCategory;
+      });
   const totalAchievements = Object.values(stats).reduce((a, b) => a + b, 0);
 
   // Get category for form (default to kegiatan if 'all' is selected)
-  const formCategory: AchievementCategory = activeCategory === 'all' ? 'kegiatan' : activeCategory;
+  const formCategory: AchievementCategory = activeCategory === 'all' ? 'kegiatan' : 
+    activeCategory === 'pengembangan' ? 'pengembangan' : activeCategory;
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="pt-24 pb-20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="max-w-5xl mx-auto">
             {/* Header */}
-            <div className="flex items-center justify-between gap-4 mb-8 animate-fade-up">
-              <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
+            <div className="flex items-start sm:items-center justify-between gap-4 mb-8 animate-fade-up">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => navigate('/dashboard')}
+                  className="flex-shrink-0 -ml-2"
+                >
                   <ChevronLeft className="w-5 h-5" />
                 </Button>
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                    Prestasi Non-Akademik
-                  </h1>
-                  <p className="text-muted-foreground mt-1">
-                    Portofolio pencapaian Anda • {totalAchievements} prestasi tercatat
+                  <div className="flex items-center gap-3 mb-1">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <GraduationCap className="w-5 h-5 text-primary" />
+                    </div>
+                    <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+                      Prestasi Non-Akademik
+                    </h1>
+                  </div>
+                  <p className="text-sm text-muted-foreground ml-[52px]">
+                    Portofolio pencapaian akademik • {totalAchievements} prestasi tercatat
                   </p>
                 </div>
               </div>
-              <Button onClick={() => setIsFormOpen(true)} className="hidden sm:flex">
+              <Button onClick={() => { setEditingAchievement(null); setIsFormOpen(true); }} className="hidden sm:flex shadow-soft">
                 <Plus className="w-4 h-4 mr-2" />
                 Tambah Prestasi
               </Button>
             </div>
 
             {/* Main Content with Sidebar */}
-            <div className="flex gap-6 animate-fade-up" style={{ animationDelay: '0.1s' }}>
+            <div className="flex gap-8 animate-fade-up" style={{ animationDelay: '0.1s' }}>
               {/* Category Sidebar */}
               <CategorySidebar
                 activeCategory={activeCategory}
                 stats={stats}
-                onCategoryChange={setActiveCategory}
+                onCategoryChange={(cat) => {
+                  setActiveCategory(cat);
+                  setExpandedId(null);
+                }}
               />
 
               {/* Main Content Area */}
               <div className="flex-1 min-w-0">
-                <div className="glass-card rounded-2xl p-6">
-                  {/* Category Header */}
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-semibold text-foreground">
-                      {activeCategory === 'all' ? 'Semua Prestasi' : ACHIEVEMENT_CATEGORIES[activeCategory].label}
-                    </h2>
-                    <Button onClick={() => setIsFormOpen(true)} size="sm" className="sm:hidden">
+                {/* Category Header Card */}
+                <div className="bg-card border border-border/50 rounded-2xl p-5 sm:p-6 shadow-soft mb-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-foreground">
+                        {activeCategory === 'all' ? 'Semua Prestasi' : 
+                          activeCategory === 'kegiatan' ? 'Partisipasi & Prestasi' :
+                          activeCategory === 'publikasi' ? 'Karya Ilmiah & Publikasi' :
+                          activeCategory === 'haki' ? 'Kekayaan Intelektual' :
+                          activeCategory === 'magang' ? 'Pengalaman Akademik Terapan' :
+                          activeCategory === 'wirausaha' ? 'Pengalaman Wirausaha' :
+                          'Pengembangan Diri'}
+                      </h2>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {filteredAchievements.length} pencapaian
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={() => { setEditingAchievement(null); setIsFormOpen(true); }} 
+                      size="sm" 
+                      className="sm:hidden"
+                    >
                       <Plus className="w-4 h-4" />
                     </Button>
                   </div>
-
-                  {/* Timeline View */}
-                  <AchievementTimelineView
-                    achievements={filteredAchievements}
-                    category={activeCategory}
-                    expandedId={expandedId}
-                    onItemClick={handleItemClick}
-                    onAddNew={() => setIsFormOpen(true)}
-                  />
                 </div>
+
+                {/* Timeline View */}
+                <AchievementTimelineView
+                  achievements={filteredAchievements}
+                  category={activeCategory}
+                  expandedId={expandedId}
+                  onItemClick={handleItemClick}
+                  onAddNew={() => { setEditingAchievement(null); setIsFormOpen(true); }}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
               </div>
             </div>
 
             {/* Mobile FAB */}
             <Button
-              onClick={() => setIsFormOpen(true)}
+              onClick={() => { setEditingAchievement(null); setIsFormOpen(true); }}
               className="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-elevated sm:hidden"
               size="icon"
             >
@@ -139,13 +199,18 @@ export default function PrestasiPage() {
             {/* Form Modal */}
             {isFormOpen && (
               <AchievementForm
-                category={formCategory}
+                category={editingAchievement?.category || formCategory}
                 masterId={selectedAlumni.id}
-                onClose={() => setIsFormOpen(false)}
+                editData={editingAchievement}
+                onClose={() => {
+                  setIsFormOpen(false);
+                  setEditingAchievement(null);
+                }}
                 onSuccess={() => {
                   setIsFormOpen(false);
+                  setEditingAchievement(null);
                   refreshData();
-                  toast({ title: 'Prestasi berhasil ditambahkan!' });
+                  toast({ title: editingAchievement ? 'Prestasi berhasil diperbarui!' : 'Prestasi berhasil ditambahkan!' });
                 }}
               />
             )}
@@ -157,23 +222,31 @@ export default function PrestasiPage() {
   );
 }
 
-// Achievement Form Component
+// Achievement Form Component with Edit Support
 function AchievementForm({
   category,
   masterId,
+  editData,
   onClose,
   onSuccess,
 }: {
   category: AchievementCategory;
   masterId: string;
+  editData?: Achievement | null;
   onClose: () => void;
   onSuccess: () => void;
 }) {
-  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [selectedCategory, setSelectedCategory] = useState<AchievementCategory>(editData?.category || category);
+  const [formData, setFormData] = useState<Record<string, any>>(editData || {});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createAchievement({ ...formData, masterId, category });
+    
+    if (editData) {
+      updateAchievement(editData.id, { ...formData, category: selectedCategory });
+    } else {
+      createAchievement({ ...formData, masterId, category: selectedCategory });
+    }
     onSuccess();
   };
 
@@ -181,31 +254,61 @@ function AchievementForm({
     setFormData(prev => ({ ...prev, [key]: value }));
   };
 
+  const categoryLabels: Record<AchievementCategory, string> = {
+    kegiatan: 'Partisipasi & Prestasi',
+    publikasi: 'Karya Ilmiah & Publikasi',
+    haki: 'Kekayaan Intelektual',
+    magang: 'Pengalaman Akademik Terapan',
+    portofolio: 'Portofolio',
+    wirausaha: 'Pengalaman Wirausaha',
+    pengembangan: 'Pengembangan Diri',
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-auto glass-card rounded-2xl p-6 md:p-8 animate-scale-in">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-foreground">
-            Tambah {ACHIEVEMENT_CATEGORIES[category].label}
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-auto bg-card border border-border rounded-2xl shadow-elevated animate-scale-in">
+        {/* Header */}
+        <div className="sticky top-0 z-10 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-foreground">
+            {editData ? 'Edit Prestasi' : 'Tambah Prestasi'}
           </h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="w-5 h-5" />
           </Button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {category === 'kegiatan' && <KegiatanFields formData={formData} updateField={updateField} />}
-          {category === 'publikasi' && <PublikasiFields formData={formData} updateField={updateField} />}
-          {category === 'haki' && <HakiFields formData={formData} updateField={updateField} />}
-          {category === 'magang' && <MagangFields formData={formData} updateField={updateField} />}
-          {category === 'portofolio' && <PortofolioFields formData={formData} updateField={updateField} />}
-          {category === 'wirausaha' && <WirausahaFields formData={formData} updateField={updateField} />}
-          {category === 'pengembangan' && <PengembanganFields formData={formData} updateField={updateField} />}
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {/* Category Selector (only for new achievements) */}
+          {!editData && (
+            <div className="space-y-2">
+              <Label>Kategori Prestasi</Label>
+              <Select value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as AchievementCategory)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Pilih kategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(categoryLabels).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
+          {/* Dynamic Form Fields */}
+          {selectedCategory === 'kegiatan' && <KegiatanFields formData={formData} updateField={updateField} />}
+          {selectedCategory === 'publikasi' && <PublikasiFields formData={formData} updateField={updateField} />}
+          {selectedCategory === 'haki' && <HakiFields formData={formData} updateField={updateField} />}
+          {selectedCategory === 'magang' && <MagangFields formData={formData} updateField={updateField} />}
+          {selectedCategory === 'portofolio' && <PortofolioFields formData={formData} updateField={updateField} />}
+          {selectedCategory === 'wirausaha' && <WirausahaFields formData={formData} updateField={updateField} />}
+          {selectedCategory === 'pengembangan' && <PengembanganFields formData={formData} updateField={updateField} />}
+
+          {/* Attachments */}
           <div className="pt-4 border-t border-border">
             <Label className="flex items-center gap-2 mb-3">
               <Paperclip className="w-4 h-4" />
-              Lampiran
+              Lampiran Dokumentasi
             </Label>
             <FileUpload
               value={formData.attachments || []}
@@ -213,11 +316,20 @@ function AchievementForm({
               maxFiles={5}
               maxSizeInMB={5}
             />
+            <p className="text-xs text-muted-foreground mt-2">
+              Unggah sertifikat, foto dokumentasi, atau dokumen pendukung lainnya (maks. 5 file)
+            </p>
           </div>
 
+          {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">Batal</Button>
-            <Button type="submit" className="flex-1"><Check className="w-4 h-4 mr-2" />Simpan</Button>
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+              Batal
+            </Button>
+            <Button type="submit" className="flex-1">
+              <Check className="w-4 h-4 mr-2" />
+              {editData ? 'Simpan Perubahan' : 'Simpan'}
+            </Button>
           </div>
         </form>
       </div>
@@ -226,101 +338,483 @@ function AchievementForm({
 }
 
 // Form Field Components
-interface FieldProps { formData: Record<string, any>; updateField: (k: string, v: any) => void; }
+interface FieldProps { 
+  formData: Record<string, any>; 
+  updateField: (k: string, v: any) => void; 
+}
 
 function KegiatanFields({ formData, updateField }: FieldProps) {
   return (
-    <>
-      <div><Label>Nama Kegiatan *</Label><Input value={formData.namaKegiatan || ''} onChange={(e) => updateField('namaKegiatan', e.target.value)} required /></div>
-      <div><Label>Penyelenggara *</Label><Input value={formData.penyelenggara || ''} onChange={(e) => updateField('penyelenggara', e.target.value)} required /></div>
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Tingkat *</Label><select className="w-full mt-1.5 px-4 py-3 rounded-xl border border-border bg-background" value={formData.tingkat || ''} onChange={(e) => updateField('tingkat', e.target.value)} required><option value="">Pilih</option><option value="internal">Internal</option><option value="regional">Regional</option><option value="nasional">Nasional</option><option value="internasional">Internasional</option></select></div>
-        <div><Label>Tahun *</Label><Input type="number" value={formData.tahun || ''} onChange={(e) => updateField('tahun', parseInt(e.target.value))} required /></div>
+    <div className="space-y-4">
+      <div>
+        <Label>Nama Kegiatan / Lomba *</Label>
+        <Input 
+          value={formData.namaKegiatan || ''} 
+          onChange={(e) => updateField('namaKegiatan', e.target.value)} 
+          placeholder="Contoh: Lomba Karya Tulis Ilmiah"
+          required 
+        />
       </div>
-      <div><Label>Prestasi</Label><Input value={formData.prestasi || ''} onChange={(e) => updateField('prestasi', e.target.value)} placeholder="Juara 1, Finalis, dll" /></div>
-    </>
+      <div>
+        <Label>Penyelenggara *</Label>
+        <Input 
+          value={formData.penyelenggara || ''} 
+          onChange={(e) => updateField('penyelenggara', e.target.value)} 
+          placeholder="Contoh: Kemenristekdikti"
+          required 
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Tingkat *</Label>
+          <Select value={formData.tingkat || ''} onValueChange={(v) => updateField('tingkat', v)}>
+            <SelectTrigger><SelectValue placeholder="Pilih tingkat" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="internal">Internal</SelectItem>
+              <SelectItem value="regional">Regional</SelectItem>
+              <SelectItem value="nasional">Nasional</SelectItem>
+              <SelectItem value="internasional">Internasional</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Tahun *</Label>
+          <Input 
+            type="number" 
+            value={formData.tahun || ''} 
+            onChange={(e) => updateField('tahun', parseInt(e.target.value))} 
+            placeholder="2024"
+            required 
+          />
+        </div>
+      </div>
+      <div>
+        <Label>Peringkat / Hasil</Label>
+        <Input 
+          value={formData.prestasi || ''} 
+          onChange={(e) => updateField('prestasi', e.target.value)} 
+          placeholder="Contoh: Juara 1, Finalis, Best Paper"
+        />
+      </div>
+      <div>
+        <Label>Deskripsi</Label>
+        <Textarea 
+          value={formData.deskripsi || ''} 
+          onChange={(e) => updateField('deskripsi', e.target.value)} 
+          placeholder="Ceritakan pengalaman Anda..."
+          rows={3}
+        />
+      </div>
+    </div>
   );
 }
 
 function PublikasiFields({ formData, updateField }: FieldProps) {
   return (
-    <>
-      <div><Label>Judul *</Label><Input value={formData.judul || ''} onChange={(e) => updateField('judul', e.target.value)} required /></div>
-      <div><Label>Penulis *</Label><Input value={formData.penulis || ''} onChange={(e) => updateField('penulis', e.target.value)} required /></div>
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Jurnal/Penerbit</Label><Input value={formData.namaJurnal || ''} onChange={(e) => updateField('namaJurnal', e.target.value)} /></div>
-        <div><Label>Tahun *</Label><Input type="number" value={formData.tahun || ''} onChange={(e) => updateField('tahun', parseInt(e.target.value))} required /></div>
+    <div className="space-y-4">
+      <div>
+        <Label>Judul Karya *</Label>
+        <Input 
+          value={formData.judul || ''} 
+          onChange={(e) => updateField('judul', e.target.value)} 
+          placeholder="Judul lengkap publikasi"
+          required 
+        />
       </div>
-    </>
+      <div>
+        <Label>Jenis Publikasi *</Label>
+        <Select value={formData.jenisPublikasi || ''} onValueChange={(v) => updateField('jenisPublikasi', v)}>
+          <SelectTrigger><SelectValue placeholder="Pilih jenis" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="artikel_jurnal">Artikel Jurnal</SelectItem>
+            <SelectItem value="prosiding">Prosiding</SelectItem>
+            <SelectItem value="buku">Buku</SelectItem>
+            <SelectItem value="book_chapter">Book Chapter</SelectItem>
+            <SelectItem value="lainnya">Lainnya</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label>Penulis *</Label>
+        <Input 
+          value={formData.penulis || ''} 
+          onChange={(e) => updateField('penulis', e.target.value)} 
+          placeholder="Nama penulis (pisahkan dengan koma)"
+          required 
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Nama Jurnal / Konferensi</Label>
+          <Input 
+            value={formData.namaJurnal || ''} 
+            onChange={(e) => updateField('namaJurnal', e.target.value)} 
+            placeholder="Nama jurnal atau konferensi"
+          />
+        </div>
+        <div>
+          <Label>Tahun Terbit *</Label>
+          <Input 
+            type="number" 
+            value={formData.tahun || ''} 
+            onChange={(e) => updateField('tahun', parseInt(e.target.value))} 
+            placeholder="2024"
+            required 
+          />
+        </div>
+      </div>
+      <div>
+        <Label>Link Publikasi (URL)</Label>
+        <Input 
+          value={formData.url || ''} 
+          onChange={(e) => updateField('url', e.target.value)} 
+          placeholder="https://..."
+          type="url"
+        />
+      </div>
+    </div>
   );
 }
 
 function HakiFields({ formData, updateField }: FieldProps) {
   return (
-    <>
-      <div><Label>Judul *</Label><Input value={formData.judul || ''} onChange={(e) => updateField('judul', e.target.value)} required /></div>
-      <div><Label>Pemegang *</Label><Input value={formData.pemegang || ''} onChange={(e) => updateField('pemegang', e.target.value)} required /></div>
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Jenis *</Label><select className="w-full mt-1.5 px-4 py-3 rounded-xl border border-border bg-background" value={formData.jenisHaki || ''} onChange={(e) => updateField('jenisHaki', e.target.value)} required><option value="">Pilih</option><option value="hak_cipta">Hak Cipta</option><option value="paten">Paten</option><option value="merek">Merek</option></select></div>
-        <div><Label>Status *</Label><select className="w-full mt-1.5 px-4 py-3 rounded-xl border border-border bg-background" value={formData.status || ''} onChange={(e) => updateField('status', e.target.value)} required><option value="">Pilih</option><option value="pending">Pending</option><option value="terdaftar">Terdaftar</option><option value="granted">Granted</option></select></div>
+    <div className="space-y-4">
+      <div>
+        <Label>Judul KI *</Label>
+        <Input 
+          value={formData.judul || ''} 
+          onChange={(e) => updateField('judul', e.target.value)} 
+          placeholder="Judul kekayaan intelektual"
+          required 
+        />
       </div>
-      <div><Label>Tahun Pengajuan *</Label><Input type="number" value={formData.tahunPengajuan || ''} onChange={(e) => updateField('tahunPengajuan', parseInt(e.target.value))} required /></div>
-    </>
+      <div>
+        <Label>Pemegang *</Label>
+        <Input 
+          value={formData.pemegang || ''} 
+          onChange={(e) => updateField('pemegang', e.target.value)} 
+          placeholder="Nama pemegang hak"
+          required 
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Jenis KI *</Label>
+          <Select value={formData.jenisHaki || ''} onValueChange={(v) => updateField('jenisHaki', v)}>
+            <SelectTrigger><SelectValue placeholder="Pilih jenis" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="hak_cipta">Hak Cipta</SelectItem>
+              <SelectItem value="paten">Paten</SelectItem>
+              <SelectItem value="merek">Merek</SelectItem>
+              <SelectItem value="desain_industri">Desain Industri</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Status *</Label>
+          <Select value={formData.status || ''} onValueChange={(v) => updateField('status', v)}>
+            <SelectTrigger><SelectValue placeholder="Pilih status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="terdaftar">Terdaftar</SelectItem>
+              <SelectItem value="granted">Granted</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Nomor Pendaftaran</Label>
+          <Input 
+            value={formData.nomorPendaftaran || ''} 
+            onChange={(e) => updateField('nomorPendaftaran', e.target.value)} 
+            placeholder="Nomor pendaftaran"
+          />
+        </div>
+        <div>
+          <Label>Tahun Pengajuan *</Label>
+          <Input 
+            type="number" 
+            value={formData.tahunPengajuan || ''} 
+            onChange={(e) => updateField('tahunPengajuan', parseInt(e.target.value))} 
+            placeholder="2024"
+            required 
+          />
+        </div>
+      </div>
+    </div>
   );
 }
 
 function MagangFields({ formData, updateField }: FieldProps) {
   return (
-    <>
-      <div><Label>Perusahaan *</Label><Input value={formData.namaPerusahaan || ''} onChange={(e) => updateField('namaPerusahaan', e.target.value)} required /></div>
-      <div><Label>Posisi *</Label><Input value={formData.posisi || ''} onChange={(e) => updateField('posisi', e.target.value)} required /></div>
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Lokasi *</Label><Input value={formData.lokasi || ''} onChange={(e) => updateField('lokasi', e.target.value)} required /></div>
-        <div><Label>Industri *</Label><Input value={formData.industri || ''} onChange={(e) => updateField('industri', e.target.value)} required /></div>
+    <div className="space-y-4">
+      <div>
+        <Label>Nama Perusahaan / Institusi *</Label>
+        <Input 
+          value={formData.namaPerusahaan || ''} 
+          onChange={(e) => updateField('namaPerusahaan', e.target.value)} 
+          placeholder="Nama perusahaan atau institusi"
+          required 
+        />
       </div>
-      <div><Label>Tanggal Mulai *</Label><Input type="date" value={formData.tanggalMulai || ''} onChange={(e) => updateField('tanggalMulai', e.target.value)} required /></div>
-    </>
+      <div>
+        <Label>Posisi / Peran *</Label>
+        <Input 
+          value={formData.posisi || ''} 
+          onChange={(e) => updateField('posisi', e.target.value)} 
+          placeholder="Contoh: Software Developer Intern"
+          required 
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Lokasi *</Label>
+          <Input 
+            value={formData.lokasi || ''} 
+            onChange={(e) => updateField('lokasi', e.target.value)} 
+            placeholder="Kota, Negara"
+            required 
+          />
+        </div>
+        <div>
+          <Label>Industri *</Label>
+          <Input 
+            value={formData.industri || ''} 
+            onChange={(e) => updateField('industri', e.target.value)} 
+            placeholder="Contoh: Teknologi"
+            required 
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Tanggal Mulai *</Label>
+          <Input 
+            type="date" 
+            value={formData.tanggalMulai || ''} 
+            onChange={(e) => updateField('tanggalMulai', e.target.value)} 
+            required 
+          />
+        </div>
+        <div>
+          <Label>Tanggal Selesai</Label>
+          <Input 
+            type="date" 
+            value={formData.tanggalSelesai || ''} 
+            onChange={(e) => updateField('tanggalSelesai', e.target.value)}
+            disabled={formData.sedangBerjalan}
+          />
+        </div>
+      </div>
+      <div>
+        <Label>Deskripsi Tugas</Label>
+        <Textarea 
+          value={formData.deskripsiTugas || ''} 
+          onChange={(e) => updateField('deskripsiTugas', e.target.value)} 
+          placeholder="Jelaskan tugas dan tanggung jawab Anda..."
+          rows={3}
+        />
+      </div>
+    </div>
   );
 }
 
 function PortofolioFields({ formData, updateField }: FieldProps) {
   return (
-    <>
-      <div><Label>Judul Proyek *</Label><Input value={formData.judulProyek || ''} onChange={(e) => updateField('judulProyek', e.target.value)} required /></div>
-      <div><Label>Mata Kuliah *</Label><select className="w-full mt-1.5 px-4 py-3 rounded-xl border border-border bg-background" value={formData.mataKuliah || ''} onChange={(e) => updateField('mataKuliah', e.target.value)} required><option value="">Pilih</option><option value="kwu">KWU</option><option value="ecommerce">E-Commerce</option><option value="msdm_ocai">MSDM/OCAI</option></select></div>
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Tahun *</Label><Input type="number" value={formData.tahun || ''} onChange={(e) => updateField('tahun', parseInt(e.target.value))} required /></div>
-        <div><Label>Semester *</Label><select className="w-full mt-1.5 px-4 py-3 rounded-xl border border-border bg-background" value={formData.semester || ''} onChange={(e) => updateField('semester', e.target.value)} required><option value="">Pilih</option><option value="ganjil">Ganjil</option><option value="genap">Genap</option></select></div>
+    <div className="space-y-4">
+      <div>
+        <Label>Judul Proyek *</Label>
+        <Input 
+          value={formData.judulProyek || ''} 
+          onChange={(e) => updateField('judulProyek', e.target.value)} 
+          placeholder="Nama proyek"
+          required 
+        />
       </div>
-      <div><Label>Deskripsi *</Label><Textarea value={formData.deskripsiProyek || ''} onChange={(e) => updateField('deskripsiProyek', e.target.value)} required rows={3} /></div>
-    </>
+      <div>
+        <Label>Mata Kuliah *</Label>
+        <Select value={formData.mataKuliah || ''} onValueChange={(v) => updateField('mataKuliah', v)}>
+          <SelectTrigger><SelectValue placeholder="Pilih mata kuliah" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="kwu">KWU</SelectItem>
+            <SelectItem value="ecommerce">E-Commerce</SelectItem>
+            <SelectItem value="msdm_ocai">MSDM/OCAI</SelectItem>
+            <SelectItem value="lainnya">Lainnya</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Tahun *</Label>
+          <Input 
+            type="number" 
+            value={formData.tahun || ''} 
+            onChange={(e) => updateField('tahun', parseInt(e.target.value))} 
+            placeholder="2024"
+            required 
+          />
+        </div>
+        <div>
+          <Label>Semester *</Label>
+          <Select value={formData.semester || ''} onValueChange={(v) => updateField('semester', v)}>
+            <SelectTrigger><SelectValue placeholder="Pilih semester" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ganjil">Ganjil</SelectItem>
+              <SelectItem value="genap">Genap</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div>
+        <Label>Deskripsi Proyek *</Label>
+        <Textarea 
+          value={formData.deskripsiProyek || ''} 
+          onChange={(e) => updateField('deskripsiProyek', e.target.value)} 
+          placeholder="Jelaskan proyek Anda..."
+          rows={3}
+          required
+        />
+      </div>
+    </div>
   );
 }
 
 function WirausahaFields({ formData, updateField }: FieldProps) {
   return (
-    <>
-      <div><Label>Nama Usaha *</Label><Input value={formData.namaUsaha || ''} onChange={(e) => updateField('namaUsaha', e.target.value)} required /></div>
-      <div><Label>Jenis Usaha *</Label><Input value={formData.jenisUsaha || ''} onChange={(e) => updateField('jenisUsaha', e.target.value)} required /></div>
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Lokasi *</Label><Input value={formData.lokasi || ''} onChange={(e) => updateField('lokasi', e.target.value)} required /></div>
-        <div><Label>Tahun Mulai *</Label><Input type="number" value={formData.tahunMulai || ''} onChange={(e) => updateField('tahunMulai', parseInt(e.target.value))} required /></div>
+    <div className="space-y-4">
+      <div>
+        <Label>Nama Usaha *</Label>
+        <Input 
+          value={formData.namaUsaha || ''} 
+          onChange={(e) => updateField('namaUsaha', e.target.value)} 
+          placeholder="Nama usaha atau bisnis"
+          required 
+        />
       </div>
-      <div><Label>Deskripsi *</Label><Textarea value={formData.deskripsiUsaha || ''} onChange={(e) => updateField('deskripsiUsaha', e.target.value)} required rows={3} /></div>
-    </>
+      <div>
+        <Label>Bidang Usaha *</Label>
+        <Input 
+          value={formData.jenisUsaha || ''} 
+          onChange={(e) => updateField('jenisUsaha', e.target.value)} 
+          placeholder="Contoh: F&B, Teknologi, Fashion"
+          required 
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Lokasi *</Label>
+          <Input 
+            value={formData.lokasi || ''} 
+            onChange={(e) => updateField('lokasi', e.target.value)} 
+            placeholder="Kota operasional"
+            required 
+          />
+        </div>
+        <div>
+          <Label>Tahun Mulai *</Label>
+          <Input 
+            type="number" 
+            value={formData.tahunMulai || ''} 
+            onChange={(e) => updateField('tahunMulai', parseInt(e.target.value))} 
+            placeholder="2024"
+            required 
+          />
+        </div>
+      </div>
+      <div>
+        <Label>Deskripsi Usaha *</Label>
+        <Textarea 
+          value={formData.deskripsiUsaha || ''} 
+          onChange={(e) => updateField('deskripsiUsaha', e.target.value)} 
+          placeholder="Jelaskan usaha Anda..."
+          rows={3}
+          required
+        />
+      </div>
+    </div>
   );
 }
 
 function PengembanganFields({ formData, updateField }: FieldProps) {
   return (
-    <>
-      <div><Label>Nama Program *</Label><Input value={formData.namaProgram || ''} onChange={(e) => updateField('namaProgram', e.target.value)} required /></div>
-      <div><Label>Penyelenggara *</Label><Input value={formData.penyelenggara || ''} onChange={(e) => updateField('penyelenggara', e.target.value)} required /></div>
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Lokasi</Label><Input value={formData.lokasi || ''} onChange={(e) => updateField('lokasi', e.target.value)} /></div>
-        <div><Label>Negara</Label><Input value={formData.negara || ''} onChange={(e) => updateField('negara', e.target.value)} /></div>
+    <div className="space-y-4">
+      <div>
+        <Label>Nama Program / Kegiatan *</Label>
+        <Input 
+          value={formData.namaProgram || ''} 
+          onChange={(e) => updateField('namaProgram', e.target.value)} 
+          placeholder="Nama program atau kegiatan"
+          required 
+        />
       </div>
-      <div><Label>Tanggal Mulai *</Label><Input type="date" value={formData.tanggalMulai || ''} onChange={(e) => updateField('tanggalMulai', e.target.value)} required /></div>
-    </>
+      <div>
+        <Label>Jenis Aktivitas *</Label>
+        <Select value={formData.jenisProgram || ''} onValueChange={(v) => updateField('jenisProgram', v)}>
+          <SelectTrigger><SelectValue placeholder="Pilih jenis" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="pertukaran_mahasiswa">Pertukaran Mahasiswa</SelectItem>
+            <SelectItem value="beasiswa">Beasiswa</SelectItem>
+            <SelectItem value="volunteer">Volunteer</SelectItem>
+            <SelectItem value="organisasi">Organisasi</SelectItem>
+            <SelectItem value="lainnya">Lainnya</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label>Penyelenggara *</Label>
+        <Input 
+          value={formData.penyelenggara || ''} 
+          onChange={(e) => updateField('penyelenggara', e.target.value)} 
+          placeholder="Nama institusi penyelenggara"
+          required 
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Lokasi</Label>
+          <Input 
+            value={formData.lokasi || ''} 
+            onChange={(e) => updateField('lokasi', e.target.value)} 
+            placeholder="Kota"
+          />
+        </div>
+        <div>
+          <Label>Negara</Label>
+          <Input 
+            value={formData.negara || ''} 
+            onChange={(e) => updateField('negara', e.target.value)} 
+            placeholder="Negara"
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Tanggal Mulai *</Label>
+          <Input 
+            type="date" 
+            value={formData.tanggalMulai || ''} 
+            onChange={(e) => updateField('tanggalMulai', e.target.value)} 
+            required 
+          />
+        </div>
+        <div>
+          <Label>Tanggal Selesai</Label>
+          <Input 
+            type="date" 
+            value={formData.tanggalSelesai || ''} 
+            onChange={(e) => updateField('tanggalSelesai', e.target.value)}
+          />
+        </div>
+      </div>
+      <div>
+        <Label>Output / Prestasi</Label>
+        <Input 
+          value={formData.prestasi || ''} 
+          onChange={(e) => updateField('prestasi', e.target.value)} 
+          placeholder="Contoh: Sertifikat, Best Participant"
+        />
+      </div>
+    </div>
   );
 }
