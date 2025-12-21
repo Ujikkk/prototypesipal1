@@ -6,7 +6,7 @@ import { useAlumni } from '@/contexts/AlumniContext';
 import { 
   Briefcase, Rocket, GraduationCap, Search, ChevronLeft, 
   MapPin, Calendar, Building2, User, Plus, Pencil, Trash2, Clock,
-  AlertTriangle, Loader2, Filter, ArrowUpDown, X
+  AlertTriangle, Loader2, Filter, ArrowUpDown, X, CheckCircle2
 } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
@@ -146,6 +146,7 @@ interface EditFormData {
   location: string;
   industry: string;
   year: number;
+  isActive: boolean;
 }
 
 export default function CareerHistoryPage() {
@@ -179,6 +180,7 @@ export default function CareerHistoryPage() {
     location: '',
     industry: '',
     year: new Date().getFullYear(),
+    isActive: true,
   });
 
   useEffect(() => {
@@ -202,7 +204,8 @@ export default function CareerHistoryPage() {
       editFormData.subtitle !== originalFormData.subtitle ||
       editFormData.location !== originalFormData.location ||
       editFormData.industry !== originalFormData.industry ||
-      editFormData.year !== originalFormData.year
+      editFormData.year !== originalFormData.year ||
+      editFormData.isActive !== originalFormData.isActive
     );
   }, [editFormData, originalFormData]);
 
@@ -336,6 +339,7 @@ export default function CareerHistoryPage() {
       location: item.location || '',
       industry: item.industry || '',
       year: item.year,
+      isActive: item.isActive ?? true,
     };
     setEditFormData(formData);
     setOriginalFormData(formData); // Store original for comparison
@@ -400,6 +404,7 @@ export default function CareerHistoryPage() {
       const updates: Record<string, any> = {
         status: editFormData.status,
         tahunPengisian: editFormData.year,
+        isActive: editFormData.isActive,
       };
 
       if (editFormData.status === 'bekerja') {
@@ -430,10 +435,10 @@ export default function CareerHistoryPage() {
     closeEditDialog();
   };
 
-  const handleFormChange = (field: keyof EditFormData, value: string | number) => {
+  const handleFormChange = (field: keyof EditFormData, value: string | number | boolean) => {
     setEditFormData(prev => ({ ...prev, [field]: value }));
     // Clear error for this field when user starts typing
-    if (formErrors[field]) {
+    if (formErrors[field as keyof EditFormErrors]) {
       setFormErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
@@ -959,6 +964,38 @@ export default function CareerHistoryPage() {
               {formErrors.year && (
                 <p className="text-xs text-destructive">{formErrors.year}</p>
               )}
+            </div>
+
+            <div 
+              className={cn(
+                "flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-colors",
+                editFormData.isActive 
+                  ? "bg-success/10 border-success/30" 
+                  : "bg-muted/50 border-border"
+              )}
+              onClick={() => handleFormChange('isActive', !editFormData.isActive)}
+            >
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className={cn(
+                  "w-5 h-5 transition-colors",
+                  editFormData.isActive ? "text-success" : "text-muted-foreground"
+                )} />
+                <div>
+                  <p className="font-medium text-foreground">Status Aktif</p>
+                  <p className="text-sm text-muted-foreground">
+                    {editFormData.isActive ? "Masih aktif di posisi ini" : "Sudah tidak aktif"}
+                  </p>
+                </div>
+              </div>
+              <div className={cn(
+                "w-11 h-6 rounded-full transition-colors relative",
+                editFormData.isActive ? "bg-success" : "bg-muted-foreground/30"
+              )}>
+                <div className={cn(
+                  "absolute top-1 w-4 h-4 rounded-full bg-background transition-all",
+                  editFormData.isActive ? "left-6" : "left-1"
+                )} />
+              </div>
             </div>
           </div>
 
