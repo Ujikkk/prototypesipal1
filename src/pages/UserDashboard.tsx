@@ -172,9 +172,9 @@ export default function UserDashboard() {
                 <p className="text-sm text-muted-foreground mb-4">
                   Tambahkan prestasi, publikasi, HAKI, dan pengalaman Anda.
                 </p>
-                <Button variant="secondary" className="w-full" disabled>
+                <Button variant="secondary" className="w-full" onClick={() => navigate('/prestasi')}>
                   <Award className="w-4 h-4 mr-2" />
-                  Segera Hadir
+                  Kelola Prestasi
                 </Button>
               </div>
             </div>
