@@ -6,7 +6,7 @@ import { useAlumni } from '@/contexts/AlumniContext';
 import { 
   Briefcase, Rocket, GraduationCap, Search, ChevronLeft, 
   MapPin, Calendar, Building2, User, Plus, Pencil, Trash2, Clock,
-  AlertTriangle
+  AlertTriangle, Loader2, Filter, ArrowUpDown, X
 } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
@@ -41,6 +41,25 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
+import { Badge } from '@/components/ui/badge';
+
+// Filter and Sort Types
+type StatusFilter = 'all' | 'bekerja' | 'wirausaha' | 'studi' | 'mencari';
+type SortOption = 'year-desc' | 'year-asc' | 'status';
+
+const STATUS_FILTER_OPTIONS: { value: StatusFilter; label: string }[] = [
+  { value: 'all', label: 'Semua Status' },
+  { value: 'bekerja', label: 'Bekerja' },
+  { value: 'wirausaha', label: 'Wirausaha' },
+  { value: 'studi', label: 'Studi Lanjut' },
+  { value: 'mencari', label: 'Mencari Kerja' },
+];
+
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: 'year-desc', label: 'Tahun (Terbaru)' },
+  { value: 'year-asc', label: 'Tahun (Terlama)' },
+  { value: 'status', label: 'Status' },
+];
 
 // Validation schema for edit form
 const editFormSchema = z.object({
@@ -135,6 +154,15 @@ export default function CareerHistoryPage() {
   const { toast } = useToast();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   
+  // Loading states
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Filter and Sort states
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [sortOption, setSortOption] = useState<SortOption>('year-desc');
+  const [yearFilter, setYearFilter] = useState<string>('all');
+  
   // Dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -225,6 +253,51 @@ export default function CareerHistoryPage() {
     };
   });
 
+  // Get unique years for filter
+  const availableYears = useMemo(() => {
+    const years = [...new Set(careerItems.map(item => item.year))].sort((a, b) => b - a);
+    return years;
+  }, [careerItems]);
+
+  // Filter and sort career items
+  const filteredAndSortedItems = useMemo(() => {
+    let items = [...careerItems];
+    
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      items = items.filter(item => item.status === statusFilter);
+    }
+    
+    // Apply year filter
+    if (yearFilter !== 'all') {
+      items = items.filter(item => item.year === parseInt(yearFilter));
+    }
+    
+    // Apply sorting
+    items.sort((a, b) => {
+      switch (sortOption) {
+        case 'year-desc':
+          return b.year - a.year;
+        case 'year-asc':
+          return a.year - b.year;
+        case 'status':
+          return a.status.localeCompare(b.status);
+        default:
+          return 0;
+      }
+    });
+    
+    return items;
+  }, [careerItems, statusFilter, yearFilter, sortOption]);
+
+  // Check if any filter is active
+  const hasActiveFilters = statusFilter !== 'all' || yearFilter !== 'all';
+
+  const clearFilters = () => {
+    setStatusFilter('all');
+    setYearFilter('all');
+  };
+
   const handleToggle = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
   };
@@ -235,14 +308,18 @@ export default function CareerHistoryPage() {
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (selectedItemId) {
+      setIsDeleting(true);
+      // Simulate async operation
+      await new Promise(resolve => setTimeout(resolve, 500));
       deleteAlumniData(selectedItemId);
       toast({
         title: "Riwayat karir dihapus",
         description: "Data riwayat karir berhasil dihapus dari sistem.",
       });
       setExpandedId(null);
+      setIsDeleting(false);
     }
     setDeleteDialogOpen(false);
     setSelectedItemId(null);
@@ -304,7 +381,7 @@ export default function CareerHistoryPage() {
     return true;
   };
 
-  const handleEditSave = () => {
+  const handleEditSave = async () => {
     if (!validateForm()) {
       toast({
         title: "Validasi gagal",
@@ -315,6 +392,10 @@ export default function CareerHistoryPage() {
     }
 
     if (selectedItemId && editFormData) {
+      setIsSaving(true);
+      // Simulate async operation
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       // Map form data back to alumni data structure based on status
       const updates: Record<string, any> = {
         status: editFormData.status,
@@ -344,6 +425,7 @@ export default function CareerHistoryPage() {
         title: "Riwayat karir diperbarui",
         description: "Perubahan akan langsung terlihat di Dashboard.",
       });
+      setIsSaving(false);
     }
     closeEditDialog();
   };
@@ -466,13 +548,96 @@ export default function CareerHistoryPage() {
 
               {/* Right Content - Career Timeline */}
               <div className="lg:col-span-8 xl:col-span-9 animate-fade-up" style={{ animationDelay: '0.1s' }}>
-                {careerItems.length > 0 ? (
+                {/* Filter & Sort Controls */}
+                <div className="glass-card rounded-xl p-4 mb-6">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    {/* Status Filter */}
+                    <div className="flex-1">
+                      <Select value={statusFilter} onValueChange={(v: StatusFilter) => setStatusFilter(v)}>
+                        <SelectTrigger className="w-full">
+                          <div className="flex items-center gap-2">
+                            <Filter className="w-4 h-4 text-muted-foreground" />
+                            <SelectValue placeholder="Filter Status" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {STATUS_FILTER_OPTIONS.map(opt => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Year Filter */}
+                    <div className="flex-1">
+                      <Select value={yearFilter} onValueChange={setYearFilter}>
+                        <SelectTrigger className="w-full">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-muted-foreground" />
+                            <SelectValue placeholder="Filter Tahun" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Semua Tahun</SelectItem>
+                          {availableYears.map(year => (
+                            <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Sort */}
+                    <div className="flex-1">
+                      <Select value={sortOption} onValueChange={(v: SortOption) => setSortOption(v)}>
+                        <SelectTrigger className="w-full">
+                          <div className="flex items-center gap-2">
+                            <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
+                            <SelectValue placeholder="Urutkan" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SORT_OPTIONS.map(opt => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Active Filters Display */}
+                  {hasActiveFilters && (
+                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+                      <span className="text-xs text-muted-foreground">Filter aktif:</span>
+                      {statusFilter !== 'all' && (
+                        <Badge variant="secondary" className="text-xs">
+                          {STATUS_FILTER_OPTIONS.find(o => o.value === statusFilter)?.label}
+                        </Badge>
+                      )}
+                      {yearFilter !== 'all' && (
+                        <Badge variant="secondary" className="text-xs">
+                          Tahun {yearFilter}
+                        </Badge>
+                      )}
+                      <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={clearFilters}>
+                        <X className="w-3 h-3 mr-1" />
+                        Hapus Filter
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Results count */}
+                  <p className="text-xs text-muted-foreground mt-3">
+                    Menampilkan {filteredAndSortedItems.length} dari {careerItems.length} riwayat karir
+                  </p>
+                </div>
+
+                {filteredAndSortedItems.length > 0 ? (
                   <div className="relative">
                     {/* Timeline line */}
                     <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-border hidden sm:block" />
 
                     <div className="space-y-4">
-                      {careerItems.map((item) => {
+                      {filteredAndSortedItems.map((item) => {
                         const config = STATUS_CONFIG[item.status];
                         const Icon = config.icon;
                         const isExpanded = expandedId === item.id;
@@ -599,8 +764,25 @@ export default function CareerHistoryPage() {
                       })}
                     </div>
                   </div>
+                ) : careerItems.length > 0 ? (
+                  /* No results after filtering */
+                  <div className="glass-card rounded-2xl p-10 text-center">
+                    <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-6">
+                      <Search className="w-10 h-10 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-foreground mb-2">
+                      Tidak Ada Hasil
+                    </h3>
+                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                      Tidak ada riwayat karir yang sesuai dengan filter yang dipilih.
+                    </p>
+                    <Button variant="outline" onClick={clearFilters}>
+                      <X className="w-4 h-4 mr-2" />
+                      Hapus Filter
+                    </Button>
+                  </div>
                 ) : (
-                  /* Empty State */
+                  /* Empty State - No data at all */
                   <div className="glass-card rounded-2xl p-10 text-center">
                     <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-6">
                       <Clock className="w-10 h-10 text-muted-foreground" />
@@ -625,7 +807,7 @@ export default function CareerHistoryPage() {
       <Footer />
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => !isDeleting && setDeleteDialogOpen(open)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
@@ -638,12 +820,20 @@ export default function CareerHistoryPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Batal</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
+              disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Hapus
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Menghapus...
+                </>
+              ) : (
+                'Hapus'
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -773,11 +963,18 @@ export default function CareerHistoryPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={handleCloseEditDialog}>
+            <Button variant="outline" onClick={handleCloseEditDialog} disabled={isSaving}>
               Batal
             </Button>
-            <Button onClick={handleEditSave}>
-              Simpan Perubahan
+            <Button onClick={handleEditSave} disabled={isSaving}>
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                'Simpan Perubahan'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
