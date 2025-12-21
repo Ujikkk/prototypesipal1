@@ -1,3 +1,3 @@
-export { CategorySidebar } from './CategorySidebar';
+export { CategorySidebar, type CategoryFilter } from './CategorySidebar';
 export { AchievementTimelineView } from './AchievementTimelineView';
 export { AchievementDetailModal } from './AchievementDetailModal';
