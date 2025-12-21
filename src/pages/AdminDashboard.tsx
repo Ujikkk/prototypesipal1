@@ -11,13 +11,11 @@ import { jurusanList, prodiList, tahunLulusList } from '@/lib/data';
 import { StatCard, StatusBadge, ChartCard, DataTable } from '@/components/shared';
 import { getGlobalAchievementStats, getStudentsWithAchievements } from '@/services/achievement.service';
 import { ACHIEVEMENT_CATEGORIES, AchievementCategory } from '@/types/achievement.types';
-import { getStudentStatusLabel, getStudentStatusColor } from '@/data/student-seed-data';
-import type { StudentStatus } from '@/types/student.types';
 import {
   Search, Download, Filter, Users, Briefcase, Rocket, BookOpen, TrendingUp,
   User, Mail, Phone, Building2, MapPin, Calendar, ExternalLink, Sparkles,
   BarChart3, PieChart as PieChartIcon, LineChart as LineChartIcon, X,
-  Trophy, Shield, FolderOpen, GraduationCap, Award, Eye
+  Trophy, Shield, FolderOpen, GraduationCap, Award
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -31,9 +29,7 @@ export default function AdminDashboard() {
   const [filterTahun, setFilterTahun] = useState<string>('all');
   const [filterJurusan, setFilterJurusan] = useState<string>('all');
   const [filterProdi, setFilterProdi] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [selectedAlumniId, setSelectedAlumniId] = useState<string | null>(null);
-  const [previewAlumniId, setPreviewAlumniId] = useState<string | null>(null);
 
   // Merge master data with filled data
   const mergedData = useMemo(() => {
@@ -43,7 +39,7 @@ export default function AdminDashboard() {
     });
   }, [masterData, alumniData]);
 
-  // Filter data with student status filter
+  // Filter data
   const filteredData = useMemo(() => {
     return mergedData.filter(alumni => {
       const matchSearch = alumni.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -51,11 +47,9 @@ export default function AdminDashboard() {
       const matchTahun = filterTahun === 'all' || alumni.tahunLulus === parseInt(filterTahun);
       const matchJurusan = filterJurusan === 'all' || alumni.jurusan === filterJurusan;
       const matchProdi = filterProdi === 'all' || alumni.prodi === filterProdi;
-      const studentStatus = (alumni as any).status || 'alumni';
-      const matchStatus = filterStatus === 'all' || studentStatus === filterStatus;
-      return matchSearch && matchTahun && matchJurusan && matchProdi && matchStatus;
+      return matchSearch && matchTahun && matchJurusan && matchProdi;
     });
-  }, [mergedData, searchQuery, filterTahun, filterJurusan, filterProdi, filterStatus]);
+  }, [mergedData, searchQuery, filterTahun, filterJurusan, filterProdi]);
 
   // Statistics
   const stats = useMemo(() => {
@@ -168,39 +162,16 @@ export default function AdminDashboard() {
     }
   };
 
-  // Preview modal data
-  const previewAlumniDetail = useMemo(() => {
-    if (!previewAlumniId) return null;
-    const master = masterData.find(m => m.id === previewAlumniId);
-    const filled = alumniData.find(d => d.alumniMasterId === previewAlumniId);
-    return master ? { ...master, filledData: filled } : null;
-  }, [previewAlumniId, masterData, alumniData]);
-
-  // Table columns configuration with student status badge
+  // Table columns configuration
   const tableColumns = [
-    { 
-      key: 'nama', 
-      header: 'Nama', 
-      sortable: true,
-      accessor: (row: typeof filteredData[0]) => {
-        const studentStatus = ((row as any).status || 'alumni') as StudentStatus;
-        const statusColor = getStudentStatusColor(studentStatus);
-        return (
-          <div className="flex items-center gap-2">
-            <span>{row.nama}</span>
-            <span className={cn('text-xs px-1.5 py-0.5 rounded-full', statusColor.bg, statusColor.text)}>
-              {studentStatus === 'active' ? 'Aktif' : studentStatus === 'alumni' ? 'Alumni' : studentStatus === 'on_leave' ? 'Cuti' : 'DO'}
-            </span>
-          </div>
-        );
-      }
-    },
+    { key: 'nama', header: 'Nama', sortable: true },
     { key: 'nim', header: 'NIM', sortable: true },
     { key: 'jurusan', header: 'Jurusan', hideOnMobile: true, sortable: true },
+    { key: 'prodi', header: 'Prodi', hideOnMobile: true, className: 'text-sm max-w-[150px] truncate' },
     { key: 'tahunLulus', header: 'Tahun', sortable: true },
     { 
       key: 'status', 
-      header: 'Status Tracer',
+      header: 'Status',
       accessor: (row: typeof filteredData[0]) => row.filledData ? (
         <StatusBadge status={row.filledData.status} size="sm" />
       ) : (
@@ -208,21 +179,11 @@ export default function AdminDashboard() {
       )
     },
     { 
-      key: 'preview', 
-      header: '',
-      accessor: (row: typeof filteredData[0]) => (
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8"
-          onClick={(e) => {
-            e.stopPropagation();
-            setPreviewAlumniId(row.id);
-          }}
-        >
-          <Eye className="w-4 h-4 text-muted-foreground" />
-        </Button>
-      )
+      key: 'email', 
+      header: 'Email', 
+      hideOnMobile: true,
+      accessor: (row: typeof filteredData[0]) => row.filledData?.email || '-',
+      className: 'text-sm'
     },
   ];
 

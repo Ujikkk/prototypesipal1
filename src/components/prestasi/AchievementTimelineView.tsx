@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { 
   Trophy, BookOpen, Shield, Briefcase, FolderOpen, Rocket, GraduationCap,
   Paperclip, Plus, ChevronDown, ChevronUp, Building2, MapPin, Calendar,
-  User, Award, FileText, ExternalLink, Pencil, Trash2, X, Download
+  User, Award, FileText, ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -26,8 +26,6 @@ interface AchievementTimelineViewProps {
   expandedId: string | null;
   onItemClick: (achievement: Achievement) => void;
   onAddNew: () => void;
-  onEdit?: (achievement: Achievement) => void;
-  onDelete?: (achievementId: string) => void;
 }
 
 const CATEGORY_CONFIG: Record<AchievementCategory, { 
@@ -201,12 +199,8 @@ export function AchievementTimelineView({
   category, 
   expandedId,
   onItemClick, 
-  onAddNew,
-  onEdit,
-  onDelete,
+  onAddNew 
 }: AchievementTimelineViewProps) {
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-  
   // Group achievements by year
   const groupedByYear = achievements.reduce((acc, achievement) => {
     const details = getAchievementDetails(achievement);
@@ -241,283 +235,177 @@ export function AchievementTimelineView({
   }
 
   return (
-    <>
-      <div className="relative">
-        {/* Timeline Line */}
-        <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-border hidden md:block" />
+    <div className="relative">
+      {/* Timeline Line */}
+      <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-border hidden md:block" />
 
-        <div className="space-y-8">
-          {sortedYears.map((year) => (
-            <div key={year} className="relative">
-              {/* Year Marker */}
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center z-10 relative">
-                  <span className="font-bold text-foreground">{year}</span>
-                </div>
-                <div className="h-px flex-1 bg-border" />
+      <div className="space-y-8">
+        {sortedYears.map((year) => (
+          <div key={year} className="relative">
+            {/* Year Marker */}
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center z-10 relative">
+                <span className="font-bold text-foreground">{year}</span>
               </div>
+              <div className="h-px flex-1 bg-border" />
+            </div>
 
-              {/* Achievements for this year */}
-              <div className="md:pl-16 space-y-3">
-                {groupedByYear[year].map(({ achievement, details }) => {
-                  const config = CATEGORY_CONFIG[achievement.category];
-                  const Icon = config.icon;
-                  const hasAttachments = achievement.attachments && achievement.attachments.length > 0;
-                  const isExpanded = expandedId === achievement.id;
-                  const detailFields = getCategoryDetailFields(achievement);
-                  const imageAttachments = achievement.attachments?.filter(a => a.fileType.startsWith('image/')) || [];
-                  const docAttachments = achievement.attachments?.filter(a => !a.fileType.startsWith('image/')) || [];
+            {/* Achievements for this year */}
+            <div className="md:pl-16 space-y-3">
+              {groupedByYear[year].map(({ achievement, details }) => {
+                const config = CATEGORY_CONFIG[achievement.category];
+                const Icon = config.icon;
+                const hasAttachments = achievement.attachments && achievement.attachments.length > 0;
+                const isExpanded = expandedId === achievement.id;
+                const detailFields = getCategoryDetailFields(achievement);
+                const imageAttachments = achievement.attachments?.filter(a => a.fileType.startsWith('image/')) || [];
 
-                  return (
-                    <div key={achievement.id} className="relative">
-                      {/* Main Card */}
-                      <div
-                        onClick={() => onItemClick(achievement)}
-                        className={cn(
-                          'relative p-4 rounded-xl cursor-pointer transition-all duration-200',
-                          'bg-card border',
-                          isExpanded 
-                            ? 'border-primary/50 shadow-soft' 
-                            : 'border-border/50 hover:shadow-elevated hover:-translate-y-0.5 hover:border-primary/30',
-                          'group'
-                        )}
-                      >
-                        {/* Timeline Node (Desktop) */}
+                return (
+                  <div key={achievement.id} className="relative">
+                    {/* Main Card */}
+                    <div
+                      onClick={() => onItemClick(achievement)}
+                      className={cn(
+                        'relative p-4 rounded-xl cursor-pointer transition-all duration-200',
+                        'bg-card border',
+                        isExpanded 
+                          ? 'border-primary/50 shadow-soft' 
+                          : 'border-border/50 hover:shadow-elevated hover:-translate-y-0.5 hover:border-primary/30',
+                        'group'
+                      )}
+                    >
+                      {/* Timeline Node (Desktop) */}
+                      <div className={cn(
+                        'hidden md:block absolute -left-[52px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full',
+                        config.nodeColor
+                      )} />
+
+                      <div className="flex items-start gap-4">
+                        {/* Category Icon */}
                         <div className={cn(
-                          'hidden md:block absolute -left-[52px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full',
-                          config.nodeColor
-                        )} />
+                          'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
+                          config.bgColor
+                        )}>
+                          <Icon className={cn('w-5 h-5', config.color)} />
+                        </div>
 
-                        <div className="flex items-start gap-4">
-                          {/* Category Icon */}
-                          <div className={cn(
-                            'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
-                            config.bgColor
-                          )}>
-                            <Icon className={cn('w-5 h-5', config.color)} />
-                          </div>
-
-                          {/* Content */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2 mb-1">
-                              <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
-                                {details.title}
-                              </h4>
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                {details.level && (
-                                  <span className={cn(
-                                    'text-xs font-medium px-2 py-0.5 rounded-full',
-                                    config.bgColor,
-                                    config.color
-                                  )}>
-                                    {details.level}
-                                  </span>
-                                )}
-                                {isExpanded ? (
-                                  <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                                ) : (
-                                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                                )}
-                              </div>
-                            </div>
-                            
-                            <p className="text-sm text-muted-foreground line-clamp-1">
-                              {details.subtitle}
-                            </p>
-
-                            {details.result && (
-                              <p className="text-sm font-medium text-foreground mt-1">
-                                {details.result}
-                              </p>
-                            )}
-
-                            {/* Attachments Indicator */}
-                            {hasAttachments && !isExpanded && (
-                              <div className="flex items-center gap-1.5 mt-2">
-                                <Paperclip className="w-3.5 h-3.5 text-muted-foreground" />
-                                <span className="text-xs text-muted-foreground">
-                                  Dokumen tersedia
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                              {details.title}
+                            </h4>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              {details.level && (
+                                <span className={cn(
+                                  'text-xs font-medium px-2 py-0.5 rounded-full',
+                                  config.bgColor,
+                                  config.color
+                                )}>
+                                  {details.level}
                                 </span>
-                              </div>
-                            )}
+                              )}
+                              {isExpanded ? (
+                                <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                              ) : (
+                                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                              )}
+                            </div>
                           </div>
+                          
+                          <p className="text-sm text-muted-foreground line-clamp-1">
+                            {details.subtitle}
+                          </p>
+
+                          {details.result && (
+                            <p className="text-sm font-medium text-foreground mt-1">
+                              {details.result}
+                            </p>
+                          )}
+
+                          {/* Attachments Indicator */}
+                          {hasAttachments && !isExpanded && (
+                            <div className="flex items-center gap-1.5 mt-2">
+                              <Paperclip className="w-3.5 h-3.5 text-muted-foreground" />
+                              <span className="text-xs text-muted-foreground">
+                                Dokumen tersedia
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
+                    </div>
 
-                      {/* Expanded Dropdown Detail */}
-                      {isExpanded && (
-                        <div className="mt-2 rounded-xl border border-border bg-muted/30 overflow-hidden animate-fade-in">
-                          {/* Documentation Preview */}
-                          {(imageAttachments.length > 0 || docAttachments.length > 0) ? (
-                            <div className="p-4 border-b border-border">
-                              <h5 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
-                                <Paperclip className="w-4 h-4" />
-                                Dokumentasi
-                              </h5>
-                              
-                              {/* Image Gallery */}
-                              {imageAttachments.length > 0 && (
-                                <div className="flex gap-2 overflow-x-auto pb-2 mb-3">
-                                  {imageAttachments.map((img) => (
-                                    <button 
-                                      key={img.id}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setPreviewImage(img.fileUrl);
-                                      }}
-                                      className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-muted hover:ring-2 hover:ring-primary transition-all"
-                                    >
-                                      <img
-                                        src={img.fileUrl}
-                                        alt={img.fileName}
-                                        className="w-full h-full object-cover hover:scale-105 transition-transform"
-                                      />
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                              
-                              {/* Document List */}
-                              {docAttachments.length > 0 && (
-                                <div className="space-y-2">
-                                  {docAttachments.map((doc) => (
-                                    <a
-                                      key={doc.id}
-                                      href={doc.fileUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      onClick={(e) => e.stopPropagation()}
-                                      className="flex items-center gap-2 p-2 rounded-lg bg-background hover:bg-muted transition-colors"
-                                    >
-                                      <FileText className="w-4 h-4 text-primary" />
-                                      <span className="text-sm text-foreground flex-1 truncate">{doc.fileName}</span>
-                                      <Download className="w-4 h-4 text-muted-foreground" />
-                                    </a>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="p-4 border-b border-border">
-                              <div className="flex items-center gap-2 text-muted-foreground">
-                                <Paperclip className="w-4 h-4" />
-                                <span className="text-sm">Dokumentasi belum diunggah</span>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Detail Information Section */}
-                          <div className="p-4 bg-background/50">
-                            <h5 className="text-sm font-medium text-muted-foreground mb-3">
-                              Informasi Detail
+                    {/* Expanded Dropdown Detail */}
+                    {isExpanded && (
+                      <div className="mt-2 rounded-xl border border-border bg-muted/30 overflow-hidden animate-fade-in">
+                        {/* Documentation Preview */}
+                        {imageAttachments.length > 0 && (
+                          <div className="p-4 border-b border-border">
+                            <h5 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+                              <Paperclip className="w-4 h-4" />
+                              Dokumentasi
                             </h5>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {detailFields.map((field, index) => {
-                                const FieldIcon = field.icon;
-                                return (
-                                  <div key={index} className="flex items-start gap-3">
-                                    {FieldIcon && (
-                                      <FieldIcon className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                                    )}
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-xs text-muted-foreground">{field.label}</p>
-                                      <p className="text-sm font-medium text-foreground capitalize">
-                                        {field.value}
-                                      </p>
-                                    </div>
-                                  </div>
-                                );
-                              })}
+                            <div className="flex gap-2 overflow-x-auto pb-2">
+                              {imageAttachments.map((img) => (
+                                <div 
+                                  key={img.id}
+                                  className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-muted"
+                                >
+                                  <img
+                                    src={img.fileUrl}
+                                    alt={img.fileName}
+                                    className="w-full h-full object-cover hover:scale-105 transition-transform"
+                                  />
+                                </div>
+                              ))}
                             </div>
+                          </div>
+                        )}
 
-                            {/* Description if available */}
-                            {((achievement as any).deskripsi || (achievement as any).deskripsiTugas || (achievement as any).deskripsiProyek || (achievement as any).deskripsiUsaha) && (
-                              <div className="mt-4 pt-4 border-t border-border">
-                                <p className="text-xs text-muted-foreground mb-1">Deskripsi</p>
-                                <p className="text-sm text-foreground leading-relaxed">
-                                  {(achievement as any).deskripsi || (achievement as any).deskripsiTugas || (achievement as any).deskripsiProyek || (achievement as any).deskripsiUsaha}
-                                </p>
-                              </div>
-                            )}
+                        {/* Detail Information Section */}
+                        <div className="p-4 bg-background/50">
+                          <h5 className="text-sm font-medium text-muted-foreground mb-3">
+                            Informasi Detail
+                          </h5>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {detailFields.map((field, index) => {
+                              const FieldIcon = field.icon;
+                              return (
+                                <div key={index} className="flex items-start gap-3">
+                                  {FieldIcon && (
+                                    <FieldIcon className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs text-muted-foreground">{field.label}</p>
+                                    <p className="text-sm font-medium text-foreground capitalize">
+                                      {field.value}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
 
-                          {/* Action Buttons */}
-                          {(onEdit || onDelete) && (
-                            <div className="p-4 border-t border-border bg-muted/20 flex gap-2">
-                              {onEdit && (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onEdit(achievement);
-                                  }}
-                                >
-                                  <Pencil className="w-3.5 h-3.5 mr-1.5" />
-                                  Edit
-                                </Button>
-                              )}
-                              {onDelete && (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onDelete(achievement.id);
-                                  }}
-                                >
-                                  <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                                  Hapus
-                                </Button>
-                              )}
+                          {/* Description if available */}
+                          {(achievement as any).deskripsi || (achievement as any).deskripsiTugas || (achievement as any).deskripsiProyek || (achievement as any).deskripsiUsaha ? (
+                            <div className="mt-4 pt-4 border-t border-border">
+                              <p className="text-xs text-muted-foreground mb-1">Deskripsi</p>
+                              <p className="text-sm text-foreground leading-relaxed">
+                                {(achievement as any).deskripsi || (achievement as any).deskripsiTugas || (achievement as any).deskripsiProyek || (achievement as any).deskripsiUsaha}
+                              </p>
                             </div>
-                          )}
+                          ) : null}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Image Preview Modal */}
-      {previewImage && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/90 backdrop-blur-sm animate-fade-in"
-          onClick={() => setPreviewImage(null)}
-        >
-          <div className="relative max-w-4xl max-h-[90vh] w-full">
-            <Button
-              variant="outline"
-              size="icon"
-              className="absolute -top-12 right-0 bg-background"
-              onClick={() => setPreviewImage(null)}
-            >
-              <X className="w-4 h-4" />
-            </Button>
-            <img
-              src={previewImage}
-              alt="Preview"
-              className="w-full h-full object-contain rounded-xl shadow-elevated"
-            />
-            <a
-              href={previewImage}
-              download
-              onClick={(e) => e.stopPropagation()}
-              className="absolute bottom-4 right-4"
-            >
-              <Button size="sm">
-                <Download className="w-4 h-4 mr-1.5" />
-                Download
-              </Button>
-            </a>
           </div>
-        </div>
-      )}
-    </>
+        ))}
+      </div>
+    </div>
   );
 }

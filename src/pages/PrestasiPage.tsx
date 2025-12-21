@@ -10,8 +10,6 @@ import { useAlumni } from '@/contexts/AlumniContext';
 import { useToast } from '@/hooks/use-toast';
 import { FileUpload } from '@/components/shared';
 import { CategorySidebar, AchievementTimelineView, type CategoryFilter } from '@/components/prestasi';
-import { isAchievementsEditable } from '@/data/student-seed-data';
-import type { StudentStatus } from '@/types/student.types';
 import {
   ChevronLeft, Plus, X, Check, Paperclip
 } from 'lucide-react';
@@ -22,7 +20,6 @@ import {
 } from '@/types/achievement.types';
 import {
   createAchievement,
-  updateAchievement,
   getAchievementsByMasterId,
   getAchievementStats,
   deleteAchievement,
@@ -35,7 +32,6 @@ export default function PrestasiPage() {
   
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingAchievement, setEditingAchievement] = useState<Achievement | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [stats, setStats] = useState<Record<AchievementCategory, number>>({
@@ -60,24 +56,7 @@ export default function PrestasiPage() {
     setExpandedId(prev => prev === achievement.id ? null : achievement.id);
   };
 
-  const handleEdit = (achievement: Achievement) => {
-    setEditingAchievement(achievement);
-    setIsFormOpen(true);
-  };
-
-  const handleDelete = (achievementId: string) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus prestasi ini?')) {
-      deleteAchievement(achievementId);
-      refreshData();
-      setExpandedId(null);
-      toast({ title: 'Prestasi berhasil dihapus' });
-    }
-  };
-
   if (!selectedAlumni) return null;
-
-  const studentStatus: StudentStatus = (selectedAlumni as any).status || 'alumni';
-  const canEdit = isAchievementsEditable(studentStatus);
 
   const filteredAchievements = activeCategory === 'all' 
     ? achievements 
@@ -85,9 +64,7 @@ export default function PrestasiPage() {
   const totalAchievements = Object.values(stats).reduce((a, b) => a + b, 0);
 
   // Get category for form (default to kegiatan if 'all' is selected)
-  const formCategory: AchievementCategory = editingAchievement 
-    ? editingAchievement.category 
-    : (activeCategory === 'all' ? 'kegiatan' : activeCategory);
+  const formCategory: AchievementCategory = activeCategory === 'all' ? 'kegiatan' : activeCategory;
 
   return (
     <div className="min-h-screen bg-background">
@@ -110,12 +87,10 @@ export default function PrestasiPage() {
                   </p>
                 </div>
               </div>
-              {canEdit && (
-                <Button onClick={() => { setEditingAchievement(null); setIsFormOpen(true); }} className="hidden sm:flex">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Tambah Prestasi
-                </Button>
-              )}
+              <Button onClick={() => setIsFormOpen(true)} className="hidden sm:flex">
+                <Plus className="w-4 h-4 mr-2" />
+                Tambah Prestasi
+              </Button>
             </div>
 
             {/* Main Content with Sidebar */}
@@ -135,11 +110,9 @@ export default function PrestasiPage() {
                     <h2 className="text-lg font-semibold text-foreground">
                       {activeCategory === 'all' ? 'Semua Prestasi' : ACHIEVEMENT_CATEGORIES[activeCategory].label}
                     </h2>
-                    {canEdit && (
-                      <Button onClick={() => { setEditingAchievement(null); setIsFormOpen(true); }} size="sm" className="sm:hidden">
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    )}
+                    <Button onClick={() => setIsFormOpen(true)} size="sm" className="sm:hidden">
+                      <Plus className="w-4 h-4" />
+                    </Button>
                   </div>
 
                   {/* Timeline View */}
@@ -148,37 +121,31 @@ export default function PrestasiPage() {
                     category={activeCategory}
                     expandedId={expandedId}
                     onItemClick={handleItemClick}
-                    onAddNew={() => { setEditingAchievement(null); setIsFormOpen(true); }}
-                    onEdit={canEdit ? handleEdit : undefined}
-                    onDelete={canEdit ? handleDelete : undefined}
+                    onAddNew={() => setIsFormOpen(true)}
                   />
                 </div>
               </div>
             </div>
 
             {/* Mobile FAB */}
-            {canEdit && (
-              <Button
-                onClick={() => { setEditingAchievement(null); setIsFormOpen(true); }}
-                className="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-elevated sm:hidden"
-                size="icon"
-              >
-                <Plus className="w-6 h-6" />
-              </Button>
-            )}
+            <Button
+              onClick={() => setIsFormOpen(true)}
+              className="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-elevated sm:hidden"
+              size="icon"
+            >
+              <Plus className="w-6 h-6" />
+            </Button>
 
             {/* Form Modal */}
             {isFormOpen && (
               <AchievementForm
                 category={formCategory}
                 masterId={selectedAlumni.id}
-                existingData={editingAchievement}
-                onClose={() => { setIsFormOpen(false); setEditingAchievement(null); }}
+                onClose={() => setIsFormOpen(false)}
                 onSuccess={() => {
                   setIsFormOpen(false);
-                  setEditingAchievement(null);
                   refreshData();
-                  toast({ title: editingAchievement ? 'Prestasi berhasil diperbarui!' : 'Prestasi berhasil ditambahkan!' });
+                  toast({ title: 'Prestasi berhasil ditambahkan!' });
                 }}
               />
             )}
@@ -190,35 +157,23 @@ export default function PrestasiPage() {
   );
 }
 
-// Achievement Form Component with Edit Support
+// Achievement Form Component
 function AchievementForm({
   category,
   masterId,
-  existingData,
   onClose,
   onSuccess,
 }: {
   category: AchievementCategory;
   masterId: string;
-  existingData?: Achievement | null;
   onClose: () => void;
   onSuccess: () => void;
 }) {
-  const [formData, setFormData] = useState<Record<string, any>>(() => {
-    if (existingData) {
-      return { ...existingData };
-    }
-    return {};
-  });
-  const [selectedCategory, setSelectedCategory] = useState<AchievementCategory>(category);
+  const [formData, setFormData] = useState<Record<string, any>>({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (existingData) {
-      updateAchievement(existingData.id, { ...formData, category: selectedCategory });
-    } else {
-      createAchievement({ ...formData, masterId, category: selectedCategory });
-    }
+    createAchievement({ ...formData, masterId, category });
     onSuccess();
   };
 
@@ -226,14 +181,12 @@ function AchievementForm({
     setFormData(prev => ({ ...prev, [key]: value }));
   };
 
-  const isEditing = !!existingData;
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in">
       <div className="w-full max-w-2xl max-h-[90vh] overflow-auto glass-card rounded-2xl p-6 md:p-8 animate-scale-in">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-foreground">
-            {isEditing ? 'Edit' : 'Tambah'} {ACHIEVEMENT_CATEGORIES[selectedCategory].label}
+            Tambah {ACHIEVEMENT_CATEGORIES[category].label}
           </h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="w-5 h-5" />
@@ -241,32 +194,13 @@ function AchievementForm({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Category Selector (only for new achievements) */}
-          {!isEditing && (
-            <div>
-              <Label>Kategori Prestasi *</Label>
-              <select 
-                className="w-full mt-1.5 px-4 py-3 rounded-xl border border-border bg-background"
-                value={selectedCategory}
-                onChange={(e) => {
-                  setSelectedCategory(e.target.value as AchievementCategory);
-                  setFormData({});
-                }}
-              >
-                {(Object.entries(ACHIEVEMENT_CATEGORIES) as [AchievementCategory, typeof ACHIEVEMENT_CATEGORIES[AchievementCategory]][]).map(([key, cat]) => (
-                  <option key={key} value={key}>{cat.label}</option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {selectedCategory === 'kegiatan' && <KegiatanFields formData={formData} updateField={updateField} />}
-          {selectedCategory === 'publikasi' && <PublikasiFields formData={formData} updateField={updateField} />}
-          {selectedCategory === 'haki' && <HakiFields formData={formData} updateField={updateField} />}
-          {selectedCategory === 'magang' && <MagangFields formData={formData} updateField={updateField} />}
-          {selectedCategory === 'portofolio' && <PortofolioFields formData={formData} updateField={updateField} />}
-          {selectedCategory === 'wirausaha' && <WirausahaFields formData={formData} updateField={updateField} />}
-          {selectedCategory === 'pengembangan' && <PengembanganFields formData={formData} updateField={updateField} />}
+          {category === 'kegiatan' && <KegiatanFields formData={formData} updateField={updateField} />}
+          {category === 'publikasi' && <PublikasiFields formData={formData} updateField={updateField} />}
+          {category === 'haki' && <HakiFields formData={formData} updateField={updateField} />}
+          {category === 'magang' && <MagangFields formData={formData} updateField={updateField} />}
+          {category === 'portofolio' && <PortofolioFields formData={formData} updateField={updateField} />}
+          {category === 'wirausaha' && <WirausahaFields formData={formData} updateField={updateField} />}
+          {category === 'pengembangan' && <PengembanganFields formData={formData} updateField={updateField} />}
 
           <div className="pt-4 border-t border-border">
             <Label className="flex items-center gap-2 mb-3">
@@ -283,10 +217,7 @@ function AchievementForm({
 
           <div className="flex gap-3 pt-4">
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">Batal</Button>
-            <Button type="submit" className="flex-1">
-              <Check className="w-4 h-4 mr-2" />
-              {isEditing ? 'Simpan Perubahan' : 'Simpan'}
-            </Button>
+            <Button type="submit" className="flex-1"><Check className="w-4 h-4 mr-2" />Simpan</Button>
           </div>
         </form>
       </div>
