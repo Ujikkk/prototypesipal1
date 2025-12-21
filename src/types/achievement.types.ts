@@ -15,6 +15,17 @@ export interface BaseAchievement {
   category: AchievementCategory;
   createdAt: string;
   updatedAt: string;
+  // File attachments
+  attachments?: AchievementAttachment[];
+}
+
+export interface AchievementAttachment {
+  id: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  fileUrl: string; // Base64 or blob URL for now (will be storage URL with backend)
+  uploadedAt: string;
 }
 
 // Partisipasi & Prestasi Kegiatan
