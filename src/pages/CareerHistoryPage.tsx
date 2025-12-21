@@ -8,7 +8,7 @@ import {
   MapPin, Calendar, Building2, User, Plus, Pencil, Trash2, Clock,
   AlertTriangle
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { isCareerHistoryVisible } from '@/data/student-seed-data';
 import type { StudentStatus } from '@/types/student.types';
@@ -40,6 +40,37 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { z } from 'zod';
+
+// Validation schema for edit form
+const editFormSchema = z.object({
+  status: z.enum(['bekerja', 'wirausaha', 'studi', 'mencari'], {
+    required_error: 'Status harus dipilih',
+  }),
+  title: z.string()
+    .trim()
+    .min(1, 'Field ini wajib diisi')
+    .max(100, 'Maksimal 100 karakter'),
+  subtitle: z.string()
+    .trim()
+    .min(1, 'Field ini wajib diisi')
+    .max(100, 'Maksimal 100 karakter'),
+  location: z.string()
+    .trim()
+    .max(100, 'Maksimal 100 karakter')
+    .optional()
+    .or(z.literal('')),
+  industry: z.string()
+    .trim()
+    .max(100, 'Maksimal 100 karakter')
+    .optional()
+    .or(z.literal('')),
+  year: z.number()
+    .min(1990, 'Tahun minimal 1990')
+    .max(new Date().getFullYear() + 5, `Tahun maksimal ${new Date().getFullYear() + 5}`),
+});
+
+type EditFormErrors = Partial<Record<keyof z.infer<typeof editFormSchema>, string>>;
 
 // Career status configuration
 const STATUS_CONFIG = {
@@ -108,6 +139,7 @@ export default function CareerHistoryPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<EditFormErrors>({});
   const [editFormData, setEditFormData] = useState<EditFormData>({
     status: 'bekerja',
     title: '',
@@ -202,6 +234,7 @@ export default function CareerHistoryPage() {
   const handleEditClick = (e: React.MouseEvent, item: CareerItem) => {
     e.stopPropagation();
     setSelectedItemId(item.id);
+    setFormErrors({});
     setEditFormData({
       status: item.status,
       title: item.title,
@@ -213,7 +246,35 @@ export default function CareerHistoryPage() {
     setEditDialogOpen(true);
   };
 
+  const validateForm = (): boolean => {
+    const result = editFormSchema.safeParse(editFormData);
+    
+    if (!result.success) {
+      const errors: EditFormErrors = {};
+      result.error.errors.forEach((err) => {
+        const field = err.path[0] as keyof EditFormErrors;
+        if (!errors[field]) {
+          errors[field] = err.message;
+        }
+      });
+      setFormErrors(errors);
+      return false;
+    }
+    
+    setFormErrors({});
+    return true;
+  };
+
   const handleEditSave = () => {
+    if (!validateForm()) {
+      toast({
+        title: "Validasi gagal",
+        description: "Mohon periksa kembali isian form Anda.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (selectedItemId && editFormData) {
       // Map form data back to alumni data structure based on status
       const updates: Record<string, any> = {
@@ -222,21 +283,21 @@ export default function CareerHistoryPage() {
       };
 
       if (editFormData.status === 'bekerja') {
-        updates.namaPerusahaan = editFormData.title;
-        updates.jabatan = editFormData.subtitle;
-        updates.lokasiPerusahaan = editFormData.location;
-        updates.bidangIndustri = editFormData.industry;
+        updates.namaPerusahaan = editFormData.title.trim();
+        updates.jabatan = editFormData.subtitle.trim();
+        updates.lokasiPerusahaan = editFormData.location.trim();
+        updates.bidangIndustri = editFormData.industry.trim();
       } else if (editFormData.status === 'wirausaha') {
-        updates.namaUsaha = editFormData.title;
-        updates.jenisUsaha = editFormData.subtitle;
-        updates.lokasiUsaha = editFormData.location;
+        updates.namaUsaha = editFormData.title.trim();
+        updates.jenisUsaha = editFormData.subtitle.trim();
+        updates.lokasiUsaha = editFormData.location.trim();
       } else if (editFormData.status === 'studi') {
-        updates.namaKampus = editFormData.title;
-        updates.programStudi = editFormData.subtitle;
-        updates.lokasiKampus = editFormData.location;
+        updates.namaKampus = editFormData.title.trim();
+        updates.programStudi = editFormData.subtitle.trim();
+        updates.lokasiKampus = editFormData.location.trim();
       } else if (editFormData.status === 'mencari') {
-        updates.bidangDiincar = editFormData.subtitle;
-        updates.lokasiTujuan = editFormData.location;
+        updates.bidangDiincar = editFormData.subtitle.trim();
+        updates.lokasiTujuan = editFormData.location.trim();
       }
 
       updateAlumniData(selectedItemId, updates);
@@ -247,6 +308,15 @@ export default function CareerHistoryPage() {
     }
     setEditDialogOpen(false);
     setSelectedItemId(null);
+    setFormErrors({});
+  };
+
+  const handleFormChange = (field: keyof EditFormData, value: string | number) => {
+    setEditFormData(prev => ({ ...prev, [field]: value }));
+    // Clear error for this field when user starts typing
+    if (formErrors[field]) {
+      setFormErrors(prev => ({ ...prev, [field]: undefined }));
+    }
   };
 
   const getFieldLabels = (status: string) => {
@@ -554,14 +624,14 @@ export default function CareerHistoryPage() {
           
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="status">Status <span className="text-destructive">*</span></Label>
               <Select
                 value={editFormData.status}
                 onValueChange={(value: 'bekerja' | 'wirausaha' | 'studi' | 'mencari') => 
-                  setEditFormData(prev => ({ ...prev, status: value }))
+                  handleFormChange('status', value)
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className={formErrors.status ? 'border-destructive' : ''}>
                   <SelectValue placeholder="Pilih status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -571,26 +641,39 @@ export default function CareerHistoryPage() {
                   <SelectItem value="mencari">Mencari Kerja</SelectItem>
                 </SelectContent>
               </Select>
+              {formErrors.status && (
+                <p className="text-xs text-destructive">{formErrors.status}</p>
+              )}
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="title">{fieldLabels.title}</Label>
+              <Label htmlFor="title">{fieldLabels.title} <span className="text-destructive">*</span></Label>
               <Input
                 id="title"
                 value={editFormData.title}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, title: e.target.value }))}
+                onChange={(e) => handleFormChange('title', e.target.value)}
                 placeholder={`Masukkan ${fieldLabels.title.toLowerCase()}`}
+                className={formErrors.title ? 'border-destructive' : ''}
+                maxLength={100}
               />
+              {formErrors.title && (
+                <p className="text-xs text-destructive">{formErrors.title}</p>
+              )}
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="subtitle">{fieldLabels.subtitle}</Label>
+              <Label htmlFor="subtitle">{fieldLabels.subtitle} <span className="text-destructive">*</span></Label>
               <Input
                 id="subtitle"
                 value={editFormData.subtitle}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, subtitle: e.target.value }))}
+                onChange={(e) => handleFormChange('subtitle', e.target.value)}
                 placeholder={`Masukkan ${fieldLabels.subtitle.toLowerCase()}`}
+                className={formErrors.subtitle ? 'border-destructive' : ''}
+                maxLength={100}
               />
+              {formErrors.subtitle && (
+                <p className="text-xs text-destructive">{formErrors.subtitle}</p>
+              )}
             </div>
 
             <div className="grid gap-2">
@@ -598,9 +681,14 @@ export default function CareerHistoryPage() {
               <Input
                 id="location"
                 value={editFormData.location}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, location: e.target.value }))}
+                onChange={(e) => handleFormChange('location', e.target.value)}
                 placeholder="Masukkan lokasi"
+                className={formErrors.location ? 'border-destructive' : ''}
+                maxLength={100}
               />
+              {formErrors.location && (
+                <p className="text-xs text-destructive">{formErrors.location}</p>
+              )}
             </div>
 
             {fieldLabels.industry && (
@@ -609,28 +697,40 @@ export default function CareerHistoryPage() {
                 <Input
                   id="industry"
                   value={editFormData.industry}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, industry: e.target.value }))}
+                  onChange={(e) => handleFormChange('industry', e.target.value)}
                   placeholder={`Masukkan ${fieldLabels.industry.toLowerCase()}`}
+                  className={formErrors.industry ? 'border-destructive' : ''}
+                  maxLength={100}
                 />
+                {formErrors.industry && (
+                  <p className="text-xs text-destructive">{formErrors.industry}</p>
+                )}
               </div>
             )}
 
             <div className="grid gap-2">
-              <Label htmlFor="year">Tahun</Label>
+              <Label htmlFor="year">Tahun <span className="text-destructive">*</span></Label>
               <Input
                 id="year"
                 type="number"
                 value={editFormData.year}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, year: parseInt(e.target.value) || new Date().getFullYear() }))}
+                onChange={(e) => handleFormChange('year', parseInt(e.target.value) || new Date().getFullYear())}
                 placeholder="Tahun"
-                min={2000}
+                min={1990}
                 max={new Date().getFullYear() + 5}
+                className={formErrors.year ? 'border-destructive' : ''}
               />
+              {formErrors.year && (
+                <p className="text-xs text-destructive">{formErrors.year}</p>
+              )}
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+            <Button variant="outline" onClick={() => {
+              setEditDialogOpen(false);
+              setFormErrors({});
+            }}>
               Batal
             </Button>
             <Button onClick={handleEditSave}>
