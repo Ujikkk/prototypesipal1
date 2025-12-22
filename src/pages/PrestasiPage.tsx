@@ -52,7 +52,7 @@ export default function PrestasiPage() {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [editingAchievement, setEditingAchievement] = useState<Achievement | null>(null);
   const [stats, setStats] = useState<Record<AchievementCategory, number>>({
-    partisipasi: 0, publikasi: 0, haki: 0, akademik_terapan: 0, wirausaha: 0, pengembangan: 0
+    lomba: 0, seminar: 0, publikasi: 0, haki: 0, magang: 0, portofolio: 0, wirausaha: 0, pengembangan: 0, organisasi: 0
   });
   const [unggulanCount, setUnggulanCount] = useState(0);
   const [highestLevel, setHighestLevel] = useState<string | null>(null);
@@ -106,8 +106,8 @@ export default function PrestasiPage() {
     : achievements.filter(a => a.category === activeCategory);
   const totalAchievements = Object.values(stats).reduce((a, b) => a + b, 0);
 
-  // Get category for form (default to partisipasi if 'all' is selected)
-  const formCategory: AchievementCategory = activeCategory === 'all' ? 'partisipasi' : activeCategory;
+  // Get category for form (default to lomba if 'all' is selected)
+  const formCategory: AchievementCategory = activeCategory === 'all' ? 'lomba' : activeCategory;
 
   return (
     <div className="min-h-screen bg-background">
@@ -171,12 +171,15 @@ export default function PrestasiPage() {
                     <div>
                       <h2 className="text-lg font-semibold text-foreground">
                         {activeCategory === 'all' ? 'Semua Prestasi' : 
-                          activeCategory === 'partisipasi' ? 'Partisipasi & Prestasi' :
+                          activeCategory === 'lomba' ? 'Lomba' :
+                          activeCategory === 'seminar' ? 'Seminar' :
                           activeCategory === 'publikasi' ? 'Karya Ilmiah & Publikasi' :
                           activeCategory === 'haki' ? 'Kekayaan Intelektual' :
-                          activeCategory === 'akademik_terapan' ? 'Pengalaman Akademik Terapan' :
+                          activeCategory === 'magang' ? 'Pengalaman Magang' :
+                          activeCategory === 'portofolio' ? 'Portofolio Praktikum Kelas' :
                           activeCategory === 'wirausaha' ? 'Pengalaman Wirausaha' :
-                          activeCategory === 'pengembangan' ? 'Pengembangan Diri' :
+                          activeCategory === 'pengembangan' ? 'Program Pengembangan Diri' :
+                          activeCategory === 'organisasi' ? 'Organisasi & Kepemimpinan' :
                           'Prestasi'}
                       </h2>
                       <p className="text-sm text-muted-foreground mt-0.5">
@@ -275,12 +278,15 @@ function AchievementForm({
   };
 
   const categoryLabels: Record<AchievementCategory, string> = {
-    partisipasi: 'Partisipasi & Prestasi',
+    lomba: 'Lomba',
+    seminar: 'Seminar',
     publikasi: 'Karya Ilmiah & Publikasi',
     haki: 'Kekayaan Intelektual',
-    akademik_terapan: 'Pengalaman Akademik Terapan',
+    magang: 'Pengalaman Magang',
+    portofolio: 'Portofolio Praktikum Kelas',
     wirausaha: 'Pengalaman Wirausaha',
-    pengembangan: 'Pengembangan Diri',
+    pengembangan: 'Program Pengembangan Diri',
+    organisasi: 'Organisasi & Kepemimpinan',
   };
 
   return (
@@ -314,13 +320,16 @@ function AchievementForm({
             </div>
           )}
 
-{/* Dynamic Form Fields */}
-          {selectedCategory === 'partisipasi' && <LombaFields formData={formData} updateField={updateField} />}
+          {/* Dynamic Form Fields */}
+          {selectedCategory === 'lomba' && <LombaFields formData={formData} updateField={updateField} />}
+          {selectedCategory === 'seminar' && <SeminarFields formData={formData} updateField={updateField} />}
           {selectedCategory === 'publikasi' && <PublikasiFields formData={formData} updateField={updateField} />}
           {selectedCategory === 'haki' && <HakiFields formData={formData} updateField={updateField} />}
-          {selectedCategory === 'akademik_terapan' && <MagangFields formData={formData} updateField={updateField} />}
+          {selectedCategory === 'magang' && <MagangFields formData={formData} updateField={updateField} />}
+          {selectedCategory === 'portofolio' && <PortofolioFields formData={formData} updateField={updateField} />}
           {selectedCategory === 'wirausaha' && <WirausahaFields formData={formData} updateField={updateField} />}
           {selectedCategory === 'pengembangan' && <PengembanganFields formData={formData} updateField={updateField} />}
+          {selectedCategory === 'organisasi' && <OrganisasiFields formData={formData} updateField={updateField} />}
 
           {/* Attachments */}
           <div className="pt-4 border-t border-border">
@@ -506,18 +515,8 @@ function SeminarFields({ formData, updateField }: FieldProps) {
 }
 
 function OrganisasiFields({ formData, updateField }: FieldProps) {
-  const masihAktif = formData.masihAktif ?? true;
-
-  const handleToggleMembership = (isActive: boolean) => {
-    updateField('masihAktif', isActive);
-    if (isActive) {
-      updateField('periodeSelesai', null);
-    }
-  };
-
   return (
     <div className="space-y-4">
-      {/* Organization Name */}
       <div>
         <Label>Nama Organisasi *</Label>
         <Input 
@@ -527,140 +526,41 @@ function OrganisasiFields({ formData, updateField }: FieldProps) {
           required 
         />
       </div>
-
-      {/* Organization Type */}
-      <div>
-        <Label>Jenis Organisasi *</Label>
-        <Select 
-          value={formData.jenisOrganisasi || ''} 
-          onValueChange={(v) => updateField('jenisOrganisasi', v)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Pilih jenis organisasi" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="kampus">
-              <div className="flex flex-col items-start">
-                <span>Organisasi Kampus</span>
-                <span className="text-xs text-muted-foreground">Himpunan / BEM / UKM</span>
-              </div>
-            </SelectItem>
-            <SelectItem value="luar_kampus">
-              <div className="flex flex-col items-start">
-                <span>Organisasi Luar Kampus</span>
-                <span className="text-xs text-muted-foreground">Komunitas / NGO / Profesional</span>
-              </div>
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Position/Role */}
       <div>
         <Label>Jabatan / Peran *</Label>
         <Input 
           value={formData.jabatan || ''} 
           onChange={(e) => updateField('jabatan', e.target.value)} 
-          placeholder="Contoh: Ketua, Sekretaris, Anggota"
+          placeholder="Contoh: Ketua, Sekretaris"
           required 
         />
       </div>
-
-      {/* Membership Status Toggle */}
-      <div className="p-4 rounded-xl bg-muted/50 border border-border">
-        <Label className="text-sm font-medium mb-3 block">Masih menjadi anggota?</Label>
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={() => handleToggleMembership(true)}
-            className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all duration-200 ${
-              masihAktif 
-                ? 'border-primary bg-primary/10 text-primary font-medium' 
-                : 'border-border bg-background text-muted-foreground hover:border-primary/50'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                masihAktif ? 'border-primary bg-primary' : 'border-muted-foreground'
-              }`}>
-                {masihAktif && <div className="w-2 h-2 rounded-full bg-white" />}
-              </div>
-              <span>YA</span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Masih aktif sampai sekarang</p>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleToggleMembership(false)}
-            className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all duration-200 ${
-              !masihAktif 
-                ? 'border-primary bg-primary/10 text-primary font-medium' 
-                : 'border-border bg-background text-muted-foreground hover:border-primary/50'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                !masihAktif ? 'border-primary bg-primary' : 'border-muted-foreground'
-              }`}>
-                {!masihAktif && <div className="w-2 h-2 rounded-full bg-white" />}
-              </div>
-              <span>TIDAK</span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Keanggotaan sudah selesai</p>
-          </button>
-        </div>
-      </div>
-
-      {/* Date Fields */}
-      <div className={`grid gap-4 ${masihAktif ? 'grid-cols-1' : 'grid-cols-2'}`}>
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label>Tanggal Masuk Organisasi *</Label>
+          <Label>Periode Mulai *</Label>
           <Input 
             type="date" 
             value={formData.periodeMulai || ''} 
             onChange={(e) => updateField('periodeMulai', e.target.value)} 
             required 
           />
-          <p className="text-xs text-muted-foreground mt-1">Tanggal mulai bergabung</p>
         </div>
-        
-        {/* Conditional End Date Field */}
-        {!masihAktif && (
-          <div className="animate-fade-in">
-            <Label>Tanggal Selesai Keanggotaan *</Label>
-            <Input 
-              type="date" 
-              value={formData.periodeSelesai || ''} 
-              onChange={(e) => updateField('periodeSelesai', e.target.value)}
-              required
-            />
-            <p className="text-xs text-muted-foreground mt-1">Tanggal berakhir keanggotaan</p>
-          </div>
-        )}
+        <div>
+          <Label>Periode Selesai</Label>
+          <Input 
+            type="date" 
+            value={formData.periodeSelesai || ''} 
+            onChange={(e) => updateField('periodeSelesai', e.target.value)}
+            disabled={formData.masihAktif}
+          />
+        </div>
       </div>
-
-      {/* Period Display Preview */}
-      {formData.periodeMulai && (
-        <div className="p-3 rounded-lg bg-info/10 border border-info/20">
-          <p className="text-sm text-info font-medium">
-            Periode: {new Date(formData.periodeMulai).toLocaleDateString('id-ID', { 
-              day: 'numeric', month: 'long', year: 'numeric' 
-            })} – {masihAktif ? 'Sekarang' : (formData.periodeSelesai 
-              ? new Date(formData.periodeSelesai).toLocaleDateString('id-ID', { 
-                  day: 'numeric', month: 'long', year: 'numeric' 
-                }) 
-              : '...')}
-          </p>
-        </div>
-      )}
-
-      {/* Description */}
       <div>
         <Label>Deskripsi</Label>
         <Textarea 
           value={formData.deskripsi || ''} 
           onChange={(e) => updateField('deskripsi', e.target.value)} 
-          placeholder="Jelaskan peran dan kontribusi Anda dalam organisasi..."
+          placeholder="Jelaskan peran dan kontribusi Anda..."
           rows={3}
         />
       </div>

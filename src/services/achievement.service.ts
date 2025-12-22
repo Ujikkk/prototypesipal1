@@ -3,12 +3,15 @@
 import { 
   Achievement, 
   AchievementCategory,
-  PartisipasiAchievement,
+  LombaAchievement,
+  SeminarAchievement,
   PublikasiAchievement,
   HakiAchievement,
-  AkademikTerapanAchievement,
+  MagangAchievement,
+  PortofolioAchievement,
   WirausahaAchievement,
-  PengembanganAchievement
+  PengembanganAchievement,
+  OrganisasiAchievement
 } from '@/types/achievement.types';
 import { achievementSeedData } from '@/data/achievement-seed-data';
 
@@ -77,17 +80,20 @@ export const deleteAchievement = (id: string): boolean => {
   return true;
 };
 
-// Get achievement statistics for a student (NEW CATEGORIES)
+// Get achievement statistics for a student
 export const getAchievementStats = (masterId: string): Record<AchievementCategory, number> => {
   const studentAchievements = getAchievementsByMasterId(masterId);
   
   return {
-    partisipasi: studentAchievements.filter(a => a.category === 'partisipasi').length,
+    lomba: studentAchievements.filter(a => a.category === 'lomba').length,
+    seminar: studentAchievements.filter(a => a.category === 'seminar').length,
     publikasi: studentAchievements.filter(a => a.category === 'publikasi').length,
     haki: studentAchievements.filter(a => a.category === 'haki').length,
-    akademik_terapan: studentAchievements.filter(a => a.category === 'akademik_terapan').length,
+    magang: studentAchievements.filter(a => a.category === 'magang').length,
+    portofolio: studentAchievements.filter(a => a.category === 'portofolio').length,
     wirausaha: studentAchievements.filter(a => a.category === 'wirausaha').length,
     pengembangan: studentAchievements.filter(a => a.category === 'pengembangan').length,
+    organisasi: studentAchievements.filter(a => a.category === 'organisasi').length,
   };
 };
 
@@ -129,8 +135,8 @@ export const getHighestAchievementLevel = (masterId: string): string | null => {
   let highestScore = 0;
   
   for (const achievement of studentAchievements) {
-    if (achievement.category === 'partisipasi') {
-      const tingkat = (achievement as PartisipasiAchievement).tingkat;
+    if (achievement.category === 'lomba') {
+      const tingkat = (achievement as any).tingkat;
       const score = levelHierarchy[tingkat] || 0;
       if (score > highestScore) {
         highestScore = score;
@@ -149,21 +155,27 @@ export const getGlobalAchievementStats = (): {
   topCategories: { category: AchievementCategory; count: number; label: string }[];
 } => {
   const byCategory: Record<AchievementCategory, number> = {
-    partisipasi: achievements.filter(a => a.category === 'partisipasi').length,
+    lomba: achievements.filter(a => a.category === 'lomba').length,
+    seminar: achievements.filter(a => a.category === 'seminar').length,
     publikasi: achievements.filter(a => a.category === 'publikasi').length,
     haki: achievements.filter(a => a.category === 'haki').length,
-    akademik_terapan: achievements.filter(a => a.category === 'akademik_terapan').length,
+    magang: achievements.filter(a => a.category === 'magang').length,
+    portofolio: achievements.filter(a => a.category === 'portofolio').length,
     wirausaha: achievements.filter(a => a.category === 'wirausaha').length,
     pengembangan: achievements.filter(a => a.category === 'pengembangan').length,
+    organisasi: achievements.filter(a => a.category === 'organisasi').length,
   };
 
   const categoryLabels: Record<AchievementCategory, string> = {
-    partisipasi: 'Partisipasi & Prestasi',
-    publikasi: 'Karya Ilmiah',
-    haki: 'Kekayaan Intelektual',
-    akademik_terapan: 'Akademik Terapan',
+    lomba: 'Lomba',
+    seminar: 'Seminar',
+    publikasi: 'Publikasi',
+    haki: 'HAKI',
+    magang: 'Magang',
+    portofolio: 'Portofolio',
     wirausaha: 'Wirausaha',
-    pengembangan: 'Pengembangan Diri',
+    pengembangan: 'Pengembangan',
+    organisasi: 'Organisasi',
   };
 
   const topCategories = (Object.entries(byCategory) as [AchievementCategory, number][])

@@ -237,12 +237,15 @@ export default function AdminDashboard() {
               {(Object.entries(ACHIEVEMENT_CATEGORIES) as [AchievementCategory, typeof ACHIEVEMENT_CATEGORIES[AchievementCategory]][]).map(([key, cat]) => {
                 const count = achievementStats.byCategory[key];
                 const iconMap: Record<AchievementCategory, React.ElementType> = {
-                  partisipasi: Trophy,
+                  lomba: Trophy,
+                  seminar: Mic2,
                   publikasi: BookOpen,
                   haki: Shield,
-                  akademik_terapan: Briefcase,
+                  magang: Briefcase,
+                  portofolio: FolderOpen,
                   wirausaha: Rocket,
                   pengembangan: GraduationCap,
+                  organisasi: Users2,
                 };
                 const Icon = iconMap[key];
                 return (

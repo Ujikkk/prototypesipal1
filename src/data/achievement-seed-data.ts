@@ -1,28 +1,32 @@
-// Seed data for Achievements Module - REVISED Categories
+// Seed data for Achievements Module
 
 import type { 
   Achievement, 
-  PartisipasiAchievement,
+  LombaAchievement, 
+  SeminarAchievement, 
+  OrganisasiAchievement,
   PublikasiAchievement,
   HakiAchievement,
-  AkademikTerapanAchievement,
+  MagangAchievement,
+  PortofolioAchievement,
   WirausahaAchievement,
   PengembanganAchievement
 } from '@/types/achievement.types';
 
-// Sample seed data using REVISED category structure
+// Sample seed data for various achievement categories
+// All items use proper normalized categories (no legacy 'kegiatan')
 export const achievementSeedData: Achievement[] = [
-  // ===== PARTISIPASI & PRESTASI =====
+  // ===== LOMBA =====
   {
     id: 'ach_seed_001',
     masterId: '1',
-    category: 'partisipasi',
-    jenisKegiatan: 'lomba',
-    namaKegiatan: 'Lomba Debat Ekonomi Nasional',
+    category: 'lomba',
+    namaLomba: 'Lomba Debat Ekonomi Nasional',
     penyelenggara: 'Universitas Indonesia',
     tingkat: 'nasional',
     peran: 'juara',
     peringkat: 'Juara 2',
+    bidang: 'Ekonomi',
     tahun: 2023,
     deskripsi: 'Kompetisi debat ekonomi tingkat nasional dengan peserta dari 50+ universitas.',
     isUnggulan: true,
@@ -32,17 +36,17 @@ export const achievementSeedData: Achievement[] = [
     ],
     createdAt: '2023-06-15T10:00:00Z',
     updatedAt: '2023-06-15T10:00:00Z',
-  } as PartisipasiAchievement,
+  } as LombaAchievement,
   {
     id: 'ach_seed_016',
     masterId: '1',
-    category: 'partisipasi',
-    jenisKegiatan: 'lomba',
-    namaKegiatan: 'Hackathon Digital Innovation',
+    category: 'lomba',
+    namaLomba: 'Hackathon Digital Innovation',
     penyelenggara: 'Kemenkominfo',
     tingkat: 'nasional',
     peran: 'juara',
     peringkat: 'Juara 1',
+    bidang: 'Teknologi',
     tahun: 2024,
     deskripsi: 'Kompetisi pengembangan solusi digital untuk UMKM.',
     isUnggulan: true,
@@ -53,17 +57,17 @@ export const achievementSeedData: Achievement[] = [
     ],
     createdAt: '2024-05-20T10:00:00Z',
     updatedAt: '2024-05-20T10:00:00Z',
-  } as PartisipasiAchievement,
+  } as LombaAchievement,
   {
     id: 'ach_seed_017',
     masterId: '2',
-    category: 'partisipasi',
-    jenisKegiatan: 'lomba',
-    namaKegiatan: 'Business Plan Competition',
+    category: 'lomba',
+    namaLomba: 'Business Plan Competition',
     penyelenggara: 'Bank Indonesia',
     tingkat: 'regional',
     peran: 'peserta',
     peringkat: 'Finalis',
+    bidang: 'Bisnis',
     tahun: 2023,
     deskripsi: 'Kompetisi rencana bisnis tingkat regional Jawa Tengah.',
     attachments: [
@@ -71,15 +75,15 @@ export const achievementSeedData: Achievement[] = [
     ],
     createdAt: '2023-10-05T10:00:00Z',
     updatedAt: '2023-10-05T10:00:00Z',
-  } as PartisipasiAchievement,
+  } as LombaAchievement,
+
+  // ===== SEMINAR =====
   {
     id: 'ach_seed_002',
     masterId: '1',
-    category: 'partisipasi',
-    jenisKegiatan: 'seminar',
-    namaKegiatan: 'Seminar Digital Marketing 4.0',
+    category: 'seminar',
+    namaSeminar: 'Seminar Digital Marketing 4.0',
     penyelenggara: 'Google Indonesia',
-    tingkat: 'nasional',
     peran: 'peserta',
     mode: 'offline',
     tahun: 2023,
@@ -89,15 +93,13 @@ export const achievementSeedData: Achievement[] = [
     ],
     createdAt: '2023-08-20T10:00:00Z',
     updatedAt: '2023-08-20T10:00:00Z',
-  } as PartisipasiAchievement,
+  } as SeminarAchievement,
   {
     id: 'ach_seed_003',
     masterId: '2',
-    category: 'partisipasi',
-    jenisKegiatan: 'workshop',
-    namaKegiatan: 'Workshop Kewirausahaan Mahasiswa',
+    category: 'seminar',
+    namaSeminar: 'Workshop Kewirausahaan Mahasiswa',
     penyelenggara: 'Polines',
-    tingkat: 'lokal',
     peran: 'pembicara',
     mode: 'offline',
     tahun: 2024,
@@ -109,15 +111,13 @@ export const achievementSeedData: Achievement[] = [
     ],
     createdAt: '2024-02-10T10:00:00Z',
     updatedAt: '2024-02-10T10:00:00Z',
-  } as PartisipasiAchievement,
+  } as SeminarAchievement,
   {
     id: 'ach_seed_018',
     masterId: '3',
-    category: 'partisipasi',
-    jenisKegiatan: 'konferensi',
-    namaKegiatan: 'International Conference on Business Innovation',
+    category: 'seminar',
+    namaSeminar: 'International Conference on Business Innovation',
     penyelenggara: 'ASEAN Business Forum',
-    tingkat: 'internasional',
     peran: 'pembicara',
     mode: 'online',
     tahun: 2024,
@@ -128,7 +128,7 @@ export const achievementSeedData: Achievement[] = [
     ],
     createdAt: '2024-04-15T10:00:00Z',
     updatedAt: '2024-04-15T10:00:00Z',
-  } as PartisipasiAchievement,
+  } as SeminarAchievement,
 
   // ===== PUBLIKASI =====
   {
@@ -192,12 +192,11 @@ export const achievementSeedData: Achievement[] = [
     updatedAt: '2024-04-10T10:00:00Z',
   } as HakiAchievement,
 
-  // ===== AKADEMIK TERAPAN (magang + portofolio) =====
+  // ===== MAGANG =====
   {
     id: 'ach_seed_008',
     masterId: '1',
-    category: 'akademik_terapan',
-    jenisAkademik: 'magang',
+    category: 'magang',
     namaPerusahaan: 'PT Telkom Indonesia',
     posisi: 'Digital Marketing Intern',
     lokasi: 'Jakarta',
@@ -207,7 +206,6 @@ export const achievementSeedData: Achievement[] = [
     sedangBerjalan: false,
     deskripsiTugas: 'Mengelola konten media sosial dan kampanye digital marketing.',
     skillDiperoleh: ['Social Media Marketing', 'Google Ads', 'Content Creation'],
-    tahun: 2023,
     isUnggulan: true,
     attachments: [
       { id: 'att_011', fileName: 'Sertifikat Magang Telkom.pdf', fileType: 'application/pdf', fileSize: 385000, fileUrl: '/documents/cert-telkom.pdf', uploadedAt: '2023-04-20T10:00:00Z' },
@@ -215,12 +213,11 @@ export const achievementSeedData: Achievement[] = [
     ],
     createdAt: '2023-04-20T10:00:00Z',
     updatedAt: '2023-04-20T10:00:00Z',
-  } as AkademikTerapanAchievement,
+  } as MagangAchievement,
   {
     id: 'ach_seed_009',
     masterId: '3',
-    category: 'akademik_terapan',
-    jenisAkademik: 'magang',
+    category: 'magang',
     namaPerusahaan: 'Tokopedia',
     posisi: 'Business Development Intern',
     lokasi: 'Jakarta',
@@ -230,18 +227,18 @@ export const achievementSeedData: Achievement[] = [
     sedangBerjalan: false,
     deskripsiTugas: 'Analisis pasar dan pengembangan kemitraan bisnis.',
     skillDiperoleh: ['Market Analysis', 'Partnership Development', 'Presentation'],
-    tahun: 2023,
     attachments: [
       { id: 'att_013', fileName: 'Internship Certificate Tokopedia.pdf', fileType: 'application/pdf', fileSize: 290000, fileUrl: '/documents/cert-tokopedia.pdf', uploadedAt: '2023-09-05T10:00:00Z' },
     ],
     createdAt: '2023-09-05T10:00:00Z',
     updatedAt: '2023-09-05T10:00:00Z',
-  } as AkademikTerapanAchievement,
+  } as MagangAchievement,
+
+  // ===== PORTOFOLIO =====
   {
     id: 'ach_seed_010',
     masterId: '2',
-    category: 'akademik_terapan',
-    jenisAkademik: 'portofolio_kelas',
+    category: 'portofolio',
     mataKuliah: 'Kewirausahaan',
     judulProyek: 'Startup "FreshMart" - Marketplace Sayur Organik',
     deskripsiProyek: 'Platform e-commerce untuk menjual sayur organik langsung dari petani ke konsumen.',
@@ -251,12 +248,11 @@ export const achievementSeedData: Achievement[] = [
     urlProyek: 'https://freshmart.example.com',
     createdAt: '2023-07-10T10:00:00Z',
     updatedAt: '2023-07-10T10:00:00Z',
-  } as AkademikTerapanAchievement,
+  } as PortofolioAchievement,
   {
     id: 'ach_seed_011',
     masterId: '1',
-    category: 'akademik_terapan',
-    jenisAkademik: 'portofolio_kelas',
+    category: 'portofolio',
     mataKuliah: 'E-Commerce',
     judulProyek: 'Toko Online Fashion "StyleKu"',
     deskripsiProyek: 'Membangun toko online fashion dengan fitur lengkap menggunakan Shopify.',
@@ -266,7 +262,7 @@ export const achievementSeedData: Achievement[] = [
     urlProyek: 'https://styleku.myshopify.com',
     createdAt: '2023-01-15T10:00:00Z',
     updatedAt: '2023-01-15T10:00:00Z',
-  } as AkademikTerapanAchievement,
+  } as PortofolioAchievement,
 
   // ===== WIRAUSAHA =====
   {
@@ -302,7 +298,7 @@ export const achievementSeedData: Achievement[] = [
     updatedAt: '2024-02-01T10:00:00Z',
   } as WirausahaAchievement,
 
-  // ===== PENGEMBANGAN DIRI (includes organisasi) =====
+  // ===== PENGEMBANGAN =====
   {
     id: 'ach_seed_014',
     masterId: '3',
@@ -320,51 +316,44 @@ export const achievementSeedData: Achievement[] = [
     createdAt: '2024-01-05T10:00:00Z',
     updatedAt: '2024-01-05T10:00:00Z',
   } as PengembanganAchievement,
+
+  // ===== ORGANISASI =====
   {
     id: 'ach_seed_015',
     masterId: '1',
-    category: 'pengembangan',
-    jenisProgram: 'organisasi',
-    namaProgram: 'Himpunan Mahasiswa ABT',
+    category: 'organisasi',
     namaOrganisasi: 'Himpunan Mahasiswa ABT',
     jabatan: 'Ketua',
-    jenisOrganisasi: 'kampus',
-    tanggalMulai: '2022-09-01',
-    tanggalSelesai: '2023-09-01',
-    sedangBerjalan: false,
+    periodeMulai: '2022-09-01',
+    periodeSelesai: '2023-09-01',
+    masihAktif: false,
     deskripsi: 'Memimpin organisasi himpunan mahasiswa dengan 200+ anggota aktif. Penghargaan: Organisasi Terbaik Polines 2023.',
     createdAt: '2023-09-10T10:00:00Z',
     updatedAt: '2023-09-10T10:00:00Z',
-  } as PengembanganAchievement,
+  } as OrganisasiAchievement,
   {
     id: 'ach_seed_019',
     masterId: '2',
-    category: 'pengembangan',
-    jenisProgram: 'organisasi',
-    namaProgram: 'BEM Polines',
+    category: 'organisasi',
     namaOrganisasi: 'BEM Polines',
     jabatan: 'Kepala Departemen Kewirausahaan',
-    jenisOrganisasi: 'kampus',
-    tanggalMulai: '2023-01-01',
-    tanggalSelesai: '2024-01-01',
-    sedangBerjalan: false,
+    periodeMulai: '2023-01-01',
+    periodeSelesai: '2024-01-01',
+    masihAktif: false,
     deskripsi: 'Mengelola program kewirausahaan mahasiswa dan event bazaar kampus.',
     createdAt: '2024-01-15T10:00:00Z',
     updatedAt: '2024-01-15T10:00:00Z',
-  } as PengembanganAchievement,
+  } as OrganisasiAchievement,
   {
     id: 'ach_seed_020',
     masterId: '1',
-    category: 'pengembangan',
-    jenisProgram: 'organisasi',
-    namaProgram: 'Komunitas Entrepreneur Muda Semarang',
+    category: 'organisasi',
     namaOrganisasi: 'Komunitas Entrepreneur Muda Semarang',
     jabatan: 'Anggota Aktif',
-    jenisOrganisasi: 'luar_kampus',
-    tanggalMulai: '2023-03-01',
-    sedangBerjalan: true,
+    periodeMulai: '2023-03-01',
+    masihAktif: true,
     deskripsi: 'Komunitas berbagi pengalaman dan networking antar pengusaha muda.',
     createdAt: '2023-03-15T10:00:00Z',
     updatedAt: '2023-03-15T10:00:00Z',
-  } as PengembanganAchievement,
+  } as OrganisasiAchievement,
 ];
