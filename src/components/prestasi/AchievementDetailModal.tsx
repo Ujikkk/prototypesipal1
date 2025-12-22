@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { 
   X, Calendar, Building2, MapPin, Trophy, BookOpen, Shield, 
-  Briefcase, FolderOpen, Rocket, GraduationCap, Paperclip,
+  Briefcase, FolderOpen, Rocket, Sprout, Paperclip, Mic, Users,
   ExternalLink, Edit, Trash2, ChevronLeft, ChevronRight, ZoomIn
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,13 +10,15 @@ import {
   Achievement, 
   AchievementCategory,
   ACHIEVEMENT_CATEGORIES,
-  KegiatanAchievement,
+  LombaAchievement,
+  SeminarAchievement,
   PublikasiAchievement,
   HakiAchievement,
   MagangAchievement,
   PortofolioAchievement,
   WirausahaAchievement,
-  PengembanganAchievement
+  PengembanganAchievement,
+  OrganisasiAchievement
 } from '@/types/achievement.types';
 
 interface AchievementDetailModalProps {
@@ -31,13 +33,15 @@ const CATEGORY_CONFIG: Record<AchievementCategory, {
   color: string; 
   bgColor: string;
 }> = {
-  kegiatan: { icon: Trophy, color: 'text-warning', bgColor: 'bg-warning/10' },
+  lomba: { icon: Trophy, color: 'text-warning', bgColor: 'bg-warning/10' },
+  seminar: { icon: Mic, color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
   publikasi: { icon: BookOpen, color: 'text-primary', bgColor: 'bg-primary/10' },
   haki: { icon: Shield, color: 'text-success', bgColor: 'bg-success/10' },
   magang: { icon: Briefcase, color: 'text-info', bgColor: 'bg-info/10' },
-  portofolio: { icon: FolderOpen, color: 'text-muted-foreground', bgColor: 'bg-muted' },
+  portofolio: { icon: FolderOpen, color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
   wirausaha: { icon: Rocket, color: 'text-destructive', bgColor: 'bg-destructive/10' },
-  pengembangan: { icon: GraduationCap, color: 'text-accent-foreground', bgColor: 'bg-accent' },
+  pengembangan: { icon: Sprout, color: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
+  organisasi: { icon: Users, color: 'text-sky-500', bgColor: 'bg-sky-500/10' },
 };
 
 function getAchievementInfo(achievement: Achievement): {
@@ -48,17 +52,31 @@ function getAchievementInfo(achievement: Achievement): {
   description?: string;
 } {
   switch (achievement.category) {
-    case 'kegiatan': {
-      const a = achievement as KegiatanAchievement;
+    case 'lomba': {
+      const a = achievement as LombaAchievement;
       return {
-        title: a.namaKegiatan,
+        title: a.namaLomba,
         year: a.tahun,
         level: a.tingkat,
         fields: [
-          { label: 'Jenis Kegiatan', value: a.jenisKegiatan },
           { label: 'Penyelenggara', value: a.penyelenggara },
           { label: 'Tingkat', value: a.tingkat },
-          ...(a.prestasi ? [{ label: 'Prestasi', value: a.prestasi }] : []),
+          { label: 'Peran', value: a.peran },
+          ...(a.peringkat ? [{ label: 'Peringkat', value: a.peringkat }] : []),
+          ...(a.bidang ? [{ label: 'Bidang', value: a.bidang }] : []),
+        ],
+        description: a.deskripsi,
+      };
+    }
+    case 'seminar': {
+      const a = achievement as SeminarAchievement;
+      return {
+        title: a.namaSeminar,
+        year: a.tahun,
+        fields: [
+          { label: 'Penyelenggara', value: a.penyelenggara },
+          { label: 'Peran', value: a.peran },
+          { label: 'Mode', value: a.mode },
         ],
         description: a.deskripsi,
       };
@@ -71,6 +89,7 @@ function getAchievementInfo(achievement: Achievement): {
         fields: [
           { label: 'Jenis', value: a.jenisPublikasi },
           { label: 'Penulis', value: a.penulis },
+          ...(a.peranPenulis ? [{ label: 'Peran', value: a.peranPenulis }] : []),
           ...(a.namaJurnal ? [{ label: 'Jurnal/Penerbit', value: a.namaJurnal }] : []),
           ...(a.volume ? [{ label: 'Volume', value: a.volume }] : []),
           ...(a.doi ? [{ label: 'DOI', value: a.doi }] : []),
@@ -114,8 +133,9 @@ function getAchievementInfo(achievement: Achievement): {
         title: a.judulProyek,
         year: a.tahun,
         fields: [
-          { label: 'Mata Kuliah', value: a.mataKuliah.toUpperCase() },
+          { label: 'Mata Kuliah', value: a.mataKuliah },
           { label: 'Semester', value: `${a.semester} ${a.tahun}` },
+          ...(a.output ? [{ label: 'Output', value: a.output }] : []),
           ...(a.nilai ? [{ label: 'Nilai', value: a.nilai }] : []),
           ...(a.urlProyek ? [{ label: 'URL Proyek', value: a.urlProyek }] : []),
         ],
@@ -129,6 +149,7 @@ function getAchievementInfo(achievement: Achievement): {
         year: a.tahunMulai,
         fields: [
           { label: 'Jenis Usaha', value: a.jenisUsaha },
+          ...(a.peran ? [{ label: 'Peran', value: a.peran }] : []),
           { label: 'Lokasi', value: a.lokasi },
           { label: 'Status', value: a.masihAktif ? 'Masih Aktif' : 'Tidak Aktif' },
           ...(a.jumlahKaryawan ? [{ label: 'Karyawan', value: `${a.jumlahKaryawan} orang` }] : []),
@@ -145,10 +166,24 @@ function getAchievementInfo(achievement: Achievement): {
         fields: [
           { label: 'Jenis Program', value: a.jenisProgram.replace('_', ' ') },
           { label: 'Penyelenggara', value: a.penyelenggara },
+          ...(a.peranMahasiswa ? [{ label: 'Peran', value: a.peranMahasiswa }] : []),
           ...(a.lokasi ? [{ label: 'Lokasi', value: a.lokasi }] : []),
           ...(a.negara ? [{ label: 'Negara', value: a.negara }] : []),
           { label: 'Periode', value: `${a.tanggalMulai} - ${a.sedangBerjalan ? 'Sekarang' : a.tanggalSelesai}` },
-          ...(a.prestasi ? [{ label: 'Prestasi', value: a.prestasi }] : []),
+          ...(a.output ? [{ label: 'Output', value: a.output }] : []),
+        ],
+        description: a.deskripsi,
+      };
+    }
+    case 'organisasi': {
+      const a = achievement as OrganisasiAchievement;
+      return {
+        title: `${a.jabatan} - ${a.namaOrganisasi}`,
+        year: new Date(a.periodeMulai).getFullYear(),
+        fields: [
+          { label: 'Organisasi', value: a.namaOrganisasi },
+          { label: 'Jabatan', value: a.jabatan },
+          { label: 'Periode', value: `${a.periodeMulai} - ${a.masihAktif ? 'Sekarang' : a.periodeSelesai}` },
         ],
         description: a.deskripsi,
       };

@@ -3,13 +3,15 @@
 import { 
   Achievement, 
   AchievementCategory,
-  KegiatanAchievement,
+  LombaAchievement,
+  SeminarAchievement,
   PublikasiAchievement,
   HakiAchievement,
   MagangAchievement,
   PortofolioAchievement,
   WirausahaAchievement,
-  PengembanganAchievement
+  PengembanganAchievement,
+  OrganisasiAchievement
 } from '@/types/achievement.types';
 import { achievementSeedData } from '@/data/achievement-seed-data';
 
@@ -83,13 +85,15 @@ export const getAchievementStats = (masterId: string): Record<AchievementCategor
   const studentAchievements = getAchievementsByMasterId(masterId);
   
   return {
-    kegiatan: studentAchievements.filter(a => a.category === 'kegiatan').length,
+    lomba: studentAchievements.filter(a => a.category === 'lomba').length,
+    seminar: studentAchievements.filter(a => a.category === 'seminar').length,
     publikasi: studentAchievements.filter(a => a.category === 'publikasi').length,
     haki: studentAchievements.filter(a => a.category === 'haki').length,
     magang: studentAchievements.filter(a => a.category === 'magang').length,
     portofolio: studentAchievements.filter(a => a.category === 'portofolio').length,
     wirausaha: studentAchievements.filter(a => a.category === 'wirausaha').length,
     pengembangan: studentAchievements.filter(a => a.category === 'pengembangan').length,
+    organisasi: studentAchievements.filter(a => a.category === 'organisasi').length,
   };
 };
 
@@ -100,23 +104,27 @@ export const getGlobalAchievementStats = (): {
   topCategories: { category: AchievementCategory; count: number; label: string }[];
 } => {
   const byCategory: Record<AchievementCategory, number> = {
-    kegiatan: achievements.filter(a => a.category === 'kegiatan').length,
+    lomba: achievements.filter(a => a.category === 'lomba').length,
+    seminar: achievements.filter(a => a.category === 'seminar').length,
     publikasi: achievements.filter(a => a.category === 'publikasi').length,
     haki: achievements.filter(a => a.category === 'haki').length,
     magang: achievements.filter(a => a.category === 'magang').length,
     portofolio: achievements.filter(a => a.category === 'portofolio').length,
     wirausaha: achievements.filter(a => a.category === 'wirausaha').length,
     pengembangan: achievements.filter(a => a.category === 'pengembangan').length,
+    organisasi: achievements.filter(a => a.category === 'organisasi').length,
   };
 
   const categoryLabels: Record<AchievementCategory, string> = {
-    kegiatan: 'Kegiatan',
+    lomba: 'Lomba',
+    seminar: 'Seminar',
     publikasi: 'Publikasi',
     haki: 'HAKI',
     magang: 'Magang',
     portofolio: 'Portofolio',
     wirausaha: 'Wirausaha',
     pengembangan: 'Pengembangan',
+    organisasi: 'Organisasi',
   };
 
   const topCategories = (Object.entries(byCategory) as [AchievementCategory, number][])

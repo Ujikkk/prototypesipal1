@@ -1,10 +1,22 @@
 import { 
-  Trophy, BookOpen, Shield, Briefcase, FolderOpen, Rocket, GraduationCap,
+  Trophy, BookOpen, Shield, Briefcase, FolderOpen, Rocket, Sprout, Mic, Users,
   ChevronRight, Paperclip, ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Achievement, AchievementCategory } from '@/types/achievement.types';
+import { 
+  Achievement, 
+  AchievementCategory,
+  LombaAchievement,
+  SeminarAchievement,
+  PublikasiAchievement,
+  HakiAchievement,
+  MagangAchievement,
+  PortofolioAchievement,
+  WirausahaAchievement,
+  PengembanganAchievement,
+  OrganisasiAchievement
+} from '@/types/achievement.types';
 
 interface AchievementTimelineProps {
   achievements: Achievement[];
@@ -21,48 +33,77 @@ const CATEGORY_CONFIG: Record<AchievementCategory, {
   bgColor: string;
   label: string;
 }> = {
-  kegiatan: { icon: Trophy, color: 'text-warning', bgColor: 'bg-warning/10', label: 'Kegiatan' },
+  lomba: { icon: Trophy, color: 'text-warning', bgColor: 'bg-warning/10', label: 'Lomba' },
+  seminar: { icon: Mic, color: 'text-purple-500', bgColor: 'bg-purple-500/10', label: 'Seminar' },
   publikasi: { icon: BookOpen, color: 'text-primary', bgColor: 'bg-primary/10', label: 'Publikasi' },
   haki: { icon: Shield, color: 'text-success', bgColor: 'bg-success/10', label: 'HAKI' },
   magang: { icon: Briefcase, color: 'text-info', bgColor: 'bg-info/10', label: 'Magang' },
-  portofolio: { icon: FolderOpen, color: 'text-secondary-foreground', bgColor: 'bg-secondary', label: 'Portofolio' },
+  portofolio: { icon: FolderOpen, color: 'text-orange-500', bgColor: 'bg-orange-500/10', label: 'Portofolio' },
   wirausaha: { icon: Rocket, color: 'text-destructive', bgColor: 'bg-destructive/10', label: 'Wirausaha' },
-  pengembangan: { icon: GraduationCap, color: 'text-accent-foreground', bgColor: 'bg-accent', label: 'Pengembangan' },
+  pengembangan: { icon: Sprout, color: 'text-emerald-500', bgColor: 'bg-emerald-500/10', label: 'Pengembangan' },
+  organisasi: { icon: Users, color: 'text-sky-500', bgColor: 'bg-sky-500/10', label: 'Organisasi' },
 };
 
 function getAchievementTitle(achievement: Achievement): string {
   switch (achievement.category) {
-    case 'kegiatan': return achievement.namaKegiatan;
-    case 'publikasi': return achievement.judul;
-    case 'haki': return achievement.judul;
-    case 'magang': return `${achievement.posisi} - ${achievement.namaPerusahaan}`;
-    case 'portofolio': return achievement.judulProyek;
-    case 'wirausaha': return achievement.namaUsaha;
-    case 'pengembangan': return achievement.namaProgram;
+    case 'lomba': return (achievement as LombaAchievement).namaLomba;
+    case 'seminar': return (achievement as SeminarAchievement).namaSeminar;
+    case 'publikasi': return (achievement as PublikasiAchievement).judul;
+    case 'haki': return (achievement as HakiAchievement).judul;
+    case 'magang': return `${(achievement as MagangAchievement).posisi} - ${(achievement as MagangAchievement).namaPerusahaan}`;
+    case 'portofolio': return (achievement as PortofolioAchievement).judulProyek;
+    case 'wirausaha': return (achievement as WirausahaAchievement).namaUsaha;
+    case 'pengembangan': return (achievement as PengembanganAchievement).namaProgram;
+    case 'organisasi': return `${(achievement as OrganisasiAchievement).jabatan} - ${(achievement as OrganisasiAchievement).namaOrganisasi}`;
   }
 }
 
 function getAchievementYear(achievement: Achievement): number {
   switch (achievement.category) {
-    case 'kegiatan': return achievement.tahun;
-    case 'publikasi': return achievement.tahun;
-    case 'haki': return achievement.tahunPengajuan;
-    case 'magang': return new Date(achievement.tanggalMulai).getFullYear();
-    case 'portofolio': return achievement.tahun;
-    case 'wirausaha': return achievement.tahunMulai;
-    case 'pengembangan': return new Date(achievement.tanggalMulai).getFullYear();
+    case 'lomba': return (achievement as LombaAchievement).tahun;
+    case 'seminar': return (achievement as SeminarAchievement).tahun;
+    case 'publikasi': return (achievement as PublikasiAchievement).tahun;
+    case 'haki': return (achievement as HakiAchievement).tahunPengajuan;
+    case 'magang': return new Date((achievement as MagangAchievement).tanggalMulai).getFullYear();
+    case 'portofolio': return (achievement as PortofolioAchievement).tahun;
+    case 'wirausaha': return (achievement as WirausahaAchievement).tahunMulai;
+    case 'pengembangan': return new Date((achievement as PengembanganAchievement).tanggalMulai).getFullYear();
+    case 'organisasi': return new Date((achievement as OrganisasiAchievement).periodeMulai).getFullYear();
   }
 }
 
 function getAchievementSubtitle(achievement: Achievement): string | undefined {
   switch (achievement.category) {
-    case 'kegiatan': return achievement.prestasi || achievement.penyelenggara;
-    case 'publikasi': return achievement.namaJurnal || achievement.penerbit;
-    case 'haki': return `${achievement.jenisHaki.replace('_', ' ')} • ${achievement.status}`;
-    case 'magang': return achievement.lokasi;
-    case 'portofolio': return achievement.mataKuliah.toUpperCase();
-    case 'wirausaha': return `${achievement.jenisUsaha} • ${achievement.masihAktif ? 'Aktif' : 'Tidak Aktif'}`;
-    case 'pengembangan': return achievement.negara || achievement.penyelenggara;
+    case 'lomba': {
+      const a = achievement as LombaAchievement;
+      return a.peringkat || a.penyelenggara;
+    }
+    case 'seminar': {
+      const a = achievement as SeminarAchievement;
+      return `${a.peran} • ${a.penyelenggara}`;
+    }
+    case 'publikasi': {
+      const a = achievement as PublikasiAchievement;
+      return a.namaJurnal || a.penerbit;
+    }
+    case 'haki': {
+      const a = achievement as HakiAchievement;
+      return `${a.jenisHaki.replace('_', ' ')} • ${a.status}`;
+    }
+    case 'magang': return (achievement as MagangAchievement).lokasi;
+    case 'portofolio': return (achievement as PortofolioAchievement).mataKuliah;
+    case 'wirausaha': {
+      const a = achievement as WirausahaAchievement;
+      return `${a.jenisUsaha} • ${a.masihAktif ? 'Aktif' : 'Tidak Aktif'}`;
+    }
+    case 'pengembangan': {
+      const a = achievement as PengembanganAchievement;
+      return a.penyelenggara;
+    }
+    case 'organisasi': {
+      const a = achievement as OrganisasiAchievement;
+      return a.masihAktif ? 'Masih Aktif' : 'Selesai';
+    }
   }
 }
 
@@ -121,9 +162,7 @@ export function AchievementTimeline({
                     {/* Year & Node */}
                     <div className="flex flex-col items-center w-10 flex-shrink-0">
                       <span className="text-xs font-semibold text-muted-foreground mb-2">{year}</span>
-                      <div className={cn('w-3 h-3 rounded-full z-10 border-2 border-background', config.bgColor.replace('/10', ''))} 
-                        style={{ backgroundColor: `hsl(var(--${achievement.category === 'kegiatan' ? 'warning' : achievement.category === 'publikasi' ? 'primary' : achievement.category === 'haki' ? 'success' : achievement.category === 'magang' ? 'info' : achievement.category === 'wirausaha' ? 'destructive' : 'accent'}))` }}
-                      />
+                      <div className={cn('w-3 h-3 rounded-full z-10 border-2 border-background', config.bgColor.replace('/10', ''))} />
                     </div>
 
                     {/* Content */}
@@ -141,7 +180,7 @@ export function AchievementTimeline({
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium text-foreground text-sm break-words">{title}</h4>
                           {subtitle && (
-                            <p className="text-xs text-muted-foreground break-words">{subtitle}</p>
+                            <p className="text-xs text-muted-foreground break-words capitalize">{subtitle}</p>
                           )}
                           {hasAttachments && (
                             <div className="flex items-center gap-1 mt-1">
