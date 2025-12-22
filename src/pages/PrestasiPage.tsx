@@ -506,8 +506,18 @@ function SeminarFields({ formData, updateField }: FieldProps) {
 }
 
 function OrganisasiFields({ formData, updateField }: FieldProps) {
+  const masihAktif = formData.masihAktif ?? true;
+
+  const handleToggleMembership = (isActive: boolean) => {
+    updateField('masihAktif', isActive);
+    if (isActive) {
+      updateField('periodeSelesai', null);
+    }
+  };
+
   return (
     <div className="space-y-4">
+      {/* Organization Name */}
       <div>
         <Label>Nama Organisasi *</Label>
         <Input 
@@ -517,41 +527,140 @@ function OrganisasiFields({ formData, updateField }: FieldProps) {
           required 
         />
       </div>
+
+      {/* Organization Type */}
+      <div>
+        <Label>Jenis Organisasi *</Label>
+        <Select 
+          value={formData.jenisOrganisasi || ''} 
+          onValueChange={(v) => updateField('jenisOrganisasi', v)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Pilih jenis organisasi" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="kampus">
+              <div className="flex flex-col items-start">
+                <span>Organisasi Kampus</span>
+                <span className="text-xs text-muted-foreground">Himpunan / BEM / UKM</span>
+              </div>
+            </SelectItem>
+            <SelectItem value="luar_kampus">
+              <div className="flex flex-col items-start">
+                <span>Organisasi Luar Kampus</span>
+                <span className="text-xs text-muted-foreground">Komunitas / NGO / Profesional</span>
+              </div>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Position/Role */}
       <div>
         <Label>Jabatan / Peran *</Label>
         <Input 
           value={formData.jabatan || ''} 
           onChange={(e) => updateField('jabatan', e.target.value)} 
-          placeholder="Contoh: Ketua, Sekretaris"
+          placeholder="Contoh: Ketua, Sekretaris, Anggota"
           required 
         />
       </div>
-      <div className="grid grid-cols-2 gap-4">
+
+      {/* Membership Status Toggle */}
+      <div className="p-4 rounded-xl bg-muted/50 border border-border">
+        <Label className="text-sm font-medium mb-3 block">Masih menjadi anggota?</Label>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => handleToggleMembership(true)}
+            className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all duration-200 ${
+              masihAktif 
+                ? 'border-primary bg-primary/10 text-primary font-medium' 
+                : 'border-border bg-background text-muted-foreground hover:border-primary/50'
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                masihAktif ? 'border-primary bg-primary' : 'border-muted-foreground'
+              }`}>
+                {masihAktif && <div className="w-2 h-2 rounded-full bg-white" />}
+              </div>
+              <span>YA</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Masih aktif sampai sekarang</p>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleToggleMembership(false)}
+            className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all duration-200 ${
+              !masihAktif 
+                ? 'border-primary bg-primary/10 text-primary font-medium' 
+                : 'border-border bg-background text-muted-foreground hover:border-primary/50'
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                !masihAktif ? 'border-primary bg-primary' : 'border-muted-foreground'
+              }`}>
+                {!masihAktif && <div className="w-2 h-2 rounded-full bg-white" />}
+              </div>
+              <span>TIDAK</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Keanggotaan sudah selesai</p>
+          </button>
+        </div>
+      </div>
+
+      {/* Date Fields */}
+      <div className={`grid gap-4 ${masihAktif ? 'grid-cols-1' : 'grid-cols-2'}`}>
         <div>
-          <Label>Periode Mulai *</Label>
+          <Label>Tanggal Masuk Organisasi *</Label>
           <Input 
             type="date" 
             value={formData.periodeMulai || ''} 
             onChange={(e) => updateField('periodeMulai', e.target.value)} 
             required 
           />
+          <p className="text-xs text-muted-foreground mt-1">Tanggal mulai bergabung</p>
         </div>
-        <div>
-          <Label>Periode Selesai</Label>
-          <Input 
-            type="date" 
-            value={formData.periodeSelesai || ''} 
-            onChange={(e) => updateField('periodeSelesai', e.target.value)}
-            disabled={formData.masihAktif}
-          />
-        </div>
+        
+        {/* Conditional End Date Field */}
+        {!masihAktif && (
+          <div className="animate-fade-in">
+            <Label>Tanggal Selesai Keanggotaan *</Label>
+            <Input 
+              type="date" 
+              value={formData.periodeSelesai || ''} 
+              onChange={(e) => updateField('periodeSelesai', e.target.value)}
+              required
+            />
+            <p className="text-xs text-muted-foreground mt-1">Tanggal berakhir keanggotaan</p>
+          </div>
+        )}
       </div>
+
+      {/* Period Display Preview */}
+      {formData.periodeMulai && (
+        <div className="p-3 rounded-lg bg-info/10 border border-info/20">
+          <p className="text-sm text-info font-medium">
+            Periode: {new Date(formData.periodeMulai).toLocaleDateString('id-ID', { 
+              day: 'numeric', month: 'long', year: 'numeric' 
+            })} – {masihAktif ? 'Sekarang' : (formData.periodeSelesai 
+              ? new Date(formData.periodeSelesai).toLocaleDateString('id-ID', { 
+                  day: 'numeric', month: 'long', year: 'numeric' 
+                }) 
+              : '...')}
+          </p>
+        </div>
+      )}
+
+      {/* Description */}
       <div>
         <Label>Deskripsi</Label>
         <Textarea 
           value={formData.deskripsi || ''} 
           onChange={(e) => updateField('deskripsi', e.target.value)} 
-          placeholder="Jelaskan peran dan kontribusi Anda..."
+          placeholder="Jelaskan peran dan kontribusi Anda dalam organisasi..."
           rows={3}
         />
       </div>
