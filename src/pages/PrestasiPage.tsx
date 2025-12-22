@@ -52,7 +52,7 @@ export default function PrestasiPage() {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [editingAchievement, setEditingAchievement] = useState<Achievement | null>(null);
   const [stats, setStats] = useState<Record<AchievementCategory, number>>({
-    lomba: 0, seminar: 0, publikasi: 0, haki: 0, magang: 0, portofolio: 0, wirausaha: 0, pengembangan: 0, organisasi: 0
+    partisipasi: 0, publikasi: 0, haki: 0, akademik_terapan: 0, wirausaha: 0, pengembangan: 0
   });
   const [unggulanCount, setUnggulanCount] = useState(0);
   const [highestLevel, setHighestLevel] = useState<string | null>(null);
@@ -106,8 +106,8 @@ export default function PrestasiPage() {
     : achievements.filter(a => a.category === activeCategory);
   const totalAchievements = Object.values(stats).reduce((a, b) => a + b, 0);
 
-  // Get category for form (default to lomba if 'all' is selected)
-  const formCategory: AchievementCategory = activeCategory === 'all' ? 'lomba' : activeCategory;
+  // Get category for form (default to partisipasi if 'all' is selected)
+  const formCategory: AchievementCategory = activeCategory === 'all' ? 'partisipasi' : activeCategory;
 
   return (
     <div className="min-h-screen bg-background">
@@ -171,15 +171,12 @@ export default function PrestasiPage() {
                     <div>
                       <h2 className="text-lg font-semibold text-foreground">
                         {activeCategory === 'all' ? 'Semua Prestasi' : 
-                          activeCategory === 'lomba' ? 'Lomba' :
-                          activeCategory === 'seminar' ? 'Seminar' :
+                          activeCategory === 'partisipasi' ? 'Partisipasi & Prestasi' :
                           activeCategory === 'publikasi' ? 'Karya Ilmiah & Publikasi' :
                           activeCategory === 'haki' ? 'Kekayaan Intelektual' :
-                          activeCategory === 'magang' ? 'Pengalaman Magang' :
-                          activeCategory === 'portofolio' ? 'Portofolio Praktikum Kelas' :
+                          activeCategory === 'akademik_terapan' ? 'Pengalaman Akademik Terapan' :
                           activeCategory === 'wirausaha' ? 'Pengalaman Wirausaha' :
-                          activeCategory === 'pengembangan' ? 'Program Pengembangan Diri' :
-                          activeCategory === 'organisasi' ? 'Organisasi & Kepemimpinan' :
+                          activeCategory === 'pengembangan' ? 'Pengembangan Diri' :
                           'Prestasi'}
                       </h2>
                       <p className="text-sm text-muted-foreground mt-0.5">
@@ -278,15 +275,12 @@ function AchievementForm({
   };
 
   const categoryLabels: Record<AchievementCategory, string> = {
-    lomba: 'Lomba',
-    seminar: 'Seminar',
+    partisipasi: 'Partisipasi & Prestasi',
     publikasi: 'Karya Ilmiah & Publikasi',
     haki: 'Kekayaan Intelektual',
-    magang: 'Pengalaman Magang',
-    portofolio: 'Portofolio Praktikum Kelas',
+    akademik_terapan: 'Pengalaman Akademik Terapan',
     wirausaha: 'Pengalaman Wirausaha',
-    pengembangan: 'Program Pengembangan Diri',
-    organisasi: 'Organisasi & Kepemimpinan',
+    pengembangan: 'Pengembangan Diri',
   };
 
   return (
@@ -321,15 +315,12 @@ function AchievementForm({
           )}
 
           {/* Dynamic Form Fields */}
-          {selectedCategory === 'lomba' && <LombaFields formData={formData} updateField={updateField} />}
-          {selectedCategory === 'seminar' && <SeminarFields formData={formData} updateField={updateField} />}
+          {selectedCategory === 'partisipasi' && <PartisipasiFields formData={formData} updateField={updateField} />}
           {selectedCategory === 'publikasi' && <PublikasiFields formData={formData} updateField={updateField} />}
           {selectedCategory === 'haki' && <HakiFields formData={formData} updateField={updateField} />}
-          {selectedCategory === 'magang' && <MagangFields formData={formData} updateField={updateField} />}
-          {selectedCategory === 'portofolio' && <PortofolioFields formData={formData} updateField={updateField} />}
+          {selectedCategory === 'akademik_terapan' && <AkademikTerapanFields formData={formData} updateField={updateField} />}
           {selectedCategory === 'wirausaha' && <WirausahaFields formData={formData} updateField={updateField} />}
           {selectedCategory === 'pengembangan' && <PengembanganFields formData={formData} updateField={updateField} />}
-          {selectedCategory === 'organisasi' && <OrganisasiFields formData={formData} updateField={updateField} />}
 
           {/* Attachments */}
           <div className="pt-4 border-t border-border">
