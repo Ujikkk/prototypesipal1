@@ -3,7 +3,7 @@ import {
   Trophy, BookOpen, Shield, Briefcase, Rocket, Sprout, Mic2, Users2, FolderOpen,
   Paperclip, Plus, ChevronDown, Building2, MapPin, Calendar,
   User, Award, FileText, ExternalLink, Download, X, ZoomIn,
-  Edit3, Trash2, Image as ImageIcon, HelpCircle
+  Edit3, Trash2, Image as ImageIcon, HelpCircle, Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -30,6 +30,7 @@ interface AchievementTimelineViewProps {
   onAddNew: () => void;
   onEdit?: (achievement: Achievement) => void;
   onDelete?: (achievement: Achievement) => void;
+  onToggleFeatured?: (achievement: Achievement) => void;
 }
 
 const CATEGORY_CONFIG: Record<string, { 
@@ -391,7 +392,8 @@ export function AchievementTimelineView({
   onItemClick, 
   onAddNew,
   onEdit,
-  onDelete
+  onDelete,
+  onToggleFeatured
 }: AchievementTimelineViewProps) {
   const [lightboxState, setLightboxState] = useState<{ images: any[]; index: number } | null>(null);
 
@@ -470,10 +472,12 @@ export function AchievementTimelineView({
               {/* Achievements for this year */}
               <div className="md:pl-16 space-y-3">
                 {groupedByYear[year].map(({ achievement, details }) => {
-                  const config = CATEGORY_CONFIG[achievement.category];
+                  const config = CATEGORY_CONFIG[achievement.category] || DEFAULT_CONFIG;
                   const Icon = config.icon;
                   const hasAttachments = achievement.attachments && achievement.attachments.length > 0;
+                  const attachmentCount = achievement.attachments?.length || 0;
                   const isExpanded = expandedId === achievement.id;
+                  const isFeatured = achievement.isUnggulan;
                   const detailFields = getCategoryDetailFields(achievement);
                   const imageAttachments = achievement.attachments?.filter(a => a.fileType.startsWith('image/')) || [];
                   const documentAttachments = achievement.attachments?.filter(a => !a.fileType.startsWith('image/')) || [];
@@ -498,9 +502,40 @@ export function AchievementTimelineView({
                           isExpanded 
                             ? cn('border-2', config.borderColor, 'shadow-elevated') 
                             : 'border-border/50 hover:shadow-elevated hover:-translate-y-0.5 hover:border-border',
+                          isFeatured && 'ring-2 ring-primary/30',
                           'group'
                         )}
                       >
+                        {/* Featured Star Toggle - Top Right Corner */}
+                        {onToggleFeatured && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onToggleFeatured(achievement);
+                            }}
+                            className={cn(
+                              'absolute top-3 right-3 p-1.5 rounded-lg transition-all duration-200 z-10',
+                              isFeatured 
+                                ? 'text-primary bg-primary/10 hover:bg-primary/20' 
+                                : 'text-muted-foreground/40 hover:text-primary hover:bg-primary/10 opacity-0 group-hover:opacity-100'
+                            )}
+                            title={isFeatured ? 'Hapus dari unggulan' : 'Tandai sebagai unggulan'}
+                          >
+                            <Star className={cn('w-4 h-4', isFeatured && 'fill-primary')} />
+                          </button>
+                        )}
+
+                        {/* Attachment Badge - Top Right (next to star) */}
+                        {hasAttachments && (
+                          <div className={cn(
+                            'absolute top-3 flex items-center gap-1 px-2 py-1 rounded-full bg-muted/80 text-muted-foreground text-xs font-medium',
+                            onToggleFeatured ? 'right-12' : 'right-3'
+                          )}>
+                            <Paperclip className="w-3 h-3" />
+                            <span>{attachmentCount}</span>
+                          </div>
+                        )}
+
                         <div className="flex items-start gap-4">
                           {/* Category Icon */}
                           <div className={cn(
@@ -511,52 +546,53 @@ export function AchievementTimelineView({
                           </div>
 
                           {/* Content */}
-                          <div className="flex-1 min-w-0">
+                          <div className="flex-1 min-w-0 pr-16">
                             <div className="flex items-start justify-between gap-3 mb-1.5">
-                              <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors leading-snug pr-2">
+                              <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors leading-snug">
                                 {details.title}
                               </h4>
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                {details.level && (
-                                  <span className={cn(
-                                    'text-xs font-medium px-2.5 py-1 rounded-full capitalize',
-                                    config.bgColor,
-                                    config.color
-                                  )}>
-                                    {details.level}
-                                  </span>
-                                )}
-                                <ChevronDown className={cn(
-                                  'w-4 h-4 text-muted-foreground transition-transform duration-200',
-                                  isExpanded && 'rotate-180'
-                                )} />
-                              </div>
                             </div>
                             
                             <p className="text-sm text-muted-foreground">
                               {details.subtitle}
                             </p>
 
-                            {/* Result Badge */}
-                            {details.result && (
-                              <div className="mt-2">
-                                <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground bg-muted px-2.5 py-1 rounded-lg">
-                                  <Award className="w-3.5 h-3.5 text-warning" />
+                            {/* Badges Row */}
+                            <div className="flex flex-wrap items-center gap-2 mt-2">
+                              {/* Featured Badge */}
+                              {isFeatured && (
+                                <span className="inline-flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                                  <Star className="w-3 h-3 fill-primary" />
+                                  Unggulan
+                                </span>
+                              )}
+                              
+                              {/* Level Badge */}
+                              {details.level && (
+                                <span className={cn(
+                                  'text-xs font-medium px-2 py-0.5 rounded-full capitalize',
+                                  config.bgColor,
+                                  config.color
+                                )}>
+                                  {details.level}
+                                </span>
+                              )}
+
+                              {/* Result Badge */}
+                              {details.result && (
+                                <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground bg-muted px-2 py-0.5 rounded-full">
+                                  <Award className="w-3 h-3 text-warning" />
                                   {details.result}
                                 </span>
-                              </div>
-                            )}
-
-                            {/* Document Indicator (when collapsed) */}
-                            {hasAttachments && !isExpanded && (
-                              <div className="flex items-center gap-1.5 mt-3">
-                                <Paperclip className="w-3.5 h-3.5 text-muted-foreground" />
-                                <span className="text-xs text-muted-foreground">
-                                  Dokumen tersedia
-                                </span>
-                              </div>
-                            )}
+                              )}
+                            </div>
                           </div>
+
+                          {/* Expand Chevron */}
+                          <ChevronDown className={cn(
+                            'w-5 h-5 text-muted-foreground transition-transform duration-200 flex-shrink-0 mt-1',
+                            isExpanded && 'rotate-180'
+                          )} />
                         </div>
                       </div>
 
