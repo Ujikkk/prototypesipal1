@@ -1,6 +1,6 @@
 import { 
-  Trophy, BookOpen, Shield, Briefcase, Rocket, Star, Mic,
-  FolderOpen, Sprout, Users
+  Trophy, BookOpen, Shield, Briefcase, Rocket, Star, Mic2,
+  FolderOpen, Sprout, Users2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AchievementCategory } from '@/types/achievement.types';
@@ -14,7 +14,7 @@ interface CategorySidebarProps {
   onCategoryChange: (category: CategoryFilter) => void;
 }
 
-// Category configuration with new categories
+// Category configuration with proper icons (strict order per spec)
 const CATEGORY_CONFIG: Record<CategoryFilter, { 
   icon: React.ElementType; 
   color: string; 
@@ -37,7 +37,7 @@ const CATEGORY_CONFIG: Record<CategoryFilter, {
     shortLabel: 'Lomba',
   },
   seminar: { 
-    icon: Mic, 
+    icon: Mic2, 
     color: 'text-purple-500', 
     bgColor: 'bg-purple-500/10',
     label: 'Seminar',
@@ -86,7 +86,7 @@ const CATEGORY_CONFIG: Record<CategoryFilter, {
     shortLabel: 'Pengembangan',
   },
   organisasi: { 
-    icon: Users, 
+    icon: Users2, 
     color: 'text-sky-500', 
     bgColor: 'bg-sky-500/10',
     label: 'Organisasi & Kepemimpinan',
@@ -94,9 +94,18 @@ const CATEGORY_CONFIG: Record<CategoryFilter, {
   },
 };
 
-// Categories in strict display order
+// Categories in STRICT display order per spec
 const categories: CategoryFilter[] = [
-  'all', 'lomba', 'seminar', 'publikasi', 'haki', 'magang', 'portofolio', 'wirausaha', 'pengembangan', 'organisasi'
+  'all', 
+  'lomba', 
+  'seminar', 
+  'publikasi', 
+  'haki', 
+  'magang', 
+  'portofolio', 
+  'wirausaha', 
+  'pengembangan', 
+  'organisasi'
 ];
 
 export function CategorySidebar({ activeCategory, stats, onCategoryChange }: CategorySidebarProps) {
@@ -110,10 +119,10 @@ export function CategorySidebar({ activeCategory, stats, onCategoryChange }: Cat
   return (
     <>
       {/* Desktop Sidebar - Sticky */}
-      <aside className="hidden lg:block w-64 flex-shrink-0">
-        <div className="sticky top-28 space-y-2">
+      <aside className="hidden lg:block w-60 xl:w-64 flex-shrink-0">
+        <div className="sticky top-28 space-y-1.5">
           {/* Sidebar Header */}
-          <div className="px-3 py-2">
+          <div className="px-3 py-2 mb-2">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Kategori Prestasi
             </h3>
@@ -132,7 +141,7 @@ export function CategorySidebar({ activeCategory, stats, onCategoryChange }: Cat
                   key={key}
                   onClick={() => onCategoryChange(key)}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 text-left group',
+                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-left group',
                     isActive 
                       ? 'bg-primary text-primary-foreground shadow-soft' 
                       : 'hover:bg-muted/80 text-foreground'
@@ -140,18 +149,18 @@ export function CategorySidebar({ activeCategory, stats, onCategoryChange }: Cat
                 >
                   {/* Icon Container */}
                   <div className={cn(
-                    'w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 flex-shrink-0',
+                    'w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 flex-shrink-0',
                     isActive 
                       ? 'bg-primary-foreground/20' 
                       : config.bgColor
                   )}>
                     <Icon className={cn(
-                      'w-4.5 h-4.5 transition-colors',
+                      'w-4 h-4 transition-colors',
                       isActive ? 'text-primary-foreground' : config.color
                     )} />
                   </div>
 
-                  {/* Label - no truncation */}
+                  {/* Label - never truncated */}
                   <div className="flex-1 min-w-0">
                     <span className={cn(
                       'text-sm font-medium block leading-tight',
@@ -178,7 +187,7 @@ export function CategorySidebar({ activeCategory, stats, onCategoryChange }: Cat
       </aside>
 
       {/* Mobile Horizontal Tabs */}
-      <div className="lg:hidden mb-6 -mx-4 px-4 overflow-x-auto scrollbar-hide">
+      <div className="lg:hidden mb-5 -mx-4 px-4 overflow-x-auto scrollbar-hide">
         <div className="flex gap-2 pb-2 min-w-max">
           {categories.map((key) => {
             const config = CATEGORY_CONFIG[key];
@@ -191,7 +200,7 @@ export function CategorySidebar({ activeCategory, stats, onCategoryChange }: Cat
                 key={key}
                 onClick={() => onCategoryChange(key)}
                 className={cn(
-                  'flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-200 whitespace-nowrap',
+                  'flex items-center gap-2 px-3.5 py-2.5 rounded-full transition-all duration-200 whitespace-nowrap',
                   isActive 
                     ? 'bg-primary text-primary-foreground shadow-soft' 
                     : 'bg-card border border-border/50 hover:bg-muted text-foreground'
