@@ -780,6 +780,16 @@ function MagangFields({ formData, updateField }: FieldProps) {
 }
 
 function PortofolioFields({ formData, updateField }: FieldProps) {
+  const isOtherMataKuliah = formData.mataKuliah === 'other';
+
+  // Clear custom field when switching away from 'other'
+  const handleMataKuliahChange = (value: string) => {
+    updateField('mataKuliah', value);
+    if (value !== 'other') {
+      updateField('mataKuliahCustom', undefined);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -793,16 +803,38 @@ function PortofolioFields({ formData, updateField }: FieldProps) {
       </div>
       <div>
         <Label>Mata Kuliah *</Label>
-        <Select value={formData.mataKuliah || ''} onValueChange={(v) => updateField('mataKuliah', v)}>
+        <Select value={formData.mataKuliah || ''} onValueChange={handleMataKuliahChange}>
           <SelectTrigger><SelectValue placeholder="Pilih mata kuliah" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="kwu">KWU</SelectItem>
             <SelectItem value="ecommerce">E-Commerce</SelectItem>
             <SelectItem value="msdm_ocai">MSDM/OCAI</SelectItem>
-            <SelectItem value="lainnya">Lainnya</SelectItem>
+            <SelectItem value="other">Mata Kuliah Lain</SelectItem>
           </SelectContent>
         </Select>
       </div>
+      
+      {/* Custom Mata Kuliah Field - Only visible when 'other' is selected */}
+      <div 
+        className={`overflow-hidden transition-all duration-300 ease-out ${
+          isOtherMataKuliah 
+            ? 'max-h-24 opacity-100' 
+            : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="pt-1">
+          <Label>Nama Mata Kuliah (Lainnya) *</Label>
+          <Input 
+            value={formData.mataKuliahCustom || ''} 
+            onChange={(e) => updateField('mataKuliahCustom', e.target.value.slice(0, 100))} 
+            placeholder="Contoh: Enterprise Resource Planning"
+            maxLength={100}
+            required={isOtherMataKuliah}
+          />
+          <p className="text-xs text-muted-foreground mt-1">Masukkan nama mata kuliah yang tidak ada dalam daftar</p>
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Tahun *</Label>

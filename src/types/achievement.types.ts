@@ -104,7 +104,8 @@ export interface MagangAchievement extends BaseAchievement {
 // Portofolio Praktikum Kelas
 export interface PortofolioAchievement extends BaseAchievement {
   category: 'portofolio';
-  mataKuliah: string;
+  mataKuliah: 'kwu' | 'ecommerce' | 'msdm_ocai' | 'other';
+  mataKuliahCustom?: string; // Only used when mataKuliah === 'other'
   judulProyek: string;
   deskripsiProyek: string;
   output?: string; // link / dokumen / video
