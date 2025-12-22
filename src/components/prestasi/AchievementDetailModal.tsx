@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { id as idLocale } from 'date-fns/locale';
 import { 
   Achievement, 
   AchievementCategory,
@@ -177,13 +179,22 @@ function getAchievementInfo(achievement: Achievement): {
     }
     case 'organisasi': {
       const a = achievement as OrganisasiAchievement;
+      const formatPeriod = () => {
+        const start = format(new Date(a.tanggalMulai), 'd MMM yyyy', { locale: idLocale });
+        if (a.masihAktif) return `${start} - Sekarang`;
+        return a.tanggalSelesai 
+          ? `${start} - ${format(new Date(a.tanggalSelesai), 'd MMM yyyy', { locale: idLocale })}`
+          : `${start} - Selesai`;
+      };
       return {
         title: `${a.jabatan} - ${a.namaOrganisasi}`,
-        year: new Date(a.periodeMulai).getFullYear(),
+        year: new Date(a.tanggalMulai).getFullYear(),
         fields: [
           { label: 'Organisasi', value: a.namaOrganisasi },
+          { label: 'Jenis', value: a.jenisOrganisasi === 'kampus' ? 'Organisasi Kampus' : 'Organisasi Luar Kampus' },
           { label: 'Jabatan', value: a.jabatan },
-          { label: 'Periode', value: `${a.periodeMulai} - ${a.masihAktif ? 'Sekarang' : a.periodeSelesai}` },
+          { label: 'Periode', value: formatPeriod() },
+          { label: 'Status', value: a.masihAktif ? 'Aktif' : 'Selesai' },
         ],
         description: a.deskripsi,
       };

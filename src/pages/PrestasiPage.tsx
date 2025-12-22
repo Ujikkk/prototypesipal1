@@ -16,8 +16,14 @@ import {
   type CategoryFilter 
 } from '@/components/prestasi';
 import {
-  ChevronLeft, Plus, X, Check, Paperclip
+  ChevronLeft, Plus, X, Check, Paperclip, CalendarIcon
 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { id as idLocale } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 import {
   Achievement,
   AchievementCategory,
@@ -515,6 +521,16 @@ function SeminarFields({ formData, updateField }: FieldProps) {
 }
 
 function OrganisasiFields({ formData, updateField }: FieldProps) {
+  const masihAktif = formData.masihAktif ?? true;
+
+  // Handle membership toggle change
+  const handleMasihAktifChange = (checked: boolean) => {
+    updateField('masihAktif', checked);
+    if (checked) {
+      updateField('tanggalSelesai', undefined);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -526,6 +542,32 @@ function OrganisasiFields({ formData, updateField }: FieldProps) {
           required 
         />
       </div>
+
+      {/* Jenis Organisasi - Required */}
+      <div>
+        <Label>Jenis Organisasi *</Label>
+        <Select 
+          value={formData.jenisOrganisasi || ''} 
+          onValueChange={(v) => updateField('jenisOrganisasi', v)}
+        >
+          <SelectTrigger><SelectValue placeholder="Pilih jenis organisasi" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="kampus">
+              <span className="flex flex-col items-start">
+                <span>Organisasi Kampus</span>
+                <span className="text-xs text-muted-foreground">Himpunan / BEM / UKM</span>
+              </span>
+            </SelectItem>
+            <SelectItem value="luar_kampus">
+              <span className="flex flex-col items-start">
+                <span>Organisasi Luar Kampus</span>
+                <span className="text-xs text-muted-foreground">Komunitas / NGO / Profesional</span>
+              </span>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <div>
         <Label>Jabatan / Peran *</Label>
         <Input 
@@ -535,26 +577,94 @@ function OrganisasiFields({ formData, updateField }: FieldProps) {
           required 
         />
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Periode Mulai *</Label>
-          <Input 
-            type="date" 
-            value={formData.periodeMulai || ''} 
-            onChange={(e) => updateField('periodeMulai', e.target.value)} 
-            required 
-          />
+
+      {/* Membership Status Toggle */}
+      <div className="flex items-center justify-between rounded-lg border border-border p-4 bg-muted/30">
+        <div className="space-y-0.5">
+          <Label className="text-base">Masih menjadi anggota</Label>
+          <p className="text-sm text-muted-foreground">
+            {masihAktif ? 'Keanggotaan masih aktif hingga saat ini' : 'Keanggotaan sudah berakhir'}
+          </p>
         </div>
-        <div>
-          <Label>Periode Selesai</Label>
-          <Input 
-            type="date" 
-            value={formData.periodeSelesai || ''} 
-            onChange={(e) => updateField('periodeSelesai', e.target.value)}
-            disabled={formData.masihAktif}
-          />
+        <Switch 
+          checked={masihAktif} 
+          onCheckedChange={handleMasihAktifChange}
+        />
+      </div>
+
+      {/* Start Date - Always visible */}
+      <div>
+        <Label>Tanggal Masuk Organisasi *</Label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "w-full justify-start text-left font-normal",
+                !formData.tanggalMulai && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {formData.tanggalMulai 
+                ? format(new Date(formData.tanggalMulai), 'd MMMM yyyy', { locale: idLocale })
+                : <span>Pilih tanggal mulai</span>
+              }
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={formData.tanggalMulai ? new Date(formData.tanggalMulai) : undefined}
+              onSelect={(date) => updateField('tanggalMulai', date?.toISOString().split('T')[0])}
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      {/* End Date - Conditional with smooth animation */}
+      <div 
+        className={`overflow-hidden transition-all duration-300 ease-out ${
+          !masihAktif 
+            ? 'max-h-32 opacity-100' 
+            : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="pt-1">
+          <Label>Tanggal Selesai Keanggotaan *</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !formData.tanggalSelesai && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {formData.tanggalSelesai 
+                  ? format(new Date(formData.tanggalSelesai), 'd MMMM yyyy', { locale: idLocale })
+                  : <span>Pilih tanggal selesai</span>
+                }
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={formData.tanggalSelesai ? new Date(formData.tanggalSelesai) : undefined}
+                onSelect={(date) => updateField('tanggalSelesai', date?.toISOString().split('T')[0])}
+                disabled={(date) => 
+                  formData.tanggalMulai ? date < new Date(formData.tanggalMulai) : false
+                }
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
+
       <div>
         <Label>Deskripsi</Label>
         <Textarea 

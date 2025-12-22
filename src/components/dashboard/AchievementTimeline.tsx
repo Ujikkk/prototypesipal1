@@ -73,7 +73,7 @@ function getAchievementYear(achievement: Achievement): number {
     case 'portofolio': return (achievement as PortofolioAchievement).tahun;
     case 'wirausaha': return (achievement as WirausahaAchievement).tahunMulai;
     case 'pengembangan': return new Date((achievement as PengembanganAchievement).tanggalMulai).getFullYear();
-    case 'organisasi': return new Date((achievement as OrganisasiAchievement).periodeMulai).getFullYear();
+    case 'organisasi': return new Date((achievement as OrganisasiAchievement).tanggalMulai).getFullYear();
     default: return (achievement as any).tahun || new Date().getFullYear();
   }
 }
