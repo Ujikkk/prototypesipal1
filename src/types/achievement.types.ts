@@ -1,15 +1,21 @@
 // Achievement Types for Non-Academic Achievements Module
 
+// REVISED CATEGORIES (per spec)
+// ⭐ Semua Prestasi (all) - UI only
+// 🏆 Partisipasi & Prestasi (partisipasi) - covers lomba, seminar, kegiatan
+// 📘 Karya Ilmiah & Publikasi (publikasi)
+// 🛡️ Kekayaan Intelektual (haki)
+// 🧪 Pengalaman Akademik Terapan (akademik_terapan) - covers magang, portofolio
+// 🚀 Pengalaman Wirausaha (wirausaha)
+// 🌍 Pengembangan Diri (pengembangan) - covers organisasi, volunteer, etc.
+
 export type AchievementCategory = 
-  | 'lomba'         // Lomba / Kompetisi
-  | 'seminar'       // Seminar
-  | 'publikasi'     // Karya Ilmiah & Publikasi
-  | 'haki'          // Kekayaan Intelektual
-  | 'magang'        // Pengalaman Magang
-  | 'portofolio'    // Portofolio Praktikum Kelas
-  | 'wirausaha'     // Pengalaman Wirausaha
-  | 'pengembangan'  // Program Pengembangan Diri
-  | 'organisasi';   // Organisasi & Kepemimpinan
+  | 'partisipasi'    // Partisipasi & Prestasi (lomba, seminar, kegiatan)
+  | 'publikasi'      // Karya Ilmiah & Publikasi
+  | 'haki'           // Kekayaan Intelektual
+  | 'akademik_terapan' // Pengalaman Akademik Terapan (magang, portofolio)
+  | 'wirausaha'      // Pengalaman Wirausaha
+  | 'pengembangan';  // Pengembangan Diri (organisasi, volunteer, etc.)
 
 export interface BaseAchievement {
   id: string;
@@ -32,31 +38,25 @@ export interface AchievementAttachment {
   uploadedAt: string;
 }
 
-// Lomba / Kompetisi
-export interface LombaAchievement extends BaseAchievement {
-  category: 'lomba';
-  namaLomba: string;
+// =====================================
+// Partisipasi & Prestasi (lomba, seminar, kegiatan)
+// =====================================
+export interface PartisipasiAchievement extends BaseAchievement {
+  category: 'partisipasi';
+  jenisKegiatan: 'lomba' | 'seminar' | 'workshop' | 'pelatihan' | 'konferensi' | 'lainnya';
+  namaKegiatan: string;
   penyelenggara: string;
   tingkat: 'lokal' | 'regional' | 'nasional' | 'internasional';
-  peran: 'peserta' | 'juara';
+  peran: 'peserta' | 'juara' | 'pembicara' | 'panitia';
   peringkat?: string; // e.g., Juara 1, Finalis
-  bidang?: string;
+  mode?: 'online' | 'offline' | 'hybrid';
   tahun: number;
   deskripsi?: string;
 }
 
-// Seminar
-export interface SeminarAchievement extends BaseAchievement {
-  category: 'seminar';
-  namaSeminar: string;
-  penyelenggara: string;
-  peran: 'peserta' | 'pembicara';
-  mode: 'online' | 'offline';
-  tahun: number;
-  deskripsi?: string;
-}
-
+// =====================================
 // Karya Ilmiah & Publikasi
+// =====================================
 export interface PublikasiAchievement extends BaseAchievement {
   category: 'publikasi';
   jenisPublikasi: 'artikel_jurnal' | 'prosiding' | 'buku' | 'book_chapter' | 'lainnya';
@@ -73,7 +73,9 @@ export interface PublikasiAchievement extends BaseAchievement {
   deskripsi?: string;
 }
 
+// =====================================
 // Kekayaan Intelektual (HAKI)
+// =====================================
 export interface HakiAchievement extends BaseAchievement {
   category: 'haki';
   jenisHaki: 'hak_cipta' | 'paten' | 'merek' | 'desain_industri' | 'rahasia_dagang';
@@ -87,34 +89,39 @@ export interface HakiAchievement extends BaseAchievement {
   deskripsi?: string;
 }
 
-// Pengalaman Magang
-export interface MagangAchievement extends BaseAchievement {
-  category: 'magang';
-  namaPerusahaan: string;
-  posisi: string;
-  lokasi: string;
-  industri: string;
-  tanggalMulai: string;
+// =====================================
+// Pengalaman Akademik Terapan (magang, portofolio praktikum)
+// =====================================
+export interface AkademikTerapanAchievement extends BaseAchievement {
+  category: 'akademik_terapan';
+  jenisAkademik: 'magang' | 'portofolio_kelas' | 'proyek_akhir' | 'penelitian';
+  
+  // For magang
+  namaPerusahaan?: string;
+  posisi?: string;
+  lokasi?: string;
+  industri?: string;
+  tanggalMulai?: string;
   tanggalSelesai?: string;
-  sedangBerjalan: boolean;
+  sedangBerjalan?: boolean;
   deskripsiTugas?: string;
   skillDiperoleh?: string[];
-}
-
-// Portofolio Praktikum Kelas
-export interface PortofolioAchievement extends BaseAchievement {
-  category: 'portofolio';
-  mataKuliah: string;
-  judulProyek: string;
-  deskripsiProyek: string;
-  output?: string; // link / dokumen / video
+  
+  // For portofolio
+  mataKuliah?: string;
+  mataKuliahLainnya?: string; // Custom mata kuliah if "Lainnya" selected
+  judulProyek?: string;
+  deskripsiProyek?: string;
+  output?: string;
   tahun: number;
-  semester: 'ganjil' | 'genap';
+  semester?: 'ganjil' | 'genap';
   nilai?: string;
   urlProyek?: string;
 }
 
+// =====================================
 // Pengalaman Wirausaha
+// =====================================
 export interface WirausahaAchievement extends BaseAchievement {
   category: 'wirausaha';
   namaUsaha: string;
@@ -130,12 +137,14 @@ export interface WirausahaAchievement extends BaseAchievement {
   sosialMedia?: string[];
 }
 
-// Program Pengembangan Diri
+// =====================================
+// Pengembangan Diri (organisasi, volunteer, program)
+// =====================================
 export interface PengembanganAchievement extends BaseAchievement {
   category: 'pengembangan';
-  jenisProgram: 'pertukaran_mahasiswa' | 'beasiswa' | 'volunteer' | 'pelatihan' | 'lainnya';
+  jenisProgram: 'organisasi' | 'pertukaran_mahasiswa' | 'beasiswa' | 'volunteer' | 'pelatihan' | 'lainnya';
   namaProgram: string;
-  penyelenggara: string;
+  penyelenggara?: string;
   peranMahasiswa?: string;
   lokasi?: string;
   negara?: string;
@@ -144,40 +153,28 @@ export interface PengembanganAchievement extends BaseAchievement {
   sedangBerjalan: boolean;
   output?: string;
   deskripsi?: string;
-}
-
-// Organisasi & Kepemimpinan
-export interface OrganisasiAchievement extends BaseAchievement {
-  category: 'organisasi';
-  namaOrganisasi: string;
-  jabatan: string;
-  periodeMulai: string;
-  periodeSelesai?: string;
-  masihAktif: boolean;
-  deskripsi?: string;
+  
+  // For organisasi type
+  jenisOrganisasi?: 'kampus' | 'luar_kampus'; // Organisasi Kampus vs Luar Kampus
+  namaOrganisasi?: string;
+  jabatan?: string;
 }
 
 // Union type for all achievements
 export type Achievement = 
-  | LombaAchievement
-  | SeminarAchievement
+  | PartisipasiAchievement
   | PublikasiAchievement
   | HakiAchievement
-  | MagangAchievement
-  | PortofolioAchievement
+  | AkademikTerapanAchievement
   | WirausahaAchievement
-  | PengembanganAchievement
-  | OrganisasiAchievement;
+  | PengembanganAchievement;
 
 // Category metadata for UI
 export const ACHIEVEMENT_CATEGORIES: Record<AchievementCategory, { label: string; icon: string; color: string }> = {
-  lomba: { label: 'Lomba', icon: 'Trophy', color: 'text-warning' },
-  seminar: { label: 'Seminar', icon: 'Mic', color: 'text-purple-500' },
+  partisipasi: { label: 'Partisipasi & Prestasi', icon: 'Trophy', color: 'text-warning' },
   publikasi: { label: 'Karya Ilmiah & Publikasi', icon: 'BookOpen', color: 'text-primary' },
   haki: { label: 'Kekayaan Intelektual', icon: 'Shield', color: 'text-success' },
-  magang: { label: 'Pengalaman Magang', icon: 'Briefcase', color: 'text-info' },
-  portofolio: { label: 'Portofolio Praktikum Kelas', icon: 'FolderOpen', color: 'text-orange-500' },
+  akademik_terapan: { label: 'Pengalaman Akademik Terapan', icon: 'FlaskConical', color: 'text-info' },
   wirausaha: { label: 'Pengalaman Wirausaha', icon: 'Rocket', color: 'text-destructive' },
-  pengembangan: { label: 'Program Pengembangan Diri', icon: 'Sprout', color: 'text-emerald-500' },
-  organisasi: { label: 'Organisasi & Kepemimpinan', icon: 'Users', color: 'text-sky-500' },
+  pengembangan: { label: 'Pengembangan Diri', icon: 'Globe', color: 'text-emerald-500' },
 };
