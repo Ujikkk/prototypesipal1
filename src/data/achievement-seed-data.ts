@@ -263,6 +263,31 @@ export const achievementSeedData: Achievement[] = [
     createdAt: '2023-01-15T10:00:00Z',
     updatedAt: '2023-01-15T10:00:00Z',
   } as PortofolioAchievement,
+  {
+    id: 'ach_seed_011b',
+    masterId: '1',
+    category: 'portofolio',
+    mataKuliah: 'other',
+    mataKuliahCustom: 'Enterprise Resource Planning',
+    judulProyek: 'Sistem ERP Toko Retail "RetailPro"',
+    deskripsiProyek: 'Implementasi sistem ERP untuk manajemen inventori, penjualan, dan laporan keuangan toko retail.',
+    tahun: 2024,
+    semester: 'ganjil',
+    nilai: 'A',
+    urlProyek: 'https://retailpro-erp.example.com',
+    createdAt: '2024-02-20T10:00:00Z',
+    updatedAt: '2024-02-20T10:00:00Z',
+    isUnggulan: true,
+    attachments: [
+      {
+        fileName: 'ERP_Documentation.pdf',
+        fileType: 'application/pdf',
+        fileSize: 2500000,
+        fileUrl: '/uploads/erp-docs.pdf',
+        uploadedAt: '2024-02-20T10:00:00Z',
+      }
+    ],
+  } as PortofolioAchievement,
 
   // ===== WIRAUSAHA =====
   {
