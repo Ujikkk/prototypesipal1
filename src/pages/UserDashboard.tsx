@@ -26,7 +26,7 @@ export default function UserDashboard() {
   const { selectedAlumni, getAlumniDataByMasterId } = useAlumni();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [stats, setStats] = useState<Record<AchievementCategory, number>>({
-    kegiatan: 0, publikasi: 0, haki: 0, magang: 0, portofolio: 0, wirausaha: 0, pengembangan: 0
+    lomba: 0, seminar: 0, publikasi: 0, haki: 0, magang: 0, portofolio: 0, wirausaha: 0, pengembangan: 0, organisasi: 0
   });
 
   useEffect(() => {
@@ -299,24 +299,28 @@ export default function UserDashboard() {
 // Helper functions
 function getAchievementTitle(achievement: Achievement): string {
   switch (achievement.category) {
-    case 'kegiatan': return achievement.namaKegiatan;
-    case 'publikasi': return achievement.judul;
-    case 'haki': return achievement.judul;
-    case 'magang': return `${achievement.posisi} - ${achievement.namaPerusahaan}`;
-    case 'portofolio': return achievement.judulProyek;
-    case 'wirausaha': return achievement.namaUsaha;
-    case 'pengembangan': return achievement.namaProgram;
+    case 'lomba': return (achievement as any).namaLomba;
+    case 'seminar': return (achievement as any).namaSeminar;
+    case 'publikasi': return (achievement as any).judul;
+    case 'haki': return (achievement as any).judul;
+    case 'magang': return `${(achievement as any).posisi} - ${(achievement as any).namaPerusahaan}`;
+    case 'portofolio': return (achievement as any).judulProyek;
+    case 'wirausaha': return (achievement as any).namaUsaha;
+    case 'pengembangan': return (achievement as any).namaProgram;
+    case 'organisasi': return `${(achievement as any).jabatan} - ${(achievement as any).namaOrganisasi}`;
   }
 }
 
 function getAchievementYear(achievement: Achievement): number {
   switch (achievement.category) {
-    case 'kegiatan': return achievement.tahun;
-    case 'publikasi': return achievement.tahun;
-    case 'haki': return achievement.tahunPengajuan;
-    case 'magang': return new Date(achievement.tanggalMulai).getFullYear();
-    case 'portofolio': return achievement.tahun;
-    case 'wirausaha': return achievement.tahunMulai;
-    case 'pengembangan': return new Date(achievement.tanggalMulai).getFullYear();
+    case 'lomba': return (achievement as any).tahun;
+    case 'seminar': return (achievement as any).tahun;
+    case 'publikasi': return (achievement as any).tahun;
+    case 'haki': return (achievement as any).tahunPengajuan;
+    case 'magang': return new Date((achievement as any).tanggalMulai).getFullYear();
+    case 'portofolio': return (achievement as any).tahun;
+    case 'wirausaha': return (achievement as any).tahunMulai;
+    case 'pengembangan': return new Date((achievement as any).tanggalMulai).getFullYear();
+    case 'organisasi': return new Date((achievement as any).periodeMulai).getFullYear();
   }
 }

@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { 
-  Trophy, BookOpen, Shield, Briefcase, Rocket, Globe,
+  Trophy, BookOpen, Shield, Briefcase, Rocket, Sprout, Mic, Users, FolderOpen,
   Paperclip, Plus, ChevronDown, Building2, MapPin, Calendar,
   User, Award, FileText, ExternalLink, Download, X, ZoomIn,
   Edit3, Trash2, Image as ImageIcon
@@ -10,13 +10,15 @@ import { cn } from '@/lib/utils';
 import { 
   Achievement, 
   AchievementCategory,
-  KegiatanAchievement,
+  LombaAchievement,
+  SeminarAchievement,
   PublikasiAchievement,
   HakiAchievement,
   MagangAchievement,
   PortofolioAchievement,
   WirausahaAchievement,
-  PengembanganAchievement
+  PengembanganAchievement,
+  OrganisasiAchievement
 } from '@/types/achievement.types';
 import { CategoryFilter } from './CategorySidebar';
 
@@ -37,12 +39,19 @@ const CATEGORY_CONFIG: Record<AchievementCategory, {
   bgColor: string;
   borderColor: string;
 }> = {
-  kegiatan: { 
+  lomba: { 
     icon: Trophy, 
     color: 'text-warning', 
     nodeColor: 'bg-warning', 
     bgColor: 'bg-warning/10',
     borderColor: 'border-warning/30'
+  },
+  seminar: { 
+    icon: Mic, 
+    color: 'text-purple-500', 
+    nodeColor: 'bg-purple-500', 
+    bgColor: 'bg-purple-500/10',
+    borderColor: 'border-purple-500/30'
   },
   publikasi: { 
     icon: BookOpen, 
@@ -66,11 +75,11 @@ const CATEGORY_CONFIG: Record<AchievementCategory, {
     borderColor: 'border-info/30'
   },
   portofolio: { 
-    icon: BookOpen, 
-    color: 'text-muted-foreground', 
-    nodeColor: 'bg-muted-foreground', 
-    bgColor: 'bg-muted',
-    borderColor: 'border-muted-foreground/30'
+    icon: FolderOpen, 
+    color: 'text-orange-500', 
+    nodeColor: 'bg-orange-500', 
+    bgColor: 'bg-orange-500/10',
+    borderColor: 'border-orange-500/30'
   },
   wirausaha: { 
     icon: Rocket, 
@@ -80,11 +89,18 @@ const CATEGORY_CONFIG: Record<AchievementCategory, {
     borderColor: 'border-destructive/30'
   },
   pengembangan: { 
-    icon: Globe, 
-    color: 'text-accent-foreground', 
-    nodeColor: 'bg-accent-foreground', 
-    bgColor: 'bg-accent',
-    borderColor: 'border-accent-foreground/30'
+    icon: Sprout, 
+    color: 'text-emerald-500', 
+    nodeColor: 'bg-emerald-500', 
+    bgColor: 'bg-emerald-500/10',
+    borderColor: 'border-emerald-500/30'
+  },
+  organisasi: { 
+    icon: Users, 
+    color: 'text-sky-500', 
+    nodeColor: 'bg-sky-500', 
+    bgColor: 'bg-sky-500/10',
+    borderColor: 'border-sky-500/30'
   },
 };
 
@@ -96,16 +112,25 @@ function getAchievementDetails(achievement: Achievement): {
   result?: string;
 } {
   switch (achievement.category) {
-    case 'kegiatan': {
-      const a = achievement as KegiatanAchievement;
+    case 'lomba': {
+      const a = achievement as LombaAchievement;
       return {
-        title: a.namaKegiatan,
+        title: a.namaLomba,
         subtitle: a.penyelenggara,
         year: a.tahun,
         level: a.tingkat === 'internasional' ? 'Internasional' : 
                a.tingkat === 'nasional' ? 'Nasional' : 
-               a.tingkat === 'regional' ? 'Regional' : 'Internal',
-        result: a.prestasi,
+               a.tingkat === 'regional' ? 'Regional' : 'Lokal',
+        result: a.peringkat,
+      };
+    }
+    case 'seminar': {
+      const a = achievement as SeminarAchievement;
+      return {
+        title: a.namaSeminar,
+        subtitle: a.penyelenggara,
+        year: a.tahun,
+        level: a.peran === 'pembicara' ? 'Pembicara' : 'Peserta',
       };
     }
     case 'publikasi': {
@@ -138,7 +163,7 @@ function getAchievementDetails(achievement: Achievement): {
       const a = achievement as PortofolioAchievement;
       return {
         title: a.judulProyek,
-        subtitle: a.mataKuliah?.toUpperCase() || 'Proyek',
+        subtitle: a.mataKuliah || 'Proyek',
         year: a.tahun,
         result: a.nilai ? `Nilai: ${a.nilai}` : undefined,
       };
@@ -158,7 +183,16 @@ function getAchievementDetails(achievement: Achievement): {
         title: a.namaProgram,
         subtitle: a.penyelenggara + (a.negara ? ` • ${a.negara}` : ''),
         year: new Date(a.tanggalMulai).getFullYear(),
-        result: a.prestasi,
+        result: a.output,
+      };
+    }
+    case 'organisasi': {
+      const a = achievement as OrganisasiAchievement;
+      return {
+        title: `${a.jabatan} - ${a.namaOrganisasi}`,
+        subtitle: a.namaOrganisasi,
+        year: new Date(a.periodeMulai).getFullYear(),
+        result: a.masihAktif ? 'Masih Aktif' : 'Selesai',
       };
     }
   }
@@ -167,6 +201,24 @@ function getAchievementDetails(achievement: Achievement): {
 // Category-specific detail fields
 function getCategoryDetailFields(achievement: Achievement): { label: string; value: string; icon?: React.ElementType }[] {
   switch (achievement.category) {
+    case 'lomba': {
+      const a = achievement as LombaAchievement;
+      return [
+        { label: 'Tingkat', value: a.tingkat?.charAt(0).toUpperCase() + a.tingkat?.slice(1), icon: Award },
+        { label: 'Peran', value: a.peran?.charAt(0).toUpperCase() + a.peran?.slice(1), icon: User },
+        { label: 'Peringkat / Hasil', value: a.peringkat || '-', icon: Trophy },
+        ...(a.bidang ? [{ label: 'Bidang', value: a.bidang, icon: FileText }] : []),
+      ].filter(f => f.value && f.value !== '-');
+    }
+    case 'seminar': {
+      const a = achievement as SeminarAchievement;
+      return [
+        { label: 'Peran', value: a.peran?.charAt(0).toUpperCase() + a.peran?.slice(1), icon: User },
+        { label: 'Mode', value: a.mode?.charAt(0).toUpperCase() + a.mode?.slice(1), icon: Award },
+        { label: 'Penyelenggara', value: a.penyelenggara, icon: Building2 },
+        { label: 'Tahun', value: a.tahun?.toString(), icon: Calendar },
+      ].filter(f => f.value);
+    }
     case 'magang': {
       const a = achievement as MagangAchievement;
       return [
@@ -177,18 +229,11 @@ function getCategoryDetailFields(achievement: Achievement): { label: string; val
         { label: 'Periode', value: `${a.tanggalMulai} - ${a.sedangBerjalan ? 'Sekarang' : a.tanggalSelesai || 'Selesai'}`, icon: Calendar },
       ].filter(f => f.value);
     }
-    case 'kegiatan': {
-      const a = achievement as KegiatanAchievement;
-      return [
-        { label: 'Tingkat', value: a.tingkat?.charAt(0).toUpperCase() + a.tingkat?.slice(1), icon: Award },
-        { label: 'Peringkat / Hasil', value: a.prestasi || '-', icon: Trophy },
-        { label: 'Bidang', value: a.jenisKegiatan?.replace('_', ' ') || '-', icon: FileText },
-      ].filter(f => f.value && f.value !== '-');
-    }
     case 'publikasi': {
       const a = achievement as PublikasiAchievement;
       return [
         { label: 'Jenis Publikasi', value: a.jenisPublikasi?.replace('_', ' '), icon: BookOpen },
+        { label: 'Penulis', value: a.penulis, icon: User },
         { label: 'Nama Jurnal / Konferensi', value: a.namaJurnal || a.penerbit || '-', icon: Building2 },
         { label: 'Tahun Terbit', value: a.tahun?.toString(), icon: Calendar },
         ...(a.url ? [{ label: 'Link Publikasi', value: a.url, icon: ExternalLink }] : []),
@@ -207,25 +252,35 @@ function getCategoryDetailFields(achievement: Achievement): { label: string; val
       return [
         { label: 'Nama Usaha', value: a.namaUsaha, icon: Rocket },
         { label: 'Bidang Usaha', value: a.jenisUsaha, icon: Briefcase },
-        { label: 'Peran', value: 'Founder', icon: User },
+        { label: 'Peran', value: a.peran || 'Founder', icon: User },
         { label: 'Status Usaha', value: a.masihAktif ? 'Aktif' : 'Tidak Aktif', icon: Award },
       ].filter(f => f.value);
     }
     case 'pengembangan': {
       const a = achievement as PengembanganAchievement;
       return [
-        { label: 'Jenis Aktivitas', value: a.jenisProgram?.replace('_', ' '), icon: Globe },
+        { label: 'Jenis Aktivitas', value: a.jenisProgram?.replace('_', ' '), icon: Sprout },
         { label: 'Penyelenggara', value: a.penyelenggara, icon: Building2 },
-        { label: 'Output', value: a.prestasi || 'Sertifikat', icon: Award },
+        ...(a.peranMahasiswa ? [{ label: 'Peran', value: a.peranMahasiswa, icon: User }] : []),
+        { label: 'Output', value: a.output || 'Sertifikat', icon: Award },
       ].filter(f => f.value);
     }
     case 'portofolio': {
       const a = achievement as PortofolioAchievement;
       return [
-        { label: 'Mata Kuliah', value: a.mataKuliah?.toUpperCase(), icon: BookOpen },
+        { label: 'Mata Kuliah', value: a.mataKuliah, icon: BookOpen },
         { label: 'Semester', value: `${a.semester?.charAt(0).toUpperCase()}${a.semester?.slice(1)} ${a.tahun}`, icon: Calendar },
-        { label: 'Nilai', value: a.nilai || '-', icon: Award },
-      ].filter(f => f.value && f.value !== '-');
+        ...(a.output ? [{ label: 'Output', value: a.output, icon: FileText }] : []),
+        ...(a.nilai ? [{ label: 'Nilai', value: a.nilai, icon: Award }] : []),
+      ].filter(f => f.value);
+    }
+    case 'organisasi': {
+      const a = achievement as OrganisasiAchievement;
+      return [
+        { label: 'Nama Organisasi', value: a.namaOrganisasi, icon: Users },
+        { label: 'Jabatan / Peran', value: a.jabatan, icon: User },
+        { label: 'Periode', value: `${a.periodeMulai} - ${a.masihAktif ? 'Sekarang' : a.periodeSelesai || 'Selesai'}`, icon: Calendar },
+      ].filter(f => f.value);
     }
     default:
       return [];
