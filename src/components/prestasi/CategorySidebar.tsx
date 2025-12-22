@@ -1,6 +1,5 @@
 import { 
-  Trophy, BookOpen, Shield, Briefcase, Rocket, Star, Mic2,
-  FolderOpen, Sprout, Users2
+  Trophy, BookOpen, Shield, Rocket, Star, FlaskConical, Globe
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AchievementCategory } from '@/types/achievement.types';
@@ -14,7 +13,7 @@ interface CategorySidebarProps {
   onCategoryChange: (category: CategoryFilter) => void;
 }
 
-// Category configuration with proper icons (strict order per spec)
+// Category configuration with proper icons (STRICT ORDER per spec)
 const CATEGORY_CONFIG: Record<CategoryFilter, { 
   icon: React.ElementType; 
   color: string; 
@@ -29,19 +28,12 @@ const CATEGORY_CONFIG: Record<CategoryFilter, {
     label: 'Semua Prestasi',
     shortLabel: 'Semua',
   },
-  lomba: { 
+  partisipasi: { 
     icon: Trophy, 
     color: 'text-warning', 
     bgColor: 'bg-warning/10',
-    label: 'Lomba',
-    shortLabel: 'Lomba',
-  },
-  seminar: { 
-    icon: Mic2, 
-    color: 'text-purple-500', 
-    bgColor: 'bg-purple-500/10',
-    label: 'Seminar',
-    shortLabel: 'Seminar',
+    label: 'Partisipasi & Prestasi',
+    shortLabel: 'Partisipasi',
   },
   publikasi: { 
     icon: BookOpen, 
@@ -57,19 +49,12 @@ const CATEGORY_CONFIG: Record<CategoryFilter, {
     label: 'Kekayaan Intelektual',
     shortLabel: 'HAKI',
   },
-  magang: { 
-    icon: Briefcase, 
+  akademik_terapan: { 
+    icon: FlaskConical, 
     color: 'text-info', 
     bgColor: 'bg-info/10',
-    label: 'Pengalaman Magang',
-    shortLabel: 'Magang',
-  },
-  portofolio: { 
-    icon: FolderOpen, 
-    color: 'text-orange-500', 
-    bgColor: 'bg-orange-500/10',
-    label: 'Portofolio Praktikum Kelas',
-    shortLabel: 'Portofolio',
+    label: 'Pengalaman Akademik Terapan',
+    shortLabel: 'Akademik',
   },
   wirausaha: { 
     icon: Rocket, 
@@ -79,33 +64,23 @@ const CATEGORY_CONFIG: Record<CategoryFilter, {
     shortLabel: 'Wirausaha',
   },
   pengembangan: { 
-    icon: Sprout, 
+    icon: Globe, 
     color: 'text-emerald-500', 
     bgColor: 'bg-emerald-500/10',
-    label: 'Program Pengembangan Diri',
+    label: 'Pengembangan Diri',
     shortLabel: 'Pengembangan',
-  },
-  organisasi: { 
-    icon: Users2, 
-    color: 'text-sky-500', 
-    bgColor: 'bg-sky-500/10',
-    label: 'Organisasi & Kepemimpinan',
-    shortLabel: 'Organisasi',
   },
 };
 
 // Categories in STRICT display order per spec
 const categories: CategoryFilter[] = [
   'all', 
-  'lomba', 
-  'seminar', 
+  'partisipasi', 
   'publikasi', 
   'haki', 
-  'magang', 
-  'portofolio', 
+  'akademik_terapan', 
   'wirausaha', 
-  'pengembangan', 
-  'organisasi'
+  'pengembangan'
 ];
 
 export function CategorySidebar({ activeCategory, stats, onCategoryChange }: CategorySidebarProps) {
