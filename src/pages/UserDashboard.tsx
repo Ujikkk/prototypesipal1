@@ -19,7 +19,7 @@ import {
 } from '@/services/achievement.service';
 import { Achievement, AchievementCategory } from '@/types/achievement.types';
 import { isCareerHistoryVisible, isAchievementsEditable } from '@/data/student-seed-data';
-import type { StudentStatus, CareerStatus } from '@/types/student.types';
+import type { StudentStatus } from '@/types/student.types';
 
 export default function UserDashboard() {
   const navigate = useNavigate();
@@ -58,15 +58,15 @@ export default function UserDashboard() {
     if (data.status === 'bekerja') {
       title = data.namaPerusahaan || 'Perusahaan';
       subtitle = data.jabatan || 'Karyawan';
-      location = data.kotaPerusahaan || '';
-    } else if (data.status === 'melanjutkan_studi') {
+      location = data.lokasiPerusahaan || '';
+    } else if (data.status === 'studi') {
       title = data.namaKampus || 'Kampus';
       subtitle = data.programStudi || 'Program Studi';
-      location = '';
-    } else if (data.status === 'berwirausaha') {
+      location = data.lokasiKampus || '';
+    } else if (data.status === 'wirausaha') {
       title = data.namaUsaha || 'Usaha';
-      subtitle = data.bidangUsaha || 'Wirausaha';
-      location = '';
+      subtitle = data.jenisUsaha || 'Wirausaha';
+      location = data.lokasiUsaha || '';
     } else {
       title = 'Status Lainnya';
       subtitle = data.status || '';
@@ -77,10 +77,13 @@ export default function UserDashboard() {
       title,
       subtitle,
       location,
-      date: data.tahunLulus?.toString() || '',
-      status: data.status as CareerStatus,
+      year: data.tahunPengisian || new Date().getFullYear(),
+      status: data.status,
     };
   });
+
+  // Get display year for last update
+  const lastUpdateYear = latestData?.tahunPengisian || '-';
 
   return (
     <div className="min-h-screen bg-background">
@@ -91,7 +94,11 @@ export default function UserDashboard() {
             {/* Student Identity Header */}
             <div className="mb-8 animate-fade-up">
               <StudentIdentityHeader 
-                student={selectedAlumni}
+                nama={selectedAlumni.nama}
+                nim={selectedAlumni.nim}
+                prodi={selectedAlumni.prodi}
+                jurusan={selectedAlumni.jurusan}
+                tahunLulus={selectedAlumni.tahunLulus}
                 studentStatus={studentStatus}
               />
             </div>
@@ -99,37 +106,49 @@ export default function UserDashboard() {
             {/* Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 animate-fade-up" style={{ animationDelay: '0.1s' }}>
               <SummaryCard
-                icon={Award}
-                label="Total Prestasi"
-                value={totalAchievements}
-                color="success"
+                title="Total Prestasi"
+                icon={<Award className="w-5 h-5 text-success" />}
+                iconBgClass="bg-success/10"
+                primaryLabel="Jumlah"
+                primaryValue={totalAchievements.toString()}
+                ctaLabel="Lihat Prestasi"
+                onCtaClick={() => navigate('/prestasi')}
               />
               <SummaryCard
-                icon={FileEdit}
-                label="Update Terakhir"
-                value={latestData?.tahunLulus || '-'}
-                color="primary"
+                title="Update Terakhir"
+                icon={<FileEdit className="w-5 h-5 text-primary" />}
+                iconBgClass="bg-primary/10"
+                primaryLabel="Tahun"
+                primaryValue={lastUpdateYear.toString()}
+                ctaLabel="Update Tracer"
+                onCtaClick={() => navigate('/form')}
               />
               <SummaryCard
-                icon={Clock}
-                label="Riwayat Karier"
-                value={`${alumniHistory.length} data`}
-                color="info"
+                title="Riwayat Karier"
+                icon={<Clock className="w-5 h-5 text-info" />}
+                iconBgClass="bg-info/10"
+                primaryLabel="Total Data"
+                primaryValue={`${alumniHistory.length} entri`}
+                ctaLabel="Lihat Riwayat"
+                onCtaClick={() => navigate('/karir')}
               />
               <SummaryCard
-                icon={Briefcase}
-                label="Status Saat Ini"
-                value={latestData?.status === 'bekerja' ? 'Bekerja' : 
-                       latestData?.status === 'melanjutkan_studi' ? 'Studi' : 
-                       latestData?.status === 'berwirausaha' ? 'Wirausaha' : 'Lainnya'}
-                color="warning"
+                title="Status Saat Ini"
+                icon={<Briefcase className="w-5 h-5 text-warning" />}
+                iconBgClass="bg-warning/10"
+                primaryLabel="Status"
+                primaryValue={latestData?.status === 'bekerja' ? 'Bekerja' : 
+                       latestData?.status === 'studi' ? 'Studi' : 
+                       latestData?.status === 'wirausaha' ? 'Wirausaha' : 'Lainnya'}
+                ctaLabel="Update Status"
+                onCtaClick={() => navigate('/form')}
               />
             </div>
 
             {/* Main Content Grid */}
             <div className="grid lg:grid-cols-2 gap-6">
               {/* Career Timeline */}
-              {showCareerHistory && (
+              {showCareerHistory && careerTimelineItems.length > 0 && (
                 <div className="animate-fade-up" style={{ animationDelay: '0.15s' }}>
                   <CareerTimeline
                     items={careerTimelineItems}
@@ -148,36 +167,28 @@ export default function UserDashboard() {
                   maxItems={5}
                   onViewAll={() => navigate('/prestasi')}
                   onAddNew={canEditAchievements ? () => navigate('/prestasi') : undefined}
-                  className="h-full"
+                  className={!showCareerHistory || careerTimelineItems.length === 0 ? 'lg:col-span-2' : ''}
                 />
               </div>
-
-              {/* If career history is hidden, show a placeholder or the achievement timeline full width */}
-              {!showCareerHistory && (
-                <div className="animate-fade-up" style={{ animationDelay: '0.15s' }}>
-                  <div className="glass-card rounded-2xl p-8 text-center h-full flex flex-col items-center justify-center">
-                    <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
-                      <Briefcase className="w-8 h-8 text-muted-foreground" />
-                    </div>
-                    <h3 className="font-semibold text-foreground mb-2">Riwayat Karier</h3>
-                    <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-                      Riwayat karier akan tersedia setelah Anda lulus dari program studi.
-                    </p>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Quick Actions */}
-            <div className="mt-8 flex flex-wrap gap-3 justify-center animate-fade-up" style={{ animationDelay: '0.25s' }}>
-              <Button variant="outline" onClick={() => navigate('/form')}>
-                <FileEdit className="w-4 h-4 mr-2" />
-                Update Data Tracer
-              </Button>
-              <Button variant="outline" onClick={() => navigate('/prestasi')}>
-                <Award className="w-4 h-4 mr-2" />
-                Kelola Prestasi
-              </Button>
+            <div className="mt-8 animate-fade-up" style={{ animationDelay: '0.25s' }}>
+              <div className="glass-card rounded-2xl p-6">
+                <h3 className="font-semibold text-foreground mb-4">Aksi Cepat</h3>
+                <div className="flex flex-wrap gap-3">
+                  {canEditAchievements && (
+                    <Button onClick={() => navigate('/prestasi')}>
+                      <Award className="w-4 h-4 mr-2" />
+                      Kelola Prestasi
+                    </Button>
+                  )}
+                  <Button variant="outline" onClick={() => navigate('/form')}>
+                    <FileEdit className="w-4 h-4 mr-2" />
+                    Update Tracer
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

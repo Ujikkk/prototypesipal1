@@ -314,11 +314,11 @@ function AchievementForm({
             </div>
           )}
 
-          {/* Dynamic Form Fields */}
-          {selectedCategory === 'partisipasi' && <PartisipasiFields formData={formData} updateField={updateField} />}
+{/* Dynamic Form Fields */}
+          {selectedCategory === 'partisipasi' && <LombaFields formData={formData} updateField={updateField} />}
           {selectedCategory === 'publikasi' && <PublikasiFields formData={formData} updateField={updateField} />}
           {selectedCategory === 'haki' && <HakiFields formData={formData} updateField={updateField} />}
-          {selectedCategory === 'akademik_terapan' && <AkademikTerapanFields formData={formData} updateField={updateField} />}
+          {selectedCategory === 'akademik_terapan' && <MagangFields formData={formData} updateField={updateField} />}
           {selectedCategory === 'wirausaha' && <WirausahaFields formData={formData} updateField={updateField} />}
           {selectedCategory === 'pengembangan' && <PengembanganFields formData={formData} updateField={updateField} />}
 
