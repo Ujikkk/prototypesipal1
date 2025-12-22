@@ -268,8 +268,30 @@ function AchievementForm({
   const [selectedCategory, setSelectedCategory] = useState<AchievementCategory>(editData?.category || category);
   const [formData, setFormData] = useState<Record<string, any>>(editData || {});
 
+  const { toast } = useToast();
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation for Organisasi category: tanggalSelesai required when masihAktif is false
+    if (selectedCategory === 'organisasi' && formData.masihAktif === false && !formData.tanggalSelesai) {
+      toast({
+        title: 'Validasi gagal',
+        description: 'Tanggal selesai keanggotaan wajib diisi jika keanggotaan sudah berakhir.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validation for Portofolio category: mataKuliahCustom required when mataKuliah is 'other'
+    if (selectedCategory === 'portofolio' && formData.mataKuliah === 'other' && (!formData.mataKuliahCustom || !formData.mataKuliahCustom.trim())) {
+      toast({
+        title: 'Validasi gagal',
+        description: 'Nama mata kuliah lainnya wajib diisi.',
+        variant: 'destructive',
+      });
+      return;
+    }
     
     if (editData) {
       updateAchievement(editData.id, { ...formData, category: selectedCategory });
