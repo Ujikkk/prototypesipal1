@@ -1,6 +1,6 @@
 import { 
-  Trophy, BookOpen, Shield, Briefcase, FolderOpen, Rocket, Sprout, Mic, Users,
-  ChevronRight, Paperclip, ExternalLink
+  Trophy, BookOpen, Shield, Briefcase, FolderOpen, Rocket, Sprout, Mic2, Users2,
+  ChevronRight, Paperclip, ExternalLink, HelpCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -27,22 +27,26 @@ interface AchievementTimelineProps {
   className?: string;
 }
 
-const CATEGORY_CONFIG: Record<AchievementCategory, { 
+const CATEGORY_CONFIG: Record<string, { 
   icon: React.ElementType; 
   color: string; 
   bgColor: string;
   label: string;
 }> = {
   lomba: { icon: Trophy, color: 'text-warning', bgColor: 'bg-warning/10', label: 'Lomba' },
-  seminar: { icon: Mic, color: 'text-purple-500', bgColor: 'bg-purple-500/10', label: 'Seminar' },
+  seminar: { icon: Mic2, color: 'text-purple-500', bgColor: 'bg-purple-500/10', label: 'Seminar' },
   publikasi: { icon: BookOpen, color: 'text-primary', bgColor: 'bg-primary/10', label: 'Publikasi' },
   haki: { icon: Shield, color: 'text-success', bgColor: 'bg-success/10', label: 'HAKI' },
   magang: { icon: Briefcase, color: 'text-info', bgColor: 'bg-info/10', label: 'Magang' },
   portofolio: { icon: FolderOpen, color: 'text-orange-500', bgColor: 'bg-orange-500/10', label: 'Portofolio' },
   wirausaha: { icon: Rocket, color: 'text-destructive', bgColor: 'bg-destructive/10', label: 'Wirausaha' },
   pengembangan: { icon: Sprout, color: 'text-emerald-500', bgColor: 'bg-emerald-500/10', label: 'Pengembangan' },
-  organisasi: { icon: Users, color: 'text-sky-500', bgColor: 'bg-sky-500/10', label: 'Organisasi' },
+  organisasi: { icon: Users2, color: 'text-sky-500', bgColor: 'bg-sky-500/10', label: 'Organisasi' },
+  // Fallback for legacy/unknown categories
+  kegiatan: { icon: Trophy, color: 'text-warning', bgColor: 'bg-warning/10', label: 'Kegiatan' },
 };
+
+const DEFAULT_CONFIG = { icon: HelpCircle, color: 'text-muted-foreground', bgColor: 'bg-muted', label: 'Lainnya' };
 
 function getAchievementTitle(achievement: Achievement): string {
   switch (achievement.category) {
@@ -55,6 +59,7 @@ function getAchievementTitle(achievement: Achievement): string {
     case 'wirausaha': return (achievement as WirausahaAchievement).namaUsaha;
     case 'pengembangan': return (achievement as PengembanganAchievement).namaProgram;
     case 'organisasi': return `${(achievement as OrganisasiAchievement).jabatan} - ${(achievement as OrganisasiAchievement).namaOrganisasi}`;
+    default: return (achievement as any).namaKegiatan || (achievement as any).judul || 'Prestasi';
   }
 }
 
@@ -69,6 +74,7 @@ function getAchievementYear(achievement: Achievement): number {
     case 'wirausaha': return (achievement as WirausahaAchievement).tahunMulai;
     case 'pengembangan': return new Date((achievement as PengembanganAchievement).tanggalMulai).getFullYear();
     case 'organisasi': return new Date((achievement as OrganisasiAchievement).periodeMulai).getFullYear();
+    default: return (achievement as any).tahun || new Date().getFullYear();
   }
 }
 
@@ -104,6 +110,7 @@ function getAchievementSubtitle(achievement: Achievement): string | undefined {
       const a = achievement as OrganisasiAchievement;
       return a.masihAktif ? 'Masih Aktif' : 'Selesai';
     }
+    default: return (achievement as any).penyelenggara || (achievement as any).tingkat;
   }
 }
 
@@ -147,7 +154,7 @@ export function AchievementTimeline({
 
             <div className="space-y-3">
               {displayItems.map((achievement, index) => {
-                const config = CATEGORY_CONFIG[achievement.category];
+                const config = CATEGORY_CONFIG[achievement.category] || DEFAULT_CONFIG;
                 const Icon = config.icon;
                 const year = getAchievementYear(achievement);
                 const title = getAchievementTitle(achievement);
