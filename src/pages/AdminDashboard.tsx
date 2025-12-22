@@ -12,10 +12,10 @@ import { StatCard, StatusBadge, ChartCard, DataTable } from '@/components/shared
 import { getGlobalAchievementStats, getStudentsWithAchievements } from '@/services/achievement.service';
 import { ACHIEVEMENT_CATEGORIES, AchievementCategory } from '@/types/achievement.types';
 import {
-  Search, Download, Filter, Users, Briefcase, Rocket, BookOpen, TrendingUp,
+  Search, Download, Filter, Users2, Briefcase, Rocket, BookOpen, TrendingUp,
   User, Mail, Phone, Building2, MapPin, Calendar, ExternalLink, Sparkles,
   BarChart3, PieChart as PieChartIcon, LineChart as LineChartIcon, X,
-  Trophy, Shield, FolderOpen, GraduationCap, Award, Mic
+  Trophy, Shield, FolderOpen, GraduationCap, Award, Mic2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -208,7 +208,7 @@ export default function AdminDashboard() {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8 animate-fade-up" style={{ animationDelay: '0.1s' }}>
-            <StatCard title="Total Pengisi" value={stats.filled} icon={Users} color="primary" />
+            <StatCard title="Total Pengisi" value={stats.filled} icon={Users2} color="primary" />
             <StatCard title="Bekerja" value={stats.bekerja} icon={Briefcase} color="primary" />
             <StatCard title="Wirausaha" value={stats.wirausaha} icon={Rocket} color="success" />
             <StatCard title="Studi Lanjut" value={stats.studi} icon={BookOpen} color="destructive" />
@@ -238,14 +238,14 @@ export default function AdminDashboard() {
                 const count = achievementStats.byCategory[key];
                 const iconMap: Record<AchievementCategory, React.ElementType> = {
                   lomba: Trophy,
-                  seminar: Mic,
+                  seminar: Mic2,
                   publikasi: BookOpen,
                   haki: Shield,
                   magang: Briefcase,
                   portofolio: FolderOpen,
                   wirausaha: Rocket,
                   pengembangan: GraduationCap,
-                  organisasi: Users,
+                  organisasi: Users2,
                 };
                 const Icon = iconMap[key];
                 return (
