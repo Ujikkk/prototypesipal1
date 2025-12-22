@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { 
-  Trophy, BookOpen, Shield, Briefcase, Rocket, Sprout, Mic2, Users2, FolderOpen,
+  Trophy, BookOpen, Shield, Rocket, Globe, FlaskConical,
   Paperclip, Plus, ChevronDown, Building2, MapPin, Calendar,
   User, Award, FileText, ExternalLink, Download, X, ZoomIn,
   Edit3, Trash2, Image as ImageIcon, HelpCircle, Star
@@ -10,15 +10,12 @@ import { cn } from '@/lib/utils';
 import { 
   Achievement, 
   AchievementCategory,
-  LombaAchievement,
-  SeminarAchievement,
+  PartisipasiAchievement,
   PublikasiAchievement,
   HakiAchievement,
-  MagangAchievement,
-  PortofolioAchievement,
+  AkademikTerapanAchievement,
   WirausahaAchievement,
-  PengembanganAchievement,
-  OrganisasiAchievement
+  PengembanganAchievement
 } from '@/types/achievement.types';
 import { CategoryFilter } from './CategorySidebar';
 
@@ -40,19 +37,12 @@ const CATEGORY_CONFIG: Record<string, {
   bgColor: string;
   borderColor: string;
 }> = {
-  lomba: { 
+  partisipasi: { 
     icon: Trophy, 
     color: 'text-warning', 
     nodeColor: 'bg-warning', 
     bgColor: 'bg-warning/10',
     borderColor: 'border-warning/30'
-  },
-  seminar: { 
-    icon: Mic2, 
-    color: 'text-purple-500', 
-    nodeColor: 'bg-purple-500', 
-    bgColor: 'bg-purple-500/10',
-    borderColor: 'border-purple-500/30'
   },
   publikasi: { 
     icon: BookOpen, 
@@ -68,19 +58,12 @@ const CATEGORY_CONFIG: Record<string, {
     bgColor: 'bg-success/10',
     borderColor: 'border-success/30'
   },
-  magang: { 
-    icon: Briefcase, 
+  akademik_terapan: { 
+    icon: FlaskConical, 
     color: 'text-info', 
     nodeColor: 'bg-info', 
     bgColor: 'bg-info/10',
     borderColor: 'border-info/30'
-  },
-  portofolio: { 
-    icon: FolderOpen, 
-    color: 'text-orange-500', 
-    nodeColor: 'bg-orange-500', 
-    bgColor: 'bg-orange-500/10',
-    borderColor: 'border-orange-500/30'
   },
   wirausaha: { 
     icon: Rocket, 
@@ -90,26 +73,11 @@ const CATEGORY_CONFIG: Record<string, {
     borderColor: 'border-destructive/30'
   },
   pengembangan: { 
-    icon: Sprout, 
+    icon: Globe, 
     color: 'text-emerald-500', 
     nodeColor: 'bg-emerald-500', 
     bgColor: 'bg-emerald-500/10',
     borderColor: 'border-emerald-500/30'
-  },
-  organisasi: { 
-    icon: Users2, 
-    color: 'text-sky-500', 
-    nodeColor: 'bg-sky-500', 
-    bgColor: 'bg-sky-500/10',
-    borderColor: 'border-sky-500/30'
-  },
-  // Legacy support
-  kegiatan: {
-    icon: Trophy,
-    color: 'text-warning',
-    nodeColor: 'bg-warning',
-    bgColor: 'bg-warning/10',
-    borderColor: 'border-warning/30',
   },
 };
 
@@ -129,25 +97,16 @@ function getAchievementDetails(achievement: Achievement): {
   result?: string;
 } {
   switch (achievement.category) {
-    case 'lomba': {
-      const a = achievement as LombaAchievement;
+    case 'partisipasi': {
+      const a = achievement as PartisipasiAchievement;
       return {
-        title: a.namaLomba,
+        title: a.namaKegiatan,
         subtitle: a.penyelenggara,
         year: a.tahun,
         level: a.tingkat === 'internasional' ? 'Internasional' : 
                a.tingkat === 'nasional' ? 'Nasional' : 
                a.tingkat === 'regional' ? 'Regional' : 'Lokal',
         result: a.peringkat,
-      };
-    }
-    case 'seminar': {
-      const a = achievement as SeminarAchievement;
-      return {
-        title: a.namaSeminar,
-        subtitle: a.penyelenggara,
-        year: a.tahun,
-        level: a.peran === 'pembicara' ? 'Pembicara' : 'Peserta',
       };
     }
     case 'publikasi': {
@@ -168,22 +127,22 @@ function getAchievementDetails(achievement: Achievement): {
         result: a.status,
       };
     }
-    case 'magang': {
-      const a = achievement as MagangAchievement;
-      return {
-        title: `${a.posisi} di ${a.namaPerusahaan}`,
-        subtitle: `${a.industri} • ${a.lokasi}`,
-        year: new Date(a.tanggalMulai).getFullYear(),
-      };
-    }
-    case 'portofolio': {
-      const a = achievement as PortofolioAchievement;
-      return {
-        title: a.judulProyek,
-        subtitle: a.mataKuliah || 'Proyek',
-        year: a.tahun,
-        result: a.nilai ? `Nilai: ${a.nilai}` : undefined,
-      };
+    case 'akademik_terapan': {
+      const a = achievement as AkademikTerapanAchievement;
+      if (a.jenisAkademik === 'magang') {
+        return {
+          title: `${a.posisi} di ${a.namaPerusahaan}`,
+          subtitle: `${a.industri} • ${a.lokasi}`,
+          year: a.tahun,
+        };
+      } else {
+        return {
+          title: a.judulProyek || 'Proyek',
+          subtitle: a.mataKuliah || 'Proyek Akademik',
+          year: a.tahun,
+          result: a.nilai ? `Nilai: ${a.nilai}` : undefined,
+        };
+      }
     }
     case 'wirausaha': {
       const a = achievement as WirausahaAchievement;
@@ -196,6 +155,14 @@ function getAchievementDetails(achievement: Achievement): {
     }
     case 'pengembangan': {
       const a = achievement as PengembanganAchievement;
+      if (a.jenisProgram === 'organisasi') {
+        return {
+          title: `${a.jabatan} - ${a.namaOrganisasi}`,
+          subtitle: a.namaOrganisasi || a.namaProgram,
+          year: new Date(a.tanggalMulai).getFullYear(),
+          result: a.sedangBerjalan ? 'Masih Aktif' : 'Selesai',
+        };
+      }
       return {
         title: a.namaProgram,
         subtitle: a.penyelenggara + (a.negara ? ` • ${a.negara}` : ''),
@@ -203,60 +170,28 @@ function getAchievementDetails(achievement: Achievement): {
         result: a.output,
       };
     }
-    case 'organisasi': {
-      const a = achievement as OrganisasiAchievement;
-      return {
-        title: `${a.jabatan} - ${a.namaOrganisasi}`,
-        subtitle: a.namaOrganisasi,
-        year: new Date(a.periodeMulai).getFullYear(),
-        result: a.masihAktif ? 'Masih Aktif' : 'Selesai',
-      };
-    }
     default: {
-      // Legacy/unknown achievement shapes (e.g., old seed data category: 'kegiatan')
       const anyA = achievement as any;
-      const year = anyA?.tahun ?? (typeof anyA?.year === 'number' ? anyA.year : new Date().getFullYear());
       return {
-        title: anyA?.namaKegiatan || anyA?.title || anyA?.judul || 'Prestasi',
-        subtitle: anyA?.penyelenggara || anyA?.subtitle || 'Dokumentasi prestasi',
-        year,
-        level: anyA?.tingkat,
-        result: anyA?.prestasi,
+        title: anyA?.namaKegiatan || anyA?.judul || 'Prestasi',
+        subtitle: anyA?.penyelenggara || 'Dokumentasi prestasi',
+        year: anyA?.tahun || new Date().getFullYear(),
       };
     }
   }
 }
 
-// Category-specific detail fields
 function getCategoryDetailFields(achievement: Achievement): { label: string; value: string; icon?: React.ElementType }[] {
   switch (achievement.category) {
-    case 'lomba': {
-      const a = achievement as LombaAchievement;
+    case 'partisipasi': {
+      const a = achievement as PartisipasiAchievement;
       return [
+        { label: 'Jenis Kegiatan', value: a.jenisKegiatan?.replace('_', ' '), icon: Trophy },
         { label: 'Tingkat', value: a.tingkat?.charAt(0).toUpperCase() + a.tingkat?.slice(1), icon: Award },
         { label: 'Peran', value: a.peran?.charAt(0).toUpperCase() + a.peran?.slice(1), icon: User },
         { label: 'Peringkat / Hasil', value: a.peringkat || '-', icon: Trophy },
-        ...(a.bidang ? [{ label: 'Bidang', value: a.bidang, icon: FileText }] : []),
-      ].filter(f => f.value && f.value !== '-');
-    }
-    case 'seminar': {
-      const a = achievement as SeminarAchievement;
-      return [
-        { label: 'Peran', value: a.peran?.charAt(0).toUpperCase() + a.peran?.slice(1), icon: User },
-        { label: 'Mode', value: a.mode?.charAt(0).toUpperCase() + a.mode?.slice(1), icon: Award },
         { label: 'Penyelenggara', value: a.penyelenggara, icon: Building2 },
-        { label: 'Tahun', value: a.tahun?.toString(), icon: Calendar },
-      ].filter(f => f.value);
-    }
-    case 'magang': {
-      const a = achievement as MagangAchievement;
-      return [
-        { label: 'Nama Perusahaan', value: a.namaPerusahaan, icon: Building2 },
-        { label: 'Posisi', value: a.posisi, icon: User },
-        { label: 'Lokasi', value: a.lokasi, icon: MapPin },
-        { label: 'Industri', value: a.industri, icon: Briefcase },
-        { label: 'Periode', value: `${a.tanggalMulai} - ${a.sedangBerjalan ? 'Sekarang' : a.tanggalSelesai || 'Selesai'}`, icon: Calendar },
-      ].filter(f => f.value);
+      ].filter(f => f.value && f.value !== '-');
     }
     case 'publikasi': {
       const a = achievement as PublikasiAchievement;
@@ -272,43 +207,55 @@ function getCategoryDetailFields(achievement: Achievement): { label: string; val
       const a = achievement as HakiAchievement;
       return [
         { label: 'Jenis KI', value: a.jenisHaki?.replace('_', ' '), icon: Shield },
+        { label: 'Pemegang', value: a.pemegang, icon: User },
         { label: 'Nomor Pendaftaran', value: a.nomorPendaftaran || '-', icon: FileText },
         { label: 'Status', value: a.status === 'granted' ? 'Granted' : a.status === 'terdaftar' ? 'Terdaftar' : a.status, icon: Award },
       ].filter(f => f.value && f.value !== '-');
+    }
+    case 'akademik_terapan': {
+      const a = achievement as AkademikTerapanAchievement;
+      if (a.jenisAkademik === 'magang') {
+        return [
+          { label: 'Nama Perusahaan', value: a.namaPerusahaan || '', icon: Building2 },
+          { label: 'Posisi', value: a.posisi || '', icon: User },
+          { label: 'Lokasi', value: a.lokasi || '', icon: MapPin },
+          { label: 'Industri', value: a.industri || '', icon: FlaskConical },
+          { label: 'Periode', value: `${a.tanggalMulai} - ${a.sedangBerjalan ? 'Sekarang' : a.tanggalSelesai || 'Selesai'}`, icon: Calendar },
+        ].filter(f => f.value);
+      } else {
+        return [
+          { label: 'Mata Kuliah', value: a.mataKuliah || a.mataKuliahLainnya || '', icon: BookOpen },
+          { label: 'Semester', value: `${a.semester?.charAt(0).toUpperCase()}${a.semester?.slice(1)} ${a.tahun}`, icon: Calendar },
+          ...(a.output ? [{ label: 'Output', value: a.output, icon: FileText }] : []),
+          ...(a.nilai ? [{ label: 'Nilai', value: a.nilai, icon: Award }] : []),
+        ].filter(f => f.value);
+      }
     }
     case 'wirausaha': {
       const a = achievement as WirausahaAchievement;
       return [
         { label: 'Nama Usaha', value: a.namaUsaha, icon: Rocket },
-        { label: 'Bidang Usaha', value: a.jenisUsaha, icon: Briefcase },
+        { label: 'Bidang Usaha', value: a.jenisUsaha, icon: Building2 },
         { label: 'Peran', value: a.peran || 'Founder', icon: User },
         { label: 'Status Usaha', value: a.masihAktif ? 'Aktif' : 'Tidak Aktif', icon: Award },
       ].filter(f => f.value);
     }
     case 'pengembangan': {
       const a = achievement as PengembanganAchievement;
+      if (a.jenisProgram === 'organisasi') {
+        return [
+          { label: 'Nama Organisasi', value: a.namaOrganisasi || '', icon: Building2 },
+          { label: 'Jenis Organisasi', value: a.jenisOrganisasi === 'kampus' ? 'Organisasi Kampus' : 'Organisasi Luar Kampus', icon: Globe },
+          { label: 'Jabatan / Peran', value: a.jabatan || '', icon: User },
+          { label: 'Status Keanggotaan', value: a.sedangBerjalan ? 'Aktif' : 'Selesai', icon: Award },
+          { label: 'Periode', value: `${a.tanggalMulai} - ${a.sedangBerjalan ? 'Sekarang' : a.tanggalSelesai || 'Selesai'}`, icon: Calendar },
+        ].filter(f => f.value);
+      }
       return [
-        { label: 'Jenis Aktivitas', value: a.jenisProgram?.replace('_', ' '), icon: Sprout },
-        { label: 'Penyelenggara', value: a.penyelenggara, icon: Building2 },
+        { label: 'Jenis Aktivitas', value: a.jenisProgram?.replace('_', ' '), icon: Globe },
+        { label: 'Penyelenggara', value: a.penyelenggara || '', icon: Building2 },
         ...(a.peranMahasiswa ? [{ label: 'Peran', value: a.peranMahasiswa, icon: User }] : []),
         { label: 'Output', value: a.output || 'Sertifikat', icon: Award },
-      ].filter(f => f.value);
-    }
-    case 'portofolio': {
-      const a = achievement as PortofolioAchievement;
-      return [
-        { label: 'Mata Kuliah', value: a.mataKuliah, icon: BookOpen },
-        { label: 'Semester', value: `${a.semester?.charAt(0).toUpperCase()}${a.semester?.slice(1)} ${a.tahun}`, icon: Calendar },
-        ...(a.output ? [{ label: 'Output', value: a.output, icon: FileText }] : []),
-        ...(a.nilai ? [{ label: 'Nilai', value: a.nilai, icon: Award }] : []),
-      ].filter(f => f.value);
-    }
-    case 'organisasi': {
-      const a = achievement as OrganisasiAchievement;
-      return [
-        { label: 'Nama Organisasi', value: a.namaOrganisasi, icon: Users2 },
-        { label: 'Jabatan / Peran', value: a.jabatan, icon: User },
-        { label: 'Periode', value: `${a.periodeMulai} - ${a.masihAktif ? 'Sekarang' : a.periodeSelesai || 'Selesai'}`, icon: Calendar },
       ].filter(f => f.value);
     }
     default:
@@ -336,7 +283,6 @@ function ImageLightbox({
       onClick={onClose}
     >
       <div className="relative max-w-4xl max-h-[90vh] w-full mx-4" onClick={e => e.stopPropagation()}>
-        {/* Close Button */}
         <button 
           onClick={onClose}
           className="absolute -top-12 right-0 p-2 rounded-full bg-muted hover:bg-muted/80 transition-colors"
@@ -344,7 +290,6 @@ function ImageLightbox({
           <X className="w-5 h-5 text-foreground" />
         </button>
 
-        {/* Image */}
         <div className="relative rounded-2xl overflow-hidden bg-muted">
           <img 
             src={currentImage.fileUrl} 
@@ -353,7 +298,6 @@ function ImageLightbox({
           />
         </div>
 
-        {/* Navigation Dots */}
         {images.length > 1 && (
           <div className="flex items-center justify-center gap-2 mt-4">
             {images.map((_, idx) => (
@@ -371,7 +315,6 @@ function ImageLightbox({
           </div>
         )}
 
-        {/* Download Button */}
         <div className="flex justify-center mt-4">
           <Button variant="outline" size="sm" asChild>
             <a href={currentImage.fileUrl} download={currentImage.fileName}>
@@ -424,7 +367,6 @@ export function AchievementTimelineView({
     return acc;
   }, {} as Record<number, { achievement: Achievement; details: ReturnType<typeof getAchievementDetails> }[]>);
 
-  // Sort years descending
   const sortedYears = Object.keys(groupedByYear).map(Number).sort((a, b) => b - a);
 
   // Empty State
@@ -432,7 +374,6 @@ export function AchievementTimelineView({
     const isAllCategory = category === 'all';
     return (
       <div className="text-center py-16 px-4">
-        {/* Illustration */}
         <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mx-auto mb-6 shadow-soft">
           <Trophy className="w-12 h-12 text-primary/60" />
         </div>
@@ -455,13 +396,11 @@ export function AchievementTimelineView({
   return (
     <>
       <div className="relative">
-        {/* Timeline Line (Desktop) */}
         <div className="absolute left-[23px] top-8 bottom-4 w-0.5 bg-gradient-to-b from-border via-border to-transparent hidden md:block" />
 
         <div className="space-y-8">
           {sortedYears.map((year) => (
             <div key={year} className="relative">
-              {/* Year Marker */}
               <div className="flex items-center gap-4 mb-5">
                 <div className="w-12 h-12 rounded-xl bg-card border border-border flex items-center justify-center z-10 relative shadow-soft">
                   <span className="font-bold text-foreground text-sm">{year}</span>
@@ -469,7 +408,6 @@ export function AchievementTimelineView({
                 <div className="h-px flex-1 bg-gradient-to-r from-border to-transparent" />
               </div>
 
-              {/* Achievements for this year */}
               <div className="md:pl-16 space-y-3">
                 {groupedByYear[year].map(({ achievement, details }) => {
                   const config = CATEGORY_CONFIG[achievement.category] || DEFAULT_CONFIG;
@@ -484,7 +422,6 @@ export function AchievementTimelineView({
 
                   return (
                     <div key={achievement.id} className="relative">
-                      {/* Timeline Node (Desktop) */}
                       <div className={cn(
                         'hidden md:flex absolute -left-[52px] top-6 w-4 h-4 rounded-full items-center justify-center',
                         config.nodeColor,
@@ -493,7 +430,6 @@ export function AchievementTimelineView({
                         <div className="w-1.5 h-1.5 rounded-full bg-white/80" />
                       </div>
 
-                      {/* Main Achievement Card */}
                       <div
                         onClick={() => onItemClick(achievement)}
                         className={cn(
@@ -506,7 +442,7 @@ export function AchievementTimelineView({
                           'group'
                         )}
                       >
-                        {/* Featured Star Toggle - Top Right Corner */}
+                        {/* Featured Star Toggle */}
                         {onToggleFeatured && (
                           <button
                             onClick={(e) => {
@@ -517,7 +453,7 @@ export function AchievementTimelineView({
                               'absolute top-3 right-3 p-1.5 rounded-lg transition-all duration-200 z-10',
                               isFeatured 
                                 ? 'text-primary bg-primary/10 hover:bg-primary/20' 
-                                : 'text-muted-foreground/40 hover:text-primary hover:bg-primary/10 opacity-0 group-hover:opacity-100'
+                                : 'text-muted-foreground/40 hover:text-primary hover:bg-primary/10'
                             )}
                             title={isFeatured ? 'Hapus dari unggulan' : 'Tandai sebagai unggulan'}
                           >
@@ -525,7 +461,7 @@ export function AchievementTimelineView({
                           </button>
                         )}
 
-                        {/* Attachment Badge - Top Right (next to star) */}
+                        {/* Attachment Badge */}
                         {hasAttachments && (
                           <div className={cn(
                             'absolute top-3 flex items-center gap-1 px-2 py-1 rounded-full bg-muted/80 text-muted-foreground text-xs font-medium',
@@ -537,7 +473,6 @@ export function AchievementTimelineView({
                         )}
 
                         <div className="flex items-start gap-4">
-                          {/* Category Icon */}
                           <div className={cn(
                             'w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-105',
                             config.bgColor
@@ -545,7 +480,6 @@ export function AchievementTimelineView({
                             <Icon className={cn('w-5 h-5', config.color)} />
                           </div>
 
-                          {/* Content */}
                           <div className="flex-1 min-w-0 pr-16">
                             <div className="flex items-start justify-between gap-3 mb-1.5">
                               <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors leading-snug">
@@ -557,9 +491,7 @@ export function AchievementTimelineView({
                               {details.subtitle}
                             </p>
 
-                            {/* Badges Row */}
                             <div className="flex flex-wrap items-center gap-2 mt-2">
-                              {/* Featured Badge */}
                               {isFeatured && (
                                 <span className="inline-flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
                                   <Star className="w-3 h-3 fill-primary" />
@@ -567,7 +499,6 @@ export function AchievementTimelineView({
                                 </span>
                               )}
                               
-                              {/* Level Badge */}
                               {details.level && (
                                 <span className={cn(
                                   'text-xs font-medium px-2 py-0.5 rounded-full capitalize',
@@ -578,7 +509,6 @@ export function AchievementTimelineView({
                                 </span>
                               )}
 
-                              {/* Result Badge */}
                               {details.result && (
                                 <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground bg-muted px-2 py-0.5 rounded-full">
                                   <Award className="w-3 h-3 text-warning" />
@@ -588,7 +518,6 @@ export function AchievementTimelineView({
                             </div>
                           </div>
 
-                          {/* Expand Chevron */}
                           <ChevronDown className={cn(
                             'w-5 h-5 text-muted-foreground transition-transform duration-200 flex-shrink-0 mt-1',
                             isExpanded && 'rotate-180'
@@ -599,7 +528,6 @@ export function AchievementTimelineView({
                       {/* Expanded Inline Dropdown */}
                       {isExpanded && (
                         <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden animate-scale-in shadow-soft">
-                          {/* Documentation Section */}
                           <div className="p-5 border-b border-border">
                             <h5 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
                               <ImageIcon className="w-4 h-4 text-primary" />
@@ -635,7 +563,6 @@ export function AchievementTimelineView({
                               </div>
                             )}
 
-                            {/* Document Attachments */}
                             {documentAttachments.length > 0 && (
                               <div className="mt-4 space-y-2">
                                 {documentAttachments.map((doc) => (
@@ -658,7 +585,6 @@ export function AchievementTimelineView({
                             )}
                           </div>
 
-                          {/* Detail Information Section */}
                           <div className="p-5 bg-muted/30">
                             <h5 className="text-sm font-semibold text-foreground mb-4">
                               Informasi Detail
@@ -698,7 +624,6 @@ export function AchievementTimelineView({
                               })}
                             </div>
 
-                            {/* Description if available */}
                             {((achievement as any).deskripsi || (achievement as any).deskripsiTugas || (achievement as any).deskripsiProyek || (achievement as any).deskripsiUsaha) && (
                               <div className="mt-5 pt-5 border-t border-border">
                                 <p className="text-xs text-muted-foreground mb-2">Deskripsi</p>
@@ -709,7 +634,6 @@ export function AchievementTimelineView({
                             )}
                           </div>
 
-                          {/* Action Buttons */}
                           <div className="p-4 border-t border-border bg-background/50 flex items-center justify-end gap-2">
                             {onEdit && (
                               <Button
@@ -749,7 +673,6 @@ export function AchievementTimelineView({
         </div>
       </div>
 
-      {/* Image Lightbox */}
       {lightboxState && (
         <ImageLightbox
           images={lightboxState.images}
