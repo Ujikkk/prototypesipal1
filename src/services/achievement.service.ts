@@ -97,6 +97,57 @@ export const getAchievementStats = (masterId: string): Record<AchievementCategor
   };
 };
 
+// Get featured (unggulan) achievements count for a student
+export const getFeaturedAchievementsCount = (masterId: string): number => {
+  return achievements.filter(a => a.masterId === masterId && a.isUnggulan).length;
+};
+
+// Get featured achievements for a student
+export const getFeaturedAchievements = (masterId: string): Achievement[] => {
+  return achievements.filter(a => a.masterId === masterId && a.isUnggulan);
+};
+
+// Toggle featured status
+export const toggleFeaturedAchievement = (id: string): Achievement | undefined => {
+  const index = achievements.findIndex(a => a.id === id);
+  if (index === -1) return undefined;
+  
+  achievements[index] = {
+    ...achievements[index],
+    isUnggulan: !achievements[index].isUnggulan,
+    updatedAt: new Date().toISOString(),
+  };
+  
+  return achievements[index];
+};
+
+// Get highest level achieved by a student
+export const getHighestAchievementLevel = (masterId: string): string | null => {
+  const studentAchievements = getAchievementsByMasterId(masterId);
+  const levelHierarchy: Record<string, number> = {
+    'internasional': 4,
+    'nasional': 3,
+    'regional': 2,
+    'lokal': 1,
+  };
+  
+  let highestLevel: string | null = null;
+  let highestScore = 0;
+  
+  for (const achievement of studentAchievements) {
+    if (achievement.category === 'lomba') {
+      const tingkat = (achievement as any).tingkat;
+      const score = levelHierarchy[tingkat] || 0;
+      if (score > highestScore) {
+        highestScore = score;
+        highestLevel = tingkat;
+      }
+    }
+  }
+  
+  return highestLevel;
+};
+
 // Get global achievement statistics (for admin dashboard)
 export const getGlobalAchievementStats = (): { 
   total: number; 

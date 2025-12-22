@@ -29,6 +29,9 @@ import {
   getAchievementStats,
   deleteAchievement,
   updateAchievement,
+  getFeaturedAchievementsCount,
+  getHighestAchievementLevel,
+  toggleFeaturedAchievement,
 } from '@/services/achievement.service';
 import {
   Select,
@@ -51,6 +54,8 @@ export default function PrestasiPage() {
   const [stats, setStats] = useState<Record<AchievementCategory, number>>({
     lomba: 0, seminar: 0, publikasi: 0, haki: 0, magang: 0, portofolio: 0, wirausaha: 0, pengembangan: 0, organisasi: 0
   });
+  const [unggulanCount, setUnggulanCount] = useState(0);
+  const [highestLevel, setHighestLevel] = useState<string | null>(null);
 
   useEffect(() => {
     if (!selectedAlumni) {
@@ -64,6 +69,8 @@ export default function PrestasiPage() {
     if (!selectedAlumni) return;
     setAchievements(getAchievementsByMasterId(selectedAlumni.id));
     setStats(getAchievementStats(selectedAlumni.id));
+    setUnggulanCount(getFeaturedAchievementsCount(selectedAlumni.id));
+    setHighestLevel(getHighestAchievementLevel(selectedAlumni.id));
   };
 
   const handleItemClick = (achievement: Achievement) => {
@@ -82,6 +89,14 @@ export default function PrestasiPage() {
       setExpandedId(null);
       toast({ title: 'Prestasi berhasil dihapus' });
     }
+  };
+
+  const handleToggleFeatured = (achievement: Achievement) => {
+    toggleFeaturedAchievement(achievement.id);
+    refreshData();
+    toast({ 
+      title: achievement.isUnggulan ? 'Dihapus dari unggulan' : 'Ditandai sebagai unggulan' 
+    });
   };
 
   if (!selectedAlumni) return null;
@@ -131,6 +146,8 @@ export default function PrestasiPage() {
                 student={selectedAlumni}
                 stats={stats}
                 studentStatus="alumni"
+                unggulanCount={unggulanCount}
+                highestLevel={highestLevel}
               />
             </div>
 
@@ -188,6 +205,7 @@ export default function PrestasiPage() {
                   onAddNew={() => { setEditingAchievement(null); setIsFormOpen(true); }}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
+                  onToggleFeatured={handleToggleFeatured}
                 />
               </div>
             </div>

@@ -17,6 +17,8 @@ export interface BaseAchievement {
   category: AchievementCategory;
   createdAt: string;
   updatedAt: string;
+  // Featured achievement flag
+  isUnggulan?: boolean;
   // File attachments
   attachments?: AchievementAttachment[];
 }

@@ -1,5 +1,5 @@
 import { 
-  User, Trophy, Star, Award, GraduationCap, Globe
+  User, Trophy, Star, GraduationCap, Globe
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AlumniMaster } from '@/types';
@@ -12,6 +12,8 @@ interface StudentProfileHeaderProps {
   student: AlumniMaster;
   stats: Record<AchievementCategory, number>;
   studentStatus?: StudentStatusType;
+  unggulanCount?: number;
+  highestLevel?: string | null;
 }
 
 // Status configuration
@@ -20,14 +22,6 @@ const STATUS_CONFIG: Record<StudentStatusType, { label: string; color: string; b
   alumni: { label: 'Alumni', color: 'text-primary', bgColor: 'bg-primary/10' },
   cuti: { label: 'Cuti', color: 'text-warning', bgColor: 'bg-warning/10' },
   dropout: { label: 'Dropout', color: 'text-muted-foreground', bgColor: 'bg-muted' },
-};
-
-// Level hierarchy for determining highest
-const LEVEL_HIERARCHY: Record<string, number> = {
-  'internasional': 4,
-  'nasional': 3,
-  'regional': 2,
-  'lokal': 1,
 };
 
 const LEVEL_LABELS: Record<string, string> = {
@@ -40,25 +34,12 @@ const LEVEL_LABELS: Record<string, string> = {
 export function StudentProfileHeader({ 
   student, 
   stats,
-  studentStatus = 'alumni' 
+  studentStatus = 'alumni',
+  unggulanCount = 0,
+  highestLevel = null,
 }: StudentProfileHeaderProps) {
   const totalAchievements = Object.values(stats).reduce((a, b) => a + b, 0);
   const statusConfig = STATUS_CONFIG[studentStatus];
-  
-  // Calculate featured achievements count (lomba wins, publications, HAKI)
-  const featuredCount = (stats.lomba || 0) + (stats.publikasi || 0) + (stats.haki || 0);
-
-  // Determine highest level achieved (placeholder - would need achievement data)
-  // For now, derive from presence of achievements
-  const getHighestLevel = (): string | null => {
-    if (totalAchievements === 0) return null;
-    // Simplified: assume nasional if achievements exist
-    // In real implementation, this would scan achievement data
-    if (stats.lomba > 0 || stats.publikasi > 0) return 'nasional';
-    if (stats.magang > 0 || stats.pengembangan > 0) return 'regional';
-    return 'lokal';
-  };
-  const highestLevel = getHighestLevel();
 
   return (
     <div className="bg-card border border-border/50 rounded-2xl shadow-soft mb-6 overflow-hidden animate-fade-up">
@@ -116,18 +97,16 @@ export function StudentProfileHeader({
               </div>
             </div>
 
-            {/* Featured Count */}
-            {featuredCount > 0 && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50 border border-border/30">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Star className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <div className="text-lg font-bold text-foreground leading-none">{featuredCount}</div>
-                  <div className="text-[11px] text-muted-foreground">Unggulan</div>
-                </div>
+            {/* Featured/Unggulan Count */}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50 border border-border/30">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Star className="w-4 h-4 text-primary fill-primary/30" />
               </div>
-            )}
+              <div>
+                <div className="text-lg font-bold text-foreground leading-none">{unggulanCount}</div>
+                <div className="text-[11px] text-muted-foreground">Unggulan</div>
+              </div>
+            </div>
 
             {/* Highest Level */}
             {highestLevel && (
@@ -136,7 +115,7 @@ export function StudentProfileHeader({
                   <Globe className="w-4 h-4 text-success" />
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-foreground leading-tight">{LEVEL_LABELS[highestLevel]}</div>
+                  <div className="text-sm font-bold text-foreground leading-tight">{LEVEL_LABELS[highestLevel] || highestLevel}</div>
                   <div className="text-[11px] text-muted-foreground">Level Tertinggi</div>
                 </div>
               </div>

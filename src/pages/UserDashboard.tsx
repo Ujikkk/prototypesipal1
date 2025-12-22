@@ -279,11 +279,11 @@ export default function UserDashboard() {
                 </div>
               )}
 
-              {/* Card 4 - Riwayat Prestasi */}
+              {/* Card 4 - Riwayat Prestasi - Sorted by achievement date DESC */}
               <AchievementTimeline
-                achievements={achievements}
+                achievements={[...achievements].sort((a, b) => getAchievementYear(b) - getAchievementYear(a))}
                 maxItems={5}
-                contextText={`Menampilkan ${Math.min(achievements.length, 5)} dari ${totalAchievements} prestasi`}
+                contextText={`Menampilkan ${Math.min(achievements.length, 5)} dari ${totalAchievements} prestasi terbaru`}
                 onViewAll={() => navigate('/prestasi')}
                 onAddNew={canEditAchievements ? () => navigate('/prestasi') : undefined}
               />
