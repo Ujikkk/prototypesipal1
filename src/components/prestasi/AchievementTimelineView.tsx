@@ -495,9 +495,8 @@ export function AchievementTimelineView({
 
                       {/* Main Achievement Card */}
                       <div
-                        onClick={() => onItemClick(achievement)}
                         className={cn(
-                          'relative p-5 rounded-2xl cursor-pointer transition-all duration-300',
+                          'relative p-5 rounded-2xl transition-all duration-300',
                           'bg-card border shadow-soft',
                           isExpanded 
                             ? cn('border-2', config.borderColor, 'shadow-elevated') 
@@ -506,36 +505,6 @@ export function AchievementTimelineView({
                           'group'
                         )}
                       >
-                        {/* Featured Star Toggle - Top Right Corner */}
-                        {onToggleFeatured && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onToggleFeatured(achievement);
-                            }}
-                            className={cn(
-                              'absolute top-3 right-3 p-1.5 rounded-lg transition-all duration-200 z-10',
-                              isFeatured 
-                                ? 'text-primary bg-primary/10 hover:bg-primary/20' 
-                                : 'text-muted-foreground/40 hover:text-primary hover:bg-primary/10 opacity-0 group-hover:opacity-100'
-                            )}
-                            title={isFeatured ? 'Hapus dari unggulan' : 'Tandai sebagai unggulan'}
-                          >
-                            <Star className={cn('w-4 h-4', isFeatured && 'fill-primary')} />
-                          </button>
-                        )}
-
-                        {/* Attachment Badge - Top Right (next to star) */}
-                        {hasAttachments && (
-                          <div className={cn(
-                            'absolute top-3 flex items-center gap-1 px-2 py-1 rounded-full bg-muted/80 text-muted-foreground text-xs font-medium',
-                            onToggleFeatured ? 'right-12' : 'right-3'
-                          )}>
-                            <Paperclip className="w-3 h-3" />
-                            <span>{attachmentCount}</span>
-                          </div>
-                        )}
-
                         <div className="flex items-start gap-4">
                           {/* Category Icon */}
                           <div className={cn(
@@ -545,8 +514,11 @@ export function AchievementTimelineView({
                             <Icon className={cn('w-5 h-5', config.color)} />
                           </div>
 
-                          {/* Content */}
-                          <div className="flex-1 min-w-0 pr-16">
+                          {/* Content - Clickable Area */}
+                          <div 
+                            className="flex-1 min-w-0 cursor-pointer"
+                            onClick={() => onItemClick(achievement)}
+                          >
                             <div className="flex items-start justify-between gap-3 mb-1.5">
                               <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors leading-snug">
                                 {details.title}
@@ -559,6 +531,14 @@ export function AchievementTimelineView({
 
                             {/* Badges Row */}
                             <div className="flex flex-wrap items-center gap-2 mt-2">
+                              {/* Attachment Badge */}
+                              {hasAttachments && (
+                                <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground bg-muted/80 px-2 py-0.5 rounded-full">
+                                  <Paperclip className="w-3 h-3" />
+                                  {attachmentCount}
+                                </span>
+                              )}
+
                               {/* Featured Badge */}
                               {isFeatured && (
                                 <span className="inline-flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
@@ -588,11 +568,41 @@ export function AchievementTimelineView({
                             </div>
                           </div>
 
-                          {/* Expand Chevron */}
-                          <ChevronDown className={cn(
-                            'w-5 h-5 text-muted-foreground transition-transform duration-200 flex-shrink-0 mt-1',
-                            isExpanded && 'rotate-180'
-                          )} />
+                          {/* Action Zone - Always Visible */}
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {/* Star Toggle */}
+                            {onToggleFeatured && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onToggleFeatured(achievement);
+                                }}
+                                className={cn(
+                                  'p-2 rounded-lg transition-all duration-200',
+                                  isFeatured 
+                                    ? 'text-primary bg-primary/10 hover:bg-primary/20' 
+                                    : 'text-muted-foreground/50 hover:text-primary hover:bg-primary/10'
+                                )}
+                                title={isFeatured ? 'Hapus dari unggulan' : 'Tandai sebagai unggulan'}
+                                aria-label={isFeatured ? 'Hapus dari unggulan' : 'Tandai sebagai unggulan'}
+                              >
+                                <Star className={cn('w-5 h-5', isFeatured && 'fill-primary')} />
+                              </button>
+                            )}
+
+                            {/* Expand/Collapse Toggle */}
+                            <button
+                              onClick={() => onItemClick(achievement)}
+                              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-200"
+                              title={isExpanded ? 'Tutup detail' : 'Lihat detail'}
+                              aria-label={isExpanded ? 'Tutup detail' : 'Lihat detail'}
+                            >
+                              <ChevronDown className={cn(
+                                'w-5 h-5 transition-transform duration-200',
+                                isExpanded && 'rotate-180'
+                              )} />
+                            </button>
+                          </div>
                         </div>
                       </div>
 
