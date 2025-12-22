@@ -1,5 +1,6 @@
 import { 
-  Trophy, BookOpen, Shield, Briefcase, Rocket, Globe, Star
+  Trophy, BookOpen, Shield, Briefcase, Rocket, Star, Mic,
+  FolderOpen, Sprout, Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AchievementCategory } from '@/types/achievement.types';
@@ -13,76 +14,89 @@ interface CategorySidebarProps {
   onCategoryChange: (category: CategoryFilter) => void;
 }
 
-// Updated category configuration with new labels
+// Category configuration with new categories
 const CATEGORY_CONFIG: Record<CategoryFilter, { 
   icon: React.ElementType; 
   color: string; 
   bgColor: string;
   label: string;
-  description?: string;
+  shortLabel: string;
 }> = {
   all: {
     icon: Star,
     color: 'text-primary',
     bgColor: 'bg-primary/10',
     label: 'Semua Prestasi',
-    description: 'Lihat semua pencapaian',
+    shortLabel: 'Semua',
   },
-  kegiatan: { 
+  lomba: { 
     icon: Trophy, 
     color: 'text-warning', 
     bgColor: 'bg-warning/10',
-    label: 'Partisipasi & Prestasi',
-    description: 'Lomba, seminar, kompetisi',
+    label: 'Lomba',
+    shortLabel: 'Lomba',
+  },
+  seminar: { 
+    icon: Mic, 
+    color: 'text-purple-500', 
+    bgColor: 'bg-purple-500/10',
+    label: 'Seminar',
+    shortLabel: 'Seminar',
   },
   publikasi: { 
     icon: BookOpen, 
     color: 'text-primary', 
     bgColor: 'bg-primary/10',
     label: 'Karya Ilmiah & Publikasi',
-    description: 'Jurnal, prosiding, buku',
+    shortLabel: 'Publikasi',
   },
   haki: { 
     icon: Shield, 
     color: 'text-success', 
     bgColor: 'bg-success/10',
     label: 'Kekayaan Intelektual',
-    description: 'Hak cipta, paten, merek',
+    shortLabel: 'HAKI',
   },
   magang: { 
     icon: Briefcase, 
     color: 'text-info', 
     bgColor: 'bg-info/10',
-    label: 'Pengalaman Akademik Terapan',
-    description: 'Magang, kerja praktik',
+    label: 'Pengalaman Magang',
+    shortLabel: 'Magang',
+  },
+  portofolio: { 
+    icon: FolderOpen, 
+    color: 'text-orange-500', 
+    bgColor: 'bg-orange-500/10',
+    label: 'Portofolio Praktikum Kelas',
+    shortLabel: 'Portofolio',
   },
   wirausaha: { 
     icon: Rocket, 
     color: 'text-destructive', 
     bgColor: 'bg-destructive/10',
     label: 'Pengalaman Wirausaha',
-    description: 'Usaha, startup, bisnis',
+    shortLabel: 'Wirausaha',
   },
   pengembangan: { 
-    icon: Globe, 
-    color: 'text-accent-foreground', 
-    bgColor: 'bg-accent',
-    label: 'Pengembangan Diri',
-    description: 'Exchange, volunteer, organisasi',
+    icon: Sprout, 
+    color: 'text-emerald-500', 
+    bgColor: 'bg-emerald-500/10',
+    label: 'Program Pengembangan Diri',
+    shortLabel: 'Pengembangan',
   },
-  // Note: portofolio merged into pengembangan conceptually
-  portofolio: { 
-    icon: BookOpen, 
-    color: 'text-muted-foreground', 
-    bgColor: 'bg-muted',
-    label: 'Portofolio',
-    description: 'Proyek praktikum',
+  organisasi: { 
+    icon: Users, 
+    color: 'text-sky-500', 
+    bgColor: 'bg-sky-500/10',
+    label: 'Organisasi & Kepemimpinan',
+    shortLabel: 'Organisasi',
   },
 };
 
-// Categories in display order (without portofolio as it's merged)
+// Categories in strict display order
 const categories: CategoryFilter[] = [
-  'all', 'kegiatan', 'publikasi', 'haki', 'magang', 'wirausaha', 'pengembangan'
+  'all', 'lomba', 'seminar', 'publikasi', 'haki', 'magang', 'portofolio', 'wirausaha', 'pengembangan', 'organisasi'
 ];
 
 export function CategorySidebar({ activeCategory, stats, onCategoryChange }: CategorySidebarProps) {
@@ -90,8 +104,6 @@ export function CategorySidebar({ activeCategory, stats, onCategoryChange }: Cat
 
   const getCount = (key: CategoryFilter): number => {
     if (key === 'all') return totalCount;
-    // Merge portofolio into pengembangan for count
-    if (key === 'pengembangan') return (stats.pengembangan || 0) + (stats.portofolio || 0);
     return stats[key] || 0;
   };
 
@@ -139,7 +151,7 @@ export function CategorySidebar({ activeCategory, stats, onCategoryChange }: Cat
                     )} />
                   </div>
 
-                  {/* Label */}
+                  {/* Label - no truncation */}
                   <div className="flex-1 min-w-0">
                     <span className={cn(
                       'text-sm font-medium block leading-tight',
@@ -190,7 +202,7 @@ export function CategorySidebar({ activeCategory, stats, onCategoryChange }: Cat
                   isActive ? 'text-primary-foreground' : config.color
                 )} />
                 <span className="text-sm font-medium">
-                  {key === 'all' ? 'Semua' : config.label.split(' ')[0]}
+                  {config.shortLabel}
                 </span>
                 <span className={cn(
                   'text-xs font-semibold px-1.5 py-0.5 rounded-full',
