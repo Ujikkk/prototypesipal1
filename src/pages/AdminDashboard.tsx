@@ -15,7 +15,7 @@ import {
   Search, Download, Filter, Users, Briefcase, Rocket, BookOpen, TrendingUp,
   User, Mail, Phone, Building2, MapPin, Calendar, ExternalLink, Sparkles,
   BarChart3, PieChart as PieChartIcon, LineChart as LineChartIcon, X,
-  Trophy, Shield, FolderOpen, GraduationCap, Award
+  Trophy, Shield, FolderOpen, GraduationCap, Award, Mic
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -237,13 +237,15 @@ export default function AdminDashboard() {
               {(Object.entries(ACHIEVEMENT_CATEGORIES) as [AchievementCategory, typeof ACHIEVEMENT_CATEGORIES[AchievementCategory]][]).map(([key, cat]) => {
                 const count = achievementStats.byCategory[key];
                 const iconMap: Record<AchievementCategory, React.ElementType> = {
-                  kegiatan: Trophy,
+                  lomba: Trophy,
+                  seminar: Mic,
                   publikasi: BookOpen,
                   haki: Shield,
                   magang: Briefcase,
                   portofolio: FolderOpen,
                   wirausaha: Rocket,
                   pengembangan: GraduationCap,
+                  organisasi: Users,
                 };
                 const Icon = iconMap[key];
                 return (

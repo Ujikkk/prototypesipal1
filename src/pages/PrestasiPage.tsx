@@ -44,7 +44,7 @@ export default function PrestasiPage() {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [editingAchievement, setEditingAchievement] = useState<Achievement | null>(null);
   const [stats, setStats] = useState<Record<AchievementCategory, number>>({
-    kegiatan: 0, publikasi: 0, haki: 0, magang: 0, portofolio: 0, wirausaha: 0, pengembangan: 0
+    lomba: 0, seminar: 0, publikasi: 0, haki: 0, magang: 0, portofolio: 0, wirausaha: 0, pengembangan: 0, organisasi: 0
   });
 
   useEffect(() => {
@@ -83,18 +83,11 @@ export default function PrestasiPage() {
 
   const filteredAchievements = activeCategory === 'all' 
     ? achievements 
-    : achievements.filter(a => {
-        // Include portofolio in pengembangan category
-        if (activeCategory === 'pengembangan') {
-          return a.category === 'pengembangan' || a.category === 'portofolio';
-        }
-        return a.category === activeCategory;
-      });
+    : achievements.filter(a => a.category === activeCategory);
   const totalAchievements = Object.values(stats).reduce((a, b) => a + b, 0);
 
-  // Get category for form (default to kegiatan if 'all' is selected)
-  const formCategory: AchievementCategory = activeCategory === 'all' ? 'kegiatan' : 
-    activeCategory === 'pengembangan' ? 'pengembangan' : activeCategory;
+  // Get category for form (default to lomba if 'all' is selected)
+  const formCategory: AchievementCategory = activeCategory === 'all' ? 'lomba' : activeCategory;
 
   return (
     <div className="min-h-screen bg-background">
@@ -153,12 +146,16 @@ export default function PrestasiPage() {
                     <div>
                       <h2 className="text-lg font-semibold text-foreground">
                         {activeCategory === 'all' ? 'Semua Prestasi' : 
-                          activeCategory === 'kegiatan' ? 'Partisipasi & Prestasi' :
+                          activeCategory === 'lomba' ? 'Lomba' :
+                          activeCategory === 'seminar' ? 'Seminar' :
                           activeCategory === 'publikasi' ? 'Karya Ilmiah & Publikasi' :
                           activeCategory === 'haki' ? 'Kekayaan Intelektual' :
-                          activeCategory === 'magang' ? 'Pengalaman Akademik Terapan' :
+                          activeCategory === 'magang' ? 'Pengalaman Magang' :
+                          activeCategory === 'portofolio' ? 'Portofolio Praktikum Kelas' :
                           activeCategory === 'wirausaha' ? 'Pengalaman Wirausaha' :
-                          'Pengembangan Diri'}
+                          activeCategory === 'pengembangan' ? 'Program Pengembangan Diri' :
+                          activeCategory === 'organisasi' ? 'Organisasi & Kepemimpinan' :
+                          'Prestasi'}
                       </h2>
                       <p className="text-sm text-muted-foreground mt-1">
                         {filteredAchievements.length} pencapaian
@@ -255,13 +252,15 @@ function AchievementForm({
   };
 
   const categoryLabels: Record<AchievementCategory, string> = {
-    kegiatan: 'Partisipasi & Prestasi',
+    lomba: 'Lomba',
+    seminar: 'Seminar',
     publikasi: 'Karya Ilmiah & Publikasi',
     haki: 'Kekayaan Intelektual',
-    magang: 'Pengalaman Akademik Terapan',
-    portofolio: 'Portofolio',
+    magang: 'Pengalaman Magang',
+    portofolio: 'Portofolio Praktikum Kelas',
     wirausaha: 'Pengalaman Wirausaha',
-    pengembangan: 'Pengembangan Diri',
+    pengembangan: 'Program Pengembangan Diri',
+    organisasi: 'Organisasi & Kepemimpinan',
   };
 
   return (
@@ -296,13 +295,15 @@ function AchievementForm({
           )}
 
           {/* Dynamic Form Fields */}
-          {selectedCategory === 'kegiatan' && <KegiatanFields formData={formData} updateField={updateField} />}
+          {selectedCategory === 'lomba' && <LombaFields formData={formData} updateField={updateField} />}
+          {selectedCategory === 'seminar' && <SeminarFields formData={formData} updateField={updateField} />}
           {selectedCategory === 'publikasi' && <PublikasiFields formData={formData} updateField={updateField} />}
           {selectedCategory === 'haki' && <HakiFields formData={formData} updateField={updateField} />}
           {selectedCategory === 'magang' && <MagangFields formData={formData} updateField={updateField} />}
           {selectedCategory === 'portofolio' && <PortofolioFields formData={formData} updateField={updateField} />}
           {selectedCategory === 'wirausaha' && <WirausahaFields formData={formData} updateField={updateField} />}
           {selectedCategory === 'pengembangan' && <PengembanganFields formData={formData} updateField={updateField} />}
+          {selectedCategory === 'organisasi' && <OrganisasiFields formData={formData} updateField={updateField} />}
 
           {/* Attachments */}
           <div className="pt-4 border-t border-border">
@@ -343,14 +344,14 @@ interface FieldProps {
   updateField: (k: string, v: any) => void; 
 }
 
-function KegiatanFields({ formData, updateField }: FieldProps) {
+function LombaFields({ formData, updateField }: FieldProps) {
   return (
     <div className="space-y-4">
       <div>
-        <Label>Nama Kegiatan / Lomba *</Label>
+        <Label>Nama Lomba *</Label>
         <Input 
-          value={formData.namaKegiatan || ''} 
-          onChange={(e) => updateField('namaKegiatan', e.target.value)} 
+          value={formData.namaLomba || ''} 
+          onChange={(e) => updateField('namaLomba', e.target.value)} 
           placeholder="Contoh: Lomba Karya Tulis Ilmiah"
           required 
         />
@@ -370,10 +371,96 @@ function KegiatanFields({ formData, updateField }: FieldProps) {
           <Select value={formData.tingkat || ''} onValueChange={(v) => updateField('tingkat', v)}>
             <SelectTrigger><SelectValue placeholder="Pilih tingkat" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="internal">Internal</SelectItem>
+              <SelectItem value="lokal">Lokal</SelectItem>
               <SelectItem value="regional">Regional</SelectItem>
               <SelectItem value="nasional">Nasional</SelectItem>
               <SelectItem value="internasional">Internasional</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Peran *</Label>
+          <Select value={formData.peran || ''} onValueChange={(v) => updateField('peran', v)}>
+            <SelectTrigger><SelectValue placeholder="Pilih peran" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="peserta">Peserta</SelectItem>
+              <SelectItem value="juara">Juara</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Peringkat</Label>
+          <Input 
+            value={formData.peringkat || ''} 
+            onChange={(e) => updateField('peringkat', e.target.value)} 
+            placeholder="Contoh: Juara 1, Finalis"
+          />
+        </div>
+        <div>
+          <Label>Tahun *</Label>
+          <Input 
+            type="number" 
+            value={formData.tahun || ''} 
+            onChange={(e) => updateField('tahun', parseInt(e.target.value))} 
+            placeholder="2024"
+            required 
+          />
+        </div>
+      </div>
+      <div>
+        <Label>Deskripsi</Label>
+        <Textarea 
+          value={formData.deskripsi || ''} 
+          onChange={(e) => updateField('deskripsi', e.target.value)} 
+          placeholder="Ceritakan pengalaman Anda..."
+          rows={3}
+        />
+      </div>
+    </div>
+  );
+}
+
+function SeminarFields({ formData, updateField }: FieldProps) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label>Nama Seminar *</Label>
+        <Input 
+          value={formData.namaSeminar || ''} 
+          onChange={(e) => updateField('namaSeminar', e.target.value)} 
+          placeholder="Contoh: Seminar Nasional Teknologi"
+          required 
+        />
+      </div>
+      <div>
+        <Label>Penyelenggara *</Label>
+        <Input 
+          value={formData.penyelenggara || ''} 
+          onChange={(e) => updateField('penyelenggara', e.target.value)} 
+          placeholder="Nama institusi penyelenggara"
+          required 
+        />
+      </div>
+      <div className="grid grid-cols-3 gap-4">
+        <div>
+          <Label>Peran *</Label>
+          <Select value={formData.peran || ''} onValueChange={(v) => updateField('peran', v)}>
+            <SelectTrigger><SelectValue placeholder="Pilih" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="peserta">Peserta</SelectItem>
+              <SelectItem value="pembicara">Pembicara</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Mode *</Label>
+          <Select value={formData.mode || ''} onValueChange={(v) => updateField('mode', v)}>
+            <SelectTrigger><SelectValue placeholder="Pilih" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="online">Online</SelectItem>
+              <SelectItem value="offline">Offline</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -389,19 +476,65 @@ function KegiatanFields({ formData, updateField }: FieldProps) {
         </div>
       </div>
       <div>
-        <Label>Peringkat / Hasil</Label>
-        <Input 
-          value={formData.prestasi || ''} 
-          onChange={(e) => updateField('prestasi', e.target.value)} 
-          placeholder="Contoh: Juara 1, Finalis, Best Paper"
+        <Label>Deskripsi</Label>
+        <Textarea 
+          value={formData.deskripsi || ''} 
+          onChange={(e) => updateField('deskripsi', e.target.value)} 
+          placeholder="Ceritakan pengalaman Anda..."
+          rows={3}
         />
+      </div>
+    </div>
+  );
+}
+
+function OrganisasiFields({ formData, updateField }: FieldProps) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label>Nama Organisasi *</Label>
+        <Input 
+          value={formData.namaOrganisasi || ''} 
+          onChange={(e) => updateField('namaOrganisasi', e.target.value)} 
+          placeholder="Nama organisasi"
+          required 
+        />
+      </div>
+      <div>
+        <Label>Jabatan / Peran *</Label>
+        <Input 
+          value={formData.jabatan || ''} 
+          onChange={(e) => updateField('jabatan', e.target.value)} 
+          placeholder="Contoh: Ketua, Sekretaris"
+          required 
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Periode Mulai *</Label>
+          <Input 
+            type="date" 
+            value={formData.periodeMulai || ''} 
+            onChange={(e) => updateField('periodeMulai', e.target.value)} 
+            required 
+          />
+        </div>
+        <div>
+          <Label>Periode Selesai</Label>
+          <Input 
+            type="date" 
+            value={formData.periodeSelesai || ''} 
+            onChange={(e) => updateField('periodeSelesai', e.target.value)}
+            disabled={formData.masihAktif}
+          />
+        </div>
       </div>
       <div>
         <Label>Deskripsi</Label>
         <Textarea 
           value={formData.deskripsi || ''} 
           onChange={(e) => updateField('deskripsi', e.target.value)} 
-          placeholder="Ceritakan pengalaman Anda..."
+          placeholder="Jelaskan peran dan kontribusi Anda..."
           rows={3}
         />
       </div>
