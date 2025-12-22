@@ -151,10 +151,11 @@ export interface PengembanganAchievement extends BaseAchievement {
 export interface OrganisasiAchievement extends BaseAchievement {
   category: 'organisasi';
   namaOrganisasi: string;
+  jenisOrganisasi: 'kampus' | 'luar_kampus'; // Organization scope
   jabatan: string;
-  periodeMulai: string;
-  periodeSelesai?: string;
-  masihAktif: boolean;
+  tanggalMulai: string; // Start date (always required)
+  tanggalSelesai?: string; // End date (null if still active)
+  masihAktif: boolean; // Membership status toggle
   deskripsi?: string;
 }
 

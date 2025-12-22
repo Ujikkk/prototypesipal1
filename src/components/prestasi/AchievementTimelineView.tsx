@@ -3,10 +3,12 @@ import {
   Trophy, BookOpen, Shield, Briefcase, Rocket, Sprout, Mic2, Users2, FolderOpen,
   Paperclip, Plus, ChevronDown, Building2, MapPin, Calendar,
   User, Award, FileText, ExternalLink, Download, X, ZoomIn,
-  Edit3, Trash2, Image as ImageIcon, HelpCircle, Star
+  Edit3, Trash2, Image as ImageIcon, HelpCircle, Star, CheckCircle2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { id as idLocale } from 'date-fns/locale';
 import { 
   Achievement, 
   AchievementCategory,
@@ -207,8 +209,8 @@ function getAchievementDetails(achievement: Achievement): {
       const a = achievement as OrganisasiAchievement;
       return {
         title: `${a.jabatan} - ${a.namaOrganisasi}`,
-        subtitle: a.namaOrganisasi,
-        year: new Date(a.periodeMulai).getFullYear(),
+        subtitle: a.jenisOrganisasi === 'kampus' ? 'Organisasi Kampus' : 'Organisasi Luar Kampus',
+        year: new Date(a.tanggalMulai).getFullYear(),
         result: a.masihAktif ? 'Masih Aktif' : 'Selesai',
       };
     }
@@ -305,10 +307,19 @@ function getCategoryDetailFields(achievement: Achievement): { label: string; val
     }
     case 'organisasi': {
       const a = achievement as OrganisasiAchievement;
+      const formatPeriod = () => {
+        const start = format(new Date(a.tanggalMulai), 'd MMM yyyy', { locale: idLocale });
+        if (a.masihAktif) return `${start} – Sekarang`;
+        return a.tanggalSelesai 
+          ? `${start} – ${format(new Date(a.tanggalSelesai), 'd MMM yyyy', { locale: idLocale })}`
+          : `${start} – Selesai`;
+      };
       return [
         { label: 'Nama Organisasi', value: a.namaOrganisasi, icon: Users2 },
+        { label: 'Jenis Organisasi', value: a.jenisOrganisasi === 'kampus' ? 'Kampus' : 'Luar Kampus', icon: Building2 },
         { label: 'Jabatan / Peran', value: a.jabatan, icon: User },
-        { label: 'Periode', value: `${a.periodeMulai} - ${a.masihAktif ? 'Sekarang' : a.periodeSelesai || 'Selesai'}`, icon: Calendar },
+        { label: 'Status Keanggotaan', value: a.masihAktif ? 'Aktif' : 'Selesai', icon: CheckCircle2 },
+        { label: 'Periode Keanggotaan', value: formatPeriod(), icon: Calendar },
       ].filter(f => f.value);
     }
     default:
