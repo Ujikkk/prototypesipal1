@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react';
 import { 
-  Trophy, BookOpen, Shield, Briefcase, Rocket, Sprout, Mic, Users, FolderOpen,
+  Trophy, BookOpen, Shield, Briefcase, Rocket, Sprout, Mic2, Users2, FolderOpen,
   Paperclip, Plus, ChevronDown, Building2, MapPin, Calendar,
   User, Award, FileText, ExternalLink, Download, X, ZoomIn,
-  Edit3, Trash2, Image as ImageIcon
+  Edit3, Trash2, Image as ImageIcon, HelpCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -32,7 +32,7 @@ interface AchievementTimelineViewProps {
   onDelete?: (achievement: Achievement) => void;
 }
 
-const CATEGORY_CONFIG: Record<AchievementCategory, { 
+const CATEGORY_CONFIG: Record<string, { 
   icon: React.ElementType; 
   color: string; 
   nodeColor: string;
@@ -47,7 +47,7 @@ const CATEGORY_CONFIG: Record<AchievementCategory, {
     borderColor: 'border-warning/30'
   },
   seminar: { 
-    icon: Mic, 
+    icon: Mic2, 
     color: 'text-purple-500', 
     nodeColor: 'bg-purple-500', 
     bgColor: 'bg-purple-500/10',
@@ -96,12 +96,28 @@ const CATEGORY_CONFIG: Record<AchievementCategory, {
     borderColor: 'border-emerald-500/30'
   },
   organisasi: { 
-    icon: Users, 
+    icon: Users2, 
     color: 'text-sky-500', 
     nodeColor: 'bg-sky-500', 
     bgColor: 'bg-sky-500/10',
     borderColor: 'border-sky-500/30'
   },
+  // Legacy support
+  kegiatan: {
+    icon: Trophy,
+    color: 'text-warning',
+    nodeColor: 'bg-warning',
+    bgColor: 'bg-warning/10',
+    borderColor: 'border-warning/30',
+  },
+};
+
+const DEFAULT_CONFIG = {
+  icon: HelpCircle,
+  color: 'text-muted-foreground',
+  nodeColor: 'bg-muted-foreground',
+  bgColor: 'bg-muted/30',
+  borderColor: 'border-border',
 };
 
 function getAchievementDetails(achievement: Achievement): { 
@@ -195,6 +211,18 @@ function getAchievementDetails(achievement: Achievement): {
         result: a.masihAktif ? 'Masih Aktif' : 'Selesai',
       };
     }
+    default: {
+      // Legacy/unknown achievement shapes (e.g., old seed data category: 'kegiatan')
+      const anyA = achievement as any;
+      const year = anyA?.tahun ?? (typeof anyA?.year === 'number' ? anyA.year : new Date().getFullYear());
+      return {
+        title: anyA?.namaKegiatan || anyA?.title || anyA?.judul || 'Prestasi',
+        subtitle: anyA?.penyelenggara || anyA?.subtitle || 'Dokumentasi prestasi',
+        year,
+        level: anyA?.tingkat,
+        result: anyA?.prestasi,
+      };
+    }
   }
 }
 
@@ -277,7 +305,7 @@ function getCategoryDetailFields(achievement: Achievement): { label: string; val
     case 'organisasi': {
       const a = achievement as OrganisasiAchievement;
       return [
-        { label: 'Nama Organisasi', value: a.namaOrganisasi, icon: Users },
+        { label: 'Nama Organisasi', value: a.namaOrganisasi, icon: Users2 },
         { label: 'Jabatan / Peran', value: a.jabatan, icon: User },
         { label: 'Periode', value: `${a.periodeMulai} - ${a.masihAktif ? 'Sekarang' : a.periodeSelesai || 'Selesai'}`, icon: Calendar },
       ].filter(f => f.value);
@@ -377,8 +405,18 @@ export function AchievementTimelineView({
 
   // Group achievements by year
   const groupedByYear = achievements.reduce((acc, achievement) => {
-    const details = getAchievementDetails(achievement);
-    const year = details.year;
+    let details: ReturnType<typeof getAchievementDetails>;
+    try {
+      details = getAchievementDetails(achievement);
+    } catch {
+      details = {
+        title: 'Prestasi',
+        subtitle: 'Dokumentasi prestasi',
+        year: new Date().getFullYear(),
+      };
+    }
+
+    const year = details?.year ?? new Date().getFullYear();
     if (!acc[year]) acc[year] = [];
     acc[year].push({ achievement, details });
     return acc;
