@@ -1,55 +1,110 @@
 // Seed data for Achievements Module
 
-import { Achievement } from '@/types/achievement.types';
+import type { 
+  Achievement, 
+  LombaAchievement, 
+  SeminarAchievement, 
+  OrganisasiAchievement,
+  PublikasiAchievement,
+  HakiAchievement,
+  MagangAchievement,
+  PortofolioAchievement,
+  WirausahaAchievement,
+  PengembanganAchievement
+} from '@/types/achievement.types';
 
 // Sample seed data for various achievement categories
+// All items use proper normalized categories (no legacy 'kegiatan')
 export const achievementSeedData: Achievement[] = [
-  // Kegiatan achievements
+  // ===== LOMBA =====
   {
     id: 'ach_seed_001',
     masterId: '1',
-    category: 'kegiatan',
-    jenisKegiatan: 'lomba',
-    namaKegiatan: 'Lomba Debat Ekonomi Nasional',
+    category: 'lomba',
+    namaLomba: 'Lomba Debat Ekonomi Nasional',
     penyelenggara: 'Universitas Indonesia',
     tingkat: 'nasional',
-    prestasi: 'Juara 2',
+    peran: 'juara',
+    peringkat: 'Juara 2',
+    bidang: 'Ekonomi',
     tahun: 2023,
-    sertifikat: true,
     deskripsi: 'Kompetisi debat ekonomi tingkat nasional dengan peserta dari 50+ universitas.',
     createdAt: '2023-06-15T10:00:00Z',
     updatedAt: '2023-06-15T10:00:00Z',
-  },
+  } as LombaAchievement,
+  {
+    id: 'ach_seed_016',
+    masterId: '1',
+    category: 'lomba',
+    namaLomba: 'Hackathon Digital Innovation',
+    penyelenggara: 'Kemenkominfo',
+    tingkat: 'nasional',
+    peran: 'juara',
+    peringkat: 'Juara 1',
+    bidang: 'Teknologi',
+    tahun: 2024,
+    deskripsi: 'Kompetisi pengembangan solusi digital untuk UMKM.',
+    createdAt: '2024-05-20T10:00:00Z',
+    updatedAt: '2024-05-20T10:00:00Z',
+  } as LombaAchievement,
+  {
+    id: 'ach_seed_017',
+    masterId: '2',
+    category: 'lomba',
+    namaLomba: 'Business Plan Competition',
+    penyelenggara: 'Bank Indonesia',
+    tingkat: 'regional',
+    peran: 'peserta',
+    peringkat: 'Finalis',
+    bidang: 'Bisnis',
+    tahun: 2023,
+    deskripsi: 'Kompetisi rencana bisnis tingkat regional Jawa Tengah.',
+    createdAt: '2023-10-05T10:00:00Z',
+    updatedAt: '2023-10-05T10:00:00Z',
+  } as LombaAchievement,
+
+  // ===== SEMINAR =====
   {
     id: 'ach_seed_002',
     masterId: '1',
-    category: 'kegiatan',
-    jenisKegiatan: 'seminar',
-    namaKegiatan: 'Seminar Digital Marketing 4.0',
+    category: 'seminar',
+    namaSeminar: 'Seminar Digital Marketing 4.0',
     penyelenggara: 'Google Indonesia',
-    tingkat: 'nasional',
+    peran: 'peserta',
+    mode: 'offline',
     tahun: 2023,
-    sertifikat: true,
     deskripsi: 'Pelatihan intensif digital marketing bersertifikasi Google.',
     createdAt: '2023-08-20T10:00:00Z',
     updatedAt: '2023-08-20T10:00:00Z',
-  },
+  } as SeminarAchievement,
   {
     id: 'ach_seed_003',
     masterId: '2',
-    category: 'kegiatan',
-    jenisKegiatan: 'pembicara',
-    namaKegiatan: 'Workshop Kewirausahaan Mahasiswa',
+    category: 'seminar',
+    namaSeminar: 'Workshop Kewirausahaan Mahasiswa',
     penyelenggara: 'Polines',
-    tingkat: 'internal',
+    peran: 'pembicara',
+    mode: 'offline',
     tahun: 2024,
-    sertifikat: true,
     deskripsi: 'Berbagi pengalaman membangun startup kepada mahasiswa baru.',
     createdAt: '2024-02-10T10:00:00Z',
     updatedAt: '2024-02-10T10:00:00Z',
-  },
+  } as SeminarAchievement,
+  {
+    id: 'ach_seed_018',
+    masterId: '3',
+    category: 'seminar',
+    namaSeminar: 'International Conference on Business Innovation',
+    penyelenggara: 'ASEAN Business Forum',
+    peran: 'pembicara',
+    mode: 'online',
+    tahun: 2024,
+    deskripsi: 'Konferensi internasional membahas inovasi bisnis di Asia Tenggara.',
+    createdAt: '2024-04-15T10:00:00Z',
+    updatedAt: '2024-04-15T10:00:00Z',
+  } as SeminarAchievement,
 
-  // Publikasi achievements
+  // ===== PUBLIKASI =====
   {
     id: 'ach_seed_004',
     masterId: '1',
@@ -64,7 +119,7 @@ export const achievementSeedData: Achievement[] = [
     url: 'https://jurnal.example.com/article/123',
     createdAt: '2023-09-01T10:00:00Z',
     updatedAt: '2023-09-01T10:00:00Z',
-  },
+  } as PublikasiAchievement,
   {
     id: 'ach_seed_005',
     masterId: '3',
@@ -77,9 +132,9 @@ export const achievementSeedData: Achievement[] = [
     halaman: '45-52',
     createdAt: '2024-03-15T10:00:00Z',
     updatedAt: '2024-03-15T10:00:00Z',
-  },
+  } as PublikasiAchievement,
 
-  // HAKI achievements
+  // ===== HAKI =====
   {
     id: 'ach_seed_006',
     masterId: '2',
@@ -95,7 +150,7 @@ export const achievementSeedData: Achievement[] = [
     deskripsi: 'Aplikasi mobile untuk membantu UMKM mengelola stok barang.',
     createdAt: '2024-01-20T10:00:00Z',
     updatedAt: '2024-01-20T10:00:00Z',
-  },
+  } as HakiAchievement,
   {
     id: 'ach_seed_007',
     masterId: '4',
@@ -109,9 +164,9 @@ export const achievementSeedData: Achievement[] = [
     deskripsi: 'Merek dan desain kemasan untuk produk kopi lokal.',
     createdAt: '2024-04-10T10:00:00Z',
     updatedAt: '2024-04-10T10:00:00Z',
-  },
+  } as HakiAchievement,
 
-  // Magang achievements
+  // ===== MAGANG =====
   {
     id: 'ach_seed_008',
     masterId: '1',
@@ -127,7 +182,7 @@ export const achievementSeedData: Achievement[] = [
     skillDiperoleh: ['Social Media Marketing', 'Google Ads', 'Content Creation'],
     createdAt: '2023-04-20T10:00:00Z',
     updatedAt: '2023-04-20T10:00:00Z',
-  },
+  } as MagangAchievement,
   {
     id: 'ach_seed_009',
     masterId: '3',
@@ -143,14 +198,14 @@ export const achievementSeedData: Achievement[] = [
     skillDiperoleh: ['Market Analysis', 'Partnership Development', 'Presentation'],
     createdAt: '2023-09-05T10:00:00Z',
     updatedAt: '2023-09-05T10:00:00Z',
-  },
+  } as MagangAchievement,
 
-  // Portofolio achievements
+  // ===== PORTOFOLIO =====
   {
     id: 'ach_seed_010',
     masterId: '2',
     category: 'portofolio',
-    mataKuliah: 'kwu',
+    mataKuliah: 'Kewirausahaan',
     judulProyek: 'Startup "FreshMart" - Marketplace Sayur Organik',
     deskripsiProyek: 'Platform e-commerce untuk menjual sayur organik langsung dari petani ke konsumen.',
     tahun: 2023,
@@ -159,12 +214,12 @@ export const achievementSeedData: Achievement[] = [
     urlProyek: 'https://freshmart.example.com',
     createdAt: '2023-07-10T10:00:00Z',
     updatedAt: '2023-07-10T10:00:00Z',
-  },
+  } as PortofolioAchievement,
   {
     id: 'ach_seed_011',
     masterId: '1',
     category: 'portofolio',
-    mataKuliah: 'ecommerce',
+    mataKuliah: 'E-Commerce',
     judulProyek: 'Toko Online Fashion "StyleKu"',
     deskripsiProyek: 'Membangun toko online fashion dengan fitur lengkap menggunakan Shopify.',
     tahun: 2023,
@@ -173,9 +228,9 @@ export const achievementSeedData: Achievement[] = [
     urlProyek: 'https://styleku.myshopify.com',
     createdAt: '2023-01-15T10:00:00Z',
     updatedAt: '2023-01-15T10:00:00Z',
-  },
+  } as PortofolioAchievement,
 
-  // Wirausaha achievements
+  // ===== WIRAUSAHA =====
   {
     id: 'ach_seed_012',
     masterId: '2',
@@ -191,7 +246,7 @@ export const achievementSeedData: Achievement[] = [
     sosialMedia: ['@kopimbakbudi', 'Kopi Mbak Budi'],
     createdAt: '2023-05-01T10:00:00Z',
     updatedAt: '2023-05-01T10:00:00Z',
-  },
+  } as WirausahaAchievement,
   {
     id: 'ach_seed_013',
     masterId: '4',
@@ -207,9 +262,9 @@ export const achievementSeedData: Achievement[] = [
     sosialMedia: ['@kopinusantara.id'],
     createdAt: '2024-02-01T10:00:00Z',
     updatedAt: '2024-02-01T10:00:00Z',
-  },
+  } as WirausahaAchievement,
 
-  // Pengembangan achievements
+  // ===== PENGEMBANGAN =====
   {
     id: 'ach_seed_014',
     masterId: '3',
@@ -223,24 +278,48 @@ export const achievementSeedData: Achievement[] = [
     tanggalSelesai: '2023-12-15',
     sedangBerjalan: false,
     deskripsi: 'Program pertukaran mahasiswa ke Universiti Malaya selama 1 semester.',
-    prestasi: 'Best Presentation Award',
+    output: 'Best Presentation Award',
     createdAt: '2024-01-05T10:00:00Z',
     updatedAt: '2024-01-05T10:00:00Z',
-  },
+  } as PengembanganAchievement,
+
+  // ===== ORGANISASI =====
   {
     id: 'ach_seed_015',
     masterId: '1',
-    category: 'pengembangan',
-    jenisProgram: 'organisasi',
-    namaProgram: 'Ketua Himpunan Mahasiswa ABT',
-    penyelenggara: 'Polines',
-    lokasi: 'Semarang',
-    tanggalMulai: '2022-09-01',
-    tanggalSelesai: '2023-09-01',
-    sedangBerjalan: false,
-    deskripsi: 'Memimpin organisasi himpunan mahasiswa dengan 200+ anggota aktif.',
-    prestasi: 'Organisasi Terbaik Polines 2023',
+    category: 'organisasi',
+    namaOrganisasi: 'Himpunan Mahasiswa ABT',
+    jabatan: 'Ketua',
+    periodeMulai: '2022-09-01',
+    periodeSelesai: '2023-09-01',
+    masihAktif: false,
+    deskripsi: 'Memimpin organisasi himpunan mahasiswa dengan 200+ anggota aktif. Penghargaan: Organisasi Terbaik Polines 2023.',
     createdAt: '2023-09-10T10:00:00Z',
     updatedAt: '2023-09-10T10:00:00Z',
-  },
-] as Achievement[];
+  } as OrganisasiAchievement,
+  {
+    id: 'ach_seed_019',
+    masterId: '2',
+    category: 'organisasi',
+    namaOrganisasi: 'BEM Polines',
+    jabatan: 'Kepala Departemen Kewirausahaan',
+    periodeMulai: '2023-01-01',
+    periodeSelesai: '2024-01-01',
+    masihAktif: false,
+    deskripsi: 'Mengelola program kewirausahaan mahasiswa dan event bazaar kampus.',
+    createdAt: '2024-01-15T10:00:00Z',
+    updatedAt: '2024-01-15T10:00:00Z',
+  } as OrganisasiAchievement,
+  {
+    id: 'ach_seed_020',
+    masterId: '1',
+    category: 'organisasi',
+    namaOrganisasi: 'Komunitas Entrepreneur Muda Semarang',
+    jabatan: 'Anggota Aktif',
+    periodeMulai: '2023-03-01',
+    masihAktif: true,
+    deskripsi: 'Komunitas berbagi pengalaman dan networking antar pengusaha muda.',
+    createdAt: '2023-03-15T10:00:00Z',
+    updatedAt: '2023-03-15T10:00:00Z',
+  } as OrganisasiAchievement,
+];

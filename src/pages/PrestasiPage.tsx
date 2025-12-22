@@ -9,9 +9,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAlumni } from '@/contexts/AlumniContext';
 import { useToast } from '@/hooks/use-toast';
 import { FileUpload } from '@/components/shared';
-import { CategorySidebar, AchievementTimelineView, type CategoryFilter } from '@/components/prestasi';
+import { 
+  CategorySidebar, 
+  AchievementTimelineView, 
+  StudentProfileHeader,
+  type CategoryFilter 
+} from '@/components/prestasi';
 import {
-  ChevronLeft, Plus, X, Check, Paperclip, GraduationCap
+  ChevronLeft, Plus, X, Check, Paperclip
 } from 'lucide-react';
 import {
   Achievement,
@@ -94,40 +99,43 @@ export default function PrestasiPage() {
       <Navbar />
       <main className="pt-24 pb-20">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="max-w-5xl mx-auto">
-            {/* Header */}
-            <div className="flex items-start sm:items-center justify-between gap-4 mb-8 animate-fade-up">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => navigate('/dashboard')}
-                  className="flex-shrink-0 -ml-2"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </Button>
-                <div>
-                  <div className="flex items-center gap-3 mb-1">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <GraduationCap className="w-5 h-5 text-primary" />
-                    </div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-                      Prestasi Non-Akademik
-                    </h1>
-                  </div>
-                  <p className="text-sm text-muted-foreground ml-[52px]">
-                    Portofolio pencapaian akademik • {totalAchievements} prestasi tercatat
-                  </p>
-                </div>
+          <div className="max-w-6xl mx-auto">
+            {/* Back Button + Page Title */}
+            <div className="flex items-center gap-3 mb-6 animate-fade-up">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => navigate('/dashboard')}
+                className="flex-shrink-0 -ml-2"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+                  Prestasi Non-Akademik
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Portofolio pencapaian akademik & profesional
+                </p>
               </div>
+              <div className="flex-1" />
               <Button onClick={() => { setEditingAchievement(null); setIsFormOpen(true); }} className="hidden sm:flex shadow-soft">
                 <Plus className="w-4 h-4 mr-2" />
                 Tambah Prestasi
               </Button>
             </div>
 
-            {/* Main Content with Sidebar */}
-            <div className="flex gap-8 animate-fade-up" style={{ animationDelay: '0.1s' }}>
+            {/* Student Profile Header */}
+            <div className="animate-fade-up" style={{ animationDelay: '0.05s' }}>
+              <StudentProfileHeader 
+                student={selectedAlumni}
+                stats={stats}
+                studentStatus="alumni"
+              />
+            </div>
+
+            {/* Two-Column Layout: Sidebar + Main Content */}
+            <div className="flex gap-6 animate-fade-up" style={{ animationDelay: '0.1s' }}>
               {/* Category Sidebar */}
               <CategorySidebar
                 activeCategory={activeCategory}
@@ -141,7 +149,7 @@ export default function PrestasiPage() {
               {/* Main Content Area */}
               <div className="flex-1 min-w-0">
                 {/* Category Header Card */}
-                <div className="bg-card border border-border/50 rounded-2xl p-5 sm:p-6 shadow-soft mb-6">
+                <div className="bg-card border border-border/50 rounded-2xl p-4 sm:p-5 shadow-soft mb-5">
                   <div className="flex items-center justify-between">
                     <div>
                       <h2 className="text-lg font-semibold text-foreground">
@@ -157,8 +165,8 @@ export default function PrestasiPage() {
                           activeCategory === 'organisasi' ? 'Organisasi & Kepemimpinan' :
                           'Prestasi'}
                       </h2>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {filteredAchievements.length} pencapaian
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {filteredAchievements.length} pencapaian tercatat
                       </p>
                     </div>
                     <Button 
