@@ -109,11 +109,13 @@ export default function PrestasiPage() {
 
   const filteredAchievements = activeCategory === 'all' 
     ? achievements 
+    : activeCategory === 'unggulan'
+    ? achievements.filter(a => a.isUnggulan)
     : achievements.filter(a => a.category === activeCategory);
   const totalAchievements = Object.values(stats).reduce((a, b) => a + b, 0);
 
-  // Get category for form (default to lomba if 'all' is selected)
-  const formCategory: AchievementCategory = activeCategory === 'all' ? 'lomba' : activeCategory;
+  // Get category for form (default to lomba if 'all' or 'unggulan' is selected)
+  const formCategory: AchievementCategory = activeCategory === 'all' || activeCategory === 'unggulan' ? 'lomba' : activeCategory;
 
   return (
     <div className="min-h-screen bg-background">
@@ -163,6 +165,7 @@ export default function PrestasiPage() {
               <CategorySidebar
                 activeCategory={activeCategory}
                 stats={stats}
+                unggulanCount={unggulanCount}
                 onCategoryChange={(cat) => {
                   setActiveCategory(cat);
                   setExpandedId(null);
@@ -273,14 +276,41 @@ function AchievementForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation for Organisasi category: tanggalSelesai required when masihAktif is false
-    if (selectedCategory === 'organisasi' && formData.masihAktif === false && !formData.tanggalSelesai) {
-      toast({
-        title: 'Validasi gagal',
-        description: 'Tanggal selesai keanggotaan wajib diisi jika keanggotaan sudah berakhir.',
-        variant: 'destructive',
-      });
-      return;
+    // Validation for Organisasi category
+    if (selectedCategory === 'organisasi') {
+      // tanggalMulai is required
+      if (!formData.tanggalMulai) {
+        toast({
+          title: 'Validasi gagal',
+          description: 'Tanggal masuk organisasi wajib diisi.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // tanggalSelesai required when masihAktif is false
+      if (formData.masihAktif === false && !formData.tanggalSelesai) {
+        toast({
+          title: 'Validasi gagal',
+          description: 'Tanggal selesai keanggotaan wajib diisi jika keanggotaan sudah berakhir.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // tanggalMulai cannot be after tanggalSelesai
+      if (formData.masihAktif === false && formData.tanggalMulai && formData.tanggalSelesai) {
+        const startDate = new Date(formData.tanggalMulai);
+        const endDate = new Date(formData.tanggalSelesai);
+        if (startDate > endDate) {
+          toast({
+            title: 'Validasi gagal',
+            description: 'Tanggal masuk tidak boleh setelah tanggal selesai keanggotaan.',
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
     }
 
     // Validation for Portofolio category: mataKuliahCustom required when mataKuliah is 'other'
