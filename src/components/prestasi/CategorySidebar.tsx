@@ -1,16 +1,17 @@
 import { 
   Trophy, BookOpen, Shield, Briefcase, Rocket, Star, Mic2,
-  FolderOpen, Sprout, Users2
+  FolderOpen, Sprout, Users2, Award
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AchievementCategory } from '@/types/achievement.types';
 
-// Extended category type to include 'all'
-export type CategoryFilter = AchievementCategory | 'all';
+// Extended category type to include 'all' and 'unggulan'
+export type CategoryFilter = AchievementCategory | 'all' | 'unggulan';
 
 interface CategorySidebarProps {
   activeCategory: CategoryFilter;
   stats: Record<AchievementCategory, number>;
+  unggulanCount: number;
   onCategoryChange: (category: CategoryFilter) => void;
 }
 
@@ -28,6 +29,13 @@ const CATEGORY_CONFIG: Record<CategoryFilter, {
     bgColor: 'bg-primary/10',
     label: 'Semua Prestasi',
     shortLabel: 'Semua',
+  },
+  unggulan: {
+    icon: Award,
+    color: 'text-amber-500',
+    bgColor: 'bg-amber-500/10',
+    label: 'Prestasi Unggulan',
+    shortLabel: 'Unggulan',
   },
   lomba: { 
     icon: Trophy, 
@@ -97,6 +105,7 @@ const CATEGORY_CONFIG: Record<CategoryFilter, {
 // Categories in STRICT display order per spec
 const categories: CategoryFilter[] = [
   'all', 
+  'unggulan',
   'lomba', 
   'seminar', 
   'publikasi', 
@@ -108,11 +117,12 @@ const categories: CategoryFilter[] = [
   'organisasi'
 ];
 
-export function CategorySidebar({ activeCategory, stats, onCategoryChange }: CategorySidebarProps) {
+export function CategorySidebar({ activeCategory, stats, unggulanCount, onCategoryChange }: CategorySidebarProps) {
   const totalCount = Object.values(stats).reduce((a, b) => a + b, 0);
 
   const getCount = (key: CategoryFilter): number => {
     if (key === 'all') return totalCount;
+    if (key === 'unggulan') return unggulanCount;
     return stats[key] || 0;
   };
 
