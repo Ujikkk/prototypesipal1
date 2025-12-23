@@ -438,27 +438,123 @@ export function AchievementTimelineView({
   // Sort years descending
   const sortedYears = Object.keys(groupedByYear).map(Number).sort((a, b) => b - a);
 
+  // Empty State Configuration
+  const getEmptyStateConfig = () => {
+    if (category === 'unggulan') {
+      return {
+        icon: Award,
+        iconColor: 'text-amber-500',
+        bgGradient: 'from-amber-500/10 to-amber-500/5',
+        title: 'Belum ada Prestasi Unggulan',
+        description: 'Tandai prestasi terbaikmu sebagai unggulan dengan mengklik ikon bintang pada setiap prestasi.',
+        showAddButton: false,
+      };
+    }
+    
+    const categoryConfig: Record<string, { icon: React.ElementType; iconColor: string; bgGradient: string; title: string; description: string }> = {
+      all: {
+        icon: Trophy,
+        iconColor: 'text-primary/60',
+        bgGradient: 'from-primary/10 to-primary/5',
+        title: 'Belum ada prestasi',
+        description: 'Yuk, tambahkan pencapaianmu. Dokumentasikan setiap prestasi yang kamu raih selama perjalanan akademik.',
+      },
+      lomba: {
+        icon: Trophy,
+        iconColor: 'text-warning',
+        bgGradient: 'from-warning/10 to-warning/5',
+        title: 'Belum ada prestasi lomba',
+        description: 'Tambahkan pencapaian kompetisi dan perlombaan yang pernah kamu ikuti.',
+      },
+      seminar: {
+        icon: Mic2,
+        iconColor: 'text-info',
+        bgGradient: 'from-info/10 to-info/5',
+        title: 'Belum ada partisipasi seminar',
+        description: 'Dokumentasikan seminar, workshop, atau konferensi yang pernah kamu ikuti.',
+      },
+      publikasi: {
+        icon: BookOpen,
+        iconColor: 'text-success',
+        bgGradient: 'from-success/10 to-success/5',
+        title: 'Belum ada publikasi ilmiah',
+        description: 'Tambahkan jurnal, paper, atau publikasi ilmiah yang pernah kamu terbitkan.',
+      },
+      haki: {
+        icon: Shield,
+        iconColor: 'text-violet-500',
+        bgGradient: 'from-violet-500/10 to-violet-500/5',
+        title: 'Belum ada Hak Kekayaan Intelektual',
+        description: 'Dokumentasikan paten, hak cipta, atau kekayaan intelektual lainnya.',
+      },
+      magang: {
+        icon: Briefcase,
+        iconColor: 'text-sky-500',
+        bgGradient: 'from-sky-500/10 to-sky-500/5',
+        title: 'Belum ada pengalaman magang',
+        description: 'Tambahkan pengalaman magang atau kerja praktik yang pernah kamu jalani.',
+      },
+      startup: {
+        icon: Rocket,
+        iconColor: 'text-orange-500',
+        bgGradient: 'from-orange-500/10 to-orange-500/5',
+        title: 'Belum ada pengalaman startup',
+        description: 'Dokumentasikan startup atau bisnis yang pernah kamu bangun atau ikuti.',
+      },
+      portofolio: {
+        icon: FolderOpen,
+        iconColor: 'text-rose-500',
+        bgGradient: 'from-rose-500/10 to-rose-500/5',
+        title: 'Belum ada portofolio',
+        description: 'Tambahkan karya atau proyek yang menunjukkan kemampuanmu.',
+      },
+      volunteer: {
+        icon: Sprout,
+        iconColor: 'text-emerald-500',
+        bgGradient: 'from-emerald-500/10 to-emerald-500/5',
+        title: 'Belum ada kegiatan volunteer',
+        description: 'Dokumentasikan kegiatan sosial dan sukarela yang pernah kamu ikuti.',
+      },
+      organisasi: {
+        icon: Users2,
+        iconColor: 'text-purple-500',
+        bgGradient: 'from-purple-500/10 to-purple-500/5',
+        title: 'Belum ada pengalaman organisasi',
+        description: 'Tambahkan pengalaman berorganisasi dan kepemimpinanmu.',
+      },
+    };
+
+    return {
+      ...categoryConfig[category] || categoryConfig.all,
+      showAddButton: true,
+    };
+  };
+
   // Empty State
   if (achievements.length === 0) {
-    const isAllCategory = category === 'all';
+    const config = getEmptyStateConfig();
+    const IconComponent = config.icon;
+    
     return (
       <div className="text-center py-16 px-4">
         {/* Illustration */}
-        <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mx-auto mb-6 shadow-soft">
-          <Trophy className="w-12 h-12 text-primary/60" />
+        <div className={`w-24 h-24 rounded-3xl bg-gradient-to-br ${config.bgGradient} flex items-center justify-center mx-auto mb-6 shadow-soft`}>
+          <IconComponent className={`w-12 h-12 ${config.iconColor}`} />
         </div>
         
         <h3 className="text-lg font-semibold text-foreground mb-2">
-          Belum ada prestasi {isAllCategory ? '' : 'di kategori ini'}
+          {config.title}
         </h3>
         <p className="text-muted-foreground mb-8 max-w-sm mx-auto leading-relaxed">
-          Yuk, tambahkan pencapaianmu. Dokumentasikan setiap prestasi yang kamu raih selama perjalanan akademik.
+          {config.description}
         </p>
         
-        <Button onClick={onAddNew} size="lg" className="shadow-soft">
-          <Plus className="w-4 h-4 mr-2" />
-          Tambah Prestasi
-        </Button>
+        {config.showAddButton && (
+          <Button onClick={onAddNew} size="lg" className="shadow-soft">
+            <Plus className="w-4 h-4 mr-2" />
+            Tambah Prestasi
+          </Button>
+        )}
       </div>
     );
   }
