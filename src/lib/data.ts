@@ -56,9 +56,10 @@ export interface AlumniData {
   jenisUsaha?: string;
   lokasiUsaha?: string;
   tahunMulaiUsaha?: number;
+  tahunSelesaiUsaha?: number; // End year - only when usahaAktif is false
   punyaKaryawan?: boolean;
   jumlahKaryawan?: number;
-  usahaAktif?: boolean;
+  usahaAktif?: boolean; // Active toggle - hides end date when true
   sosialMediaUsaha?: string[];
   
   // Data Studi
