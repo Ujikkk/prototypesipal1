@@ -36,16 +36,12 @@ export interface AlumniData {
   status: 'bekerja' | 'mencari' | 'wirausaha' | 'studi';
   tahunPengisian: number;
   
-  // Active status - indicates if still active in current position
-  isActive?: boolean;
-  
   // Data Bekerja
   namaPerusahaan?: string;
   lokasiPerusahaan?: string;
   bidangIndustri?: string;
   jabatan?: string;
   tahunMulaiKerja?: number;
-  tahunSelesaiKerja?: number;
   kontakProfesional?: string;
   
   // Data Mencari Kerja
@@ -69,7 +65,6 @@ export interface AlumniData {
   jenjang?: 'S1' | 'S2' | 'S3';
   lokasiKampus?: string;
   tahunMulaiStudi?: number;
-  tahunSelesaiStudi?: number;
   
   // Kontak
   email: string;

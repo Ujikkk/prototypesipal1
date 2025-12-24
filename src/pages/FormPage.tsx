@@ -49,8 +49,6 @@ export default function FormPage() {
   const [bidangIndustri, setBidangIndustri] = useState('');
   const [jabatan, setJabatan] = useState('');
   const [tahunMulaiKerja, setTahunMulaiKerja] = useState('');
-  const [tahunSelesaiKerja, setTahunSelesaiKerja] = useState('');
-  const [masihBekerja, setMasihBekerja] = useState(true);
   const [kontakProfesional, setKontakProfesional] = useState('');
 
   // Form fields - Mencari
@@ -74,8 +72,6 @@ export default function FormPage() {
   const [jenjang, setJenjang] = useState<'S1' | 'S2' | 'S3' | ''>('');
   const [lokasiKampus, setLokasiKampus] = useState('');
   const [tahunMulaiStudi, setTahunMulaiStudi] = useState('');
-  const [tahunSelesaiStudi, setTahunSelesaiStudi] = useState('');
-  const [masihStudi, setMasihStudi] = useState(true);
 
   // Form fields - Kontak
   const [email, setEmail] = useState('');
@@ -114,30 +110,6 @@ export default function FormPage() {
       toast({ title: 'Pilih status Anda terlebih dahulu', variant: 'destructive' });
       return;
     }
-    
-    // Validation for step 2 (detail forms)
-    if (currentStep === 2) {
-      // Bekerja validation: tahunSelesaiKerja required if not active
-      if (status === 'bekerja' && !masihBekerja && !tahunSelesaiKerja) {
-        toast({ 
-          title: 'Tahun selesai bekerja wajib diisi', 
-          description: 'Karena Anda tidak lagi aktif bekerja di sini, mohon isi tahun selesai.',
-          variant: 'destructive' 
-        });
-        return;
-      }
-      
-      // Studi validation: tahunSelesaiStudi required if not active
-      if (status === 'studi' && !masihStudi && !tahunSelesaiStudi) {
-        toast({ 
-          title: 'Tahun selesai studi wajib diisi', 
-          description: 'Karena Anda sudah tidak aktif studi, mohon isi tahun selesai.',
-          variant: 'destructive' 
-        });
-        return;
-      }
-    }
-    
     setCurrentStep(prev => Math.min(prev + 1, 4));
   };
 
@@ -172,17 +144,12 @@ export default function FormPage() {
       newData.jabatan = jabatan;
       newData.tahunMulaiKerja = parseInt(tahunMulaiKerja);
       newData.kontakProfesional = kontakProfesional || undefined;
-      newData.isActive = masihBekerja;
-      if (!masihBekerja && tahunSelesaiKerja) {
-        (newData as any).tahunSelesaiKerja = parseInt(tahunSelesaiKerja);
-      }
     }
 
     if (status === 'mencari') {
       newData.lokasiTujuan = lokasiTujuan;
       newData.bidangDiincar = bidangDiincar;
       newData.lamaMencari = parseInt(lamaMencari);
-      newData.isActive = true; // Job seeking is always "active"
     }
 
     if (status === 'wirausaha') {
@@ -193,7 +160,6 @@ export default function FormPage() {
       newData.punyaKaryawan = punyaKaryawan;
       newData.jumlahKaryawan = punyaKaryawan ? parseInt(jumlahKaryawan) : undefined;
       newData.usahaAktif = usahaAktif;
-      newData.isActive = usahaAktif;
       newData.sosialMediaUsaha = sosialMediaUsaha.filter(s => s.trim());
     }
 
@@ -203,10 +169,6 @@ export default function FormPage() {
       newData.jenjang = jenjang as 'S1' | 'S2' | 'S3';
       newData.lokasiKampus = lokasiKampus;
       newData.tahunMulaiStudi = parseInt(tahunMulaiStudi);
-      newData.isActive = masihStudi;
-      if (!masihStudi && tahunSelesaiStudi) {
-        (newData as any).tahunSelesaiStudi = parseInt(tahunSelesaiStudi);
-      }
     }
 
     addAlumniData(newData);
@@ -334,39 +296,6 @@ export default function FormPage() {
                 className="h-12 rounded-xl"
               />
             </div>
-            
-            {/* Active Toggle */}
-            <div className="md:col-span-2">
-              <Label className="mb-2 block font-medium">Status Pekerjaan</Label>
-              <div className="flex items-center gap-3 h-12 px-4 rounded-xl bg-muted/50 border border-border/50">
-                <Switch 
-                  checked={masihBekerja} 
-                  onCheckedChange={setMasihBekerja} 
-                />
-                <span className="text-sm font-medium">
-                  {masihBekerja ? 'Masih aktif bekerja di sini' : 'Sudah tidak bekerja di sini'}
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1.5">
-                {masihBekerja 
-                  ? 'Pekerjaan ini akan ditampilkan di status alumni Anda.' 
-                  : 'Pekerjaan ini akan dicatat sebagai riwayat.'}
-              </p>
-            </div>
-            
-            {/* End Year - Only shown when not active */}
-            {!masihBekerja && (
-              <div className="md:col-span-2">
-                <Label className="mb-2 block font-medium">Tahun Selesai Bekerja *</Label>
-                <Input
-                  type="number"
-                  placeholder="2024"
-                  value={tahunSelesaiKerja}
-                  onChange={(e) => setTahunSelesaiKerja(e.target.value)}
-                  className="h-12 rounded-xl"
-                />
-              </div>
-            )}
           </div>
         )}
 
@@ -553,39 +482,6 @@ export default function FormPage() {
                 className="h-12 rounded-xl"
               />
             </div>
-            
-            {/* Active Toggle */}
-            <div className="md:col-span-2">
-              <Label className="mb-2 block font-medium">Status Studi</Label>
-              <div className="flex items-center gap-3 h-12 px-4 rounded-xl bg-muted/50 border border-border/50">
-                <Switch 
-                  checked={masihStudi} 
-                  onCheckedChange={setMasihStudi} 
-                />
-                <span className="text-sm font-medium">
-                  {masihStudi ? 'Masih aktif kuliah' : 'Sudah lulus/tidak aktif'}
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1.5">
-                {masihStudi 
-                  ? 'Studi ini akan ditampilkan di status alumni Anda.' 
-                  : 'Studi ini akan dicatat sebagai riwayat pendidikan.'}
-              </p>
-            </div>
-            
-            {/* End Year - Only shown when not active */}
-            {!masihStudi && (
-              <div className="md:col-span-2">
-                <Label className="mb-2 block font-medium">Tahun Selesai Studi *</Label>
-                <Input
-                  type="number"
-                  placeholder="2025"
-                  value={tahunSelesaiStudi}
-                  onChange={(e) => setTahunSelesaiStudi(e.target.value)}
-                  className="h-12 rounded-xl"
-                />
-              </div>
-            )}
           </div>
         )}
       </div>
