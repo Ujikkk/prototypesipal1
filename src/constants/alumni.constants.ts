@@ -1,6 +1,11 @@
 /**
  * Alumni Constants
  * Static configuration values and lookup data
+ * 
+ * INSTITUTIONAL CONSTRAINT:
+ * All students belong to:
+ * - Jurusan: Administrasi Bisnis
+ * - Prodi: Administrasi Bisnis Terapan
  */
 
 import type { AlumniStatus, StatusChartData } from '@/types';
@@ -29,26 +34,14 @@ export const STATUS_CSS_CLASSES: Record<AlumniStatus, string> = {
 };
 
 // ============ Academic Structure ============
+// Restricted to single department/program for institutional compliance
 
 export const JURUSAN_LIST = [
-  'Teknik Elektro',
-  'Teknik Mesin',
-  'Teknik Sipil',
-  'Akuntansi',
   'Administrasi Bisnis',
 ] as const;
 
 export const PRODI_BY_JURUSAN: Record<string, readonly string[]> = {
-  'Teknik Elektro': [
-    'D3 Teknik Elektronika',
-    'D3 Teknik Telekomunikasi',
-    'D3 Teknik Komputer',
-    'D4 Teknik Elektronika',
-  ],
-  'Teknik Mesin': ['D3 Teknik Mesin', 'D4 Teknik Mesin Produksi'],
-  'Teknik Sipil': ['D3 Teknik Konstruksi Gedung', 'D4 Teknik Perancangan Jalan'],
-  'Akuntansi': ['D3 Akuntansi', 'D4 Akuntansi Manajerial'],
-  'Administrasi Bisnis': ['D3 Administrasi Bisnis', 'D4 Manajemen Bisnis'],
+  'Administrasi Bisnis': ['Administrasi Bisnis Terapan'],
 } as const;
 
 export const TAHUN_LULUS_LIST = [2019, 2020, 2021, 2022, 2023, 2024, 2025] as const;
@@ -58,14 +51,14 @@ export const TAHUN_LULUS_LIST = [2019, 2020, 2021, 2022, 2023, 2024, 2025] as co
 export const BIDANG_INDUSTRI_LIST = [
   'Telekomunikasi',
   'Manufaktur',
-  'Manufaktur Otomotif',
-  'Konstruksi',
   'Perbankan & Keuangan',
   'IT & Software',
   'E-Commerce',
-  'Heavy Equipment',
   'BUMN',
+  'FMCG',
   'Startup',
+  'Jasa Konsultasi',
+  'Retail',
   'Lainnya',
 ] as const;
 
