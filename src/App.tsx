@@ -16,28 +16,30 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AlumniProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/validasi" element={<ValidasiPage />} />
-            <Route path="/dashboard" element={<UserDashboard />} />
-            <Route path="/form" element={<FormPage />} />
-            <Route path="/prestasi" element={<PrestasiPage />} />
-            <Route path="/riwayat-karir" element={<CareerHistoryPage />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/ai-insight" element={<AIInsightPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AlumniProvider>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AlumniProvider>
+        <TooltipProvider>
+          <BrowserRouter>
+            <Toaster />
+            <Sonner />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/validasi" element={<ValidasiPage />} />
+              <Route path="/dashboard" element={<UserDashboard />} />
+              <Route path="/form" element={<FormPage />} />
+              <Route path="/prestasi" element={<PrestasiPage />} />
+              <Route path="/riwayat-karir" element={<CareerHistoryPage />} />
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/ai-insight" element={<AIInsightPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AlumniProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
