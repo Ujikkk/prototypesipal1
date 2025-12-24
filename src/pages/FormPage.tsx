@@ -49,6 +49,8 @@ export default function FormPage() {
   const [bidangIndustri, setBidangIndustri] = useState('');
   const [jabatan, setJabatan] = useState('');
   const [tahunMulaiKerja, setTahunMulaiKerja] = useState('');
+  const [tahunSelesaiKerja, setTahunSelesaiKerja] = useState('');
+  const [masihAktifKerja, setMasihAktifKerja] = useState(true);
   const [kontakProfesional, setKontakProfesional] = useState('');
 
   // Form fields - Mencari
@@ -72,6 +74,8 @@ export default function FormPage() {
   const [jenjang, setJenjang] = useState<'S1' | 'S2' | 'S3' | ''>('');
   const [lokasiKampus, setLokasiKampus] = useState('');
   const [tahunMulaiStudi, setTahunMulaiStudi] = useState('');
+  const [tahunSelesaiStudi, setTahunSelesaiStudi] = useState('');
+  const [masihAktifStudi, setMasihAktifStudi] = useState(true);
 
   // Form fields - Kontak
   const [email, setEmail] = useState('');
@@ -123,6 +127,17 @@ export default function FormPage() {
       return;
     }
 
+    // Validate end date is required when not active
+    if (status === 'bekerja' && !masihAktifKerja && !tahunSelesaiKerja) {
+      toast({ title: 'Tahun selesai bekerja wajib diisi', variant: 'destructive' });
+      return;
+    }
+
+    if (status === 'studi' && !masihAktifStudi && !tahunSelesaiStudi) {
+      toast({ title: 'Tahun selesai studi wajib diisi', variant: 'destructive' });
+      return;
+    }
+
     const newData: AlumniData = {
       id: `f${Date.now()}`,
       alumniMasterId: selectedAlumni.id,
@@ -143,6 +158,8 @@ export default function FormPage() {
       newData.bidangIndustri = bidangIndustri;
       newData.jabatan = jabatan;
       newData.tahunMulaiKerja = parseInt(tahunMulaiKerja);
+      newData.masihAktifKerja = masihAktifKerja;
+      newData.tahunSelesaiKerja = !masihAktifKerja && tahunSelesaiKerja ? parseInt(tahunSelesaiKerja) : undefined;
       newData.kontakProfesional = kontakProfesional || undefined;
     }
 
@@ -169,6 +186,8 @@ export default function FormPage() {
       newData.jenjang = jenjang as 'S1' | 'S2' | 'S3';
       newData.lokasiKampus = lokasiKampus;
       newData.tahunMulaiStudi = parseInt(tahunMulaiStudi);
+      newData.masihAktifStudi = masihAktifStudi;
+      newData.tahunSelesaiStudi = !masihAktifStudi && tahunSelesaiStudi ? parseInt(tahunSelesaiStudi) : undefined;
     }
 
     addAlumniData(newData);
@@ -296,6 +315,35 @@ export default function FormPage() {
                 className="h-12 rounded-xl"
               />
             </div>
+            <div>
+              <Label className="mb-2 block font-medium">Status Pekerjaan</Label>
+              <div className="flex items-center gap-3 h-12 px-4 rounded-xl bg-muted/50">
+                <Switch 
+                  checked={masihAktifKerja} 
+                  onCheckedChange={(checked) => {
+                    setMasihAktifKerja(checked);
+                    if (checked) {
+                      setTahunSelesaiKerja('');
+                    }
+                  }} 
+                />
+                <span className="text-sm font-medium">
+                  {masihAktifKerja ? 'Masih aktif di sini' : 'Sudah tidak bekerja di sini'}
+                </span>
+              </div>
+            </div>
+            {!masihAktifKerja && (
+              <div>
+                <Label className="mb-2 block font-medium">Tahun Selesai Bekerja *</Label>
+                <Input
+                  type="number"
+                  placeholder="2024"
+                  value={tahunSelesaiKerja}
+                  onChange={(e) => setTahunSelesaiKerja(e.target.value)}
+                  className="h-12 rounded-xl"
+                />
+              </div>
+            )}
           </div>
         )}
 
@@ -482,6 +530,35 @@ export default function FormPage() {
                 className="h-12 rounded-xl"
               />
             </div>
+            <div>
+              <Label className="mb-2 block font-medium">Status Studi</Label>
+              <div className="flex items-center gap-3 h-12 px-4 rounded-xl bg-muted/50">
+                <Switch 
+                  checked={masihAktifStudi} 
+                  onCheckedChange={(checked) => {
+                    setMasihAktifStudi(checked);
+                    if (checked) {
+                      setTahunSelesaiStudi('');
+                    }
+                  }} 
+                />
+                <span className="text-sm font-medium">
+                  {masihAktifStudi ? 'Masih kuliah di sini' : 'Sudah lulus/tidak melanjutkan'}
+                </span>
+              </div>
+            </div>
+            {!masihAktifStudi && (
+              <div>
+                <Label className="mb-2 block font-medium">Tahun Selesai Studi *</Label>
+                <Input
+                  type="number"
+                  placeholder="2025"
+                  value={tahunSelesaiStudi}
+                  onChange={(e) => setTahunSelesaiStudi(e.target.value)}
+                  className="h-12 rounded-xl"
+                />
+              </div>
+            )}
           </div>
         )}
       </div>
