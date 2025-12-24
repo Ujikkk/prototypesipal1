@@ -1,11 +1,14 @@
 /**
- * Admin Dashboard - Read-Only Monitoring Center
+ * Admin Dashboard - Clean Table-Based Monitoring Center
  * 
- * ARCHITECTURE:
- * - Admin can ONLY view, monitor, and review data
- * - No edit functionality for student/alumni data
- * - Synchronized with student input data
- * - Role Identity derived from StudentStatus, not tracer data
+ * DESIGN PRINCIPLES:
+ * - Clean > Fancy
+ * - Overview > Detail
+ * - Scan fast, click when needed
+ * - No editing by admin
+ * - Data integrity & traceability
+ * 
+ * READ-ONLY: Fully synchronized with student input data
  */
 
 import { useState, useMemo } from 'react';
@@ -14,34 +17,50 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle 
+} from '@/components/ui/dialog';
+import { 
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useAlumni } from '@/contexts/AlumniContext';
 import { tahunLulusList } from '@/lib/data';
-import { StatCard, StatusBadge, ChartCard, DataTable } from '@/components/shared';
 import { StudentStatusBadge } from '@/components/admin';
-import { getGlobalAchievementStats, getStudentsWithAchievements } from '@/services/achievement.service';
-import { ACHIEVEMENT_CATEGORIES, AchievementCategory } from '@/types/achievement.types';
 import { studentProfiles, tracerStudyRecords, achievementRecords } from '@/data/student-seed-data';
-import { aggregateAlumniStatus, CAREER_STATUS_LABELS } from '@/lib/role-utils';
+import { aggregateAlumniStatus } from '@/lib/role-utils';
 import type { StudentStatus, TracerStudyData } from '@/types/student.types';
 import type { AlumniData } from '@/types/alumni.types';
 import {
-  Search, Download, Filter, Users2, Briefcase, Rocket, BookOpen,
-  User, Mail, Phone, Building2, MapPin, Sparkles,
-  Trophy, Shield, FolderOpen, GraduationCap, Award, Mic2,
-  Eye, UserCheck, UserX, Clock
+  Search, Download, Users2, Briefcase, Rocket,
+  User, Mail, Phone, Building2, MapPin,
+  Trophy, GraduationCap, Award, Eye, ExternalLink,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, LineChart, Line
-} from 'recharts';
 
 // ============ Types ============
 
 interface MergedStudentData {
-  [key: string]: unknown; // Index signature for DataTable compatibility
   id: string;
   nama: string;
   nim: string;
@@ -50,10 +69,8 @@ interface MergedStudentData {
   tahunLulus?: number;
   email?: string;
   noHp?: string;
-  // Alumni tracer data (from both sources)
   tracerStudy?: TracerStudyData;
   alumniCareerHistory: AlumniData[];
-  // Aggregated status
   careerSummary: string;
   hasTracerData: boolean;
   achievementCount: number;
@@ -67,15 +84,15 @@ export default function AdminDashboard() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterTahun, setFilterTahun] = useState<string>('all');
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [previewStudentId, setPreviewStudentId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   // Merge all data sources into unified view
   const mergedData = useMemo((): MergedStudentData[] => {
     return studentProfiles.map(student => {
-      // Get tracer study data (from student-seed-data)
       const tracerStudy = tracerStudyRecords.find(t => t.studentId === student.id);
       
-      // Get alumni career history from AlumniContext (dynamic user input)
-      // Map student to master data for compatibility
       const matchingMaster = masterData.find(m => 
         m.nama === student.nama || m.nim === student.nim
       );
@@ -83,28 +100,24 @@ export default function AdminDashboard() {
         ? alumniData.filter(d => d.alumniMasterId === matchingMaster.id)
         : [];
       
-      // Count achievements
       const achievementCount = achievementRecords.filter(a => a.studentId === student.id).length;
       
-      // Generate career summary
       let careerSummary = 'Belum diisi';
       
       if (student.status === 'alumni') {
-        // Priority: dynamic alumni data > static tracer study
         if (alumniCareerHistory.length > 0) {
           const aggregated = aggregateAlumniStatus(alumniCareerHistory);
           careerSummary = aggregated.primaryText;
         } else if (tracerStudy) {
-          // Use tracer study data
           switch (tracerStudy.careerStatus) {
             case 'working':
               careerSummary = tracerStudy.employmentData 
-                ? `Bekerja di ${tracerStudy.employmentData.namaPerusahaan}`
+                ? `Bekerja · ${tracerStudy.employmentData.namaPerusahaan}`
                 : 'Bekerja';
               break;
             case 'entrepreneur':
               careerSummary = tracerStudy.entrepreneurshipData
-                ? `Wirausaha ${tracerStudy.entrepreneurshipData.namaUsaha}`
+                ? `Wirausaha`
                 : 'Wirausaha';
               break;
             case 'further_study':
@@ -118,7 +131,6 @@ export default function AdminDashboard() {
           }
         }
       } else {
-        // Non-alumni students
         careerSummary = '-';
       }
       
@@ -153,62 +165,41 @@ export default function AdminDashboard() {
     });
   }, [mergedData, searchQuery, filterStatus, filterTahun]);
 
-  // Statistics
+  // Pagination
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredData.slice(start, start + pageSize);
+  }, [filteredData, currentPage, pageSize]);
+
+  // Statistics (lightweight - no charts)
   const stats = useMemo(() => {
     const total = mergedData.length;
     const alumni = mergedData.filter(d => d.status === 'alumni').length;
     const active = mergedData.filter(d => d.status === 'active').length;
-    const onLeave = mergedData.filter(d => d.status === 'on_leave').length;
-    const dropout = mergedData.filter(d => d.status === 'dropout').length;
-    const withTracer = mergedData.filter(d => d.hasTracerData).length;
-    return { total, alumni, active, onLeave, dropout, withTracer };
-  }, [mergedData]);
-
-  // Career statistics (alumni only)
-  const careerStats = useMemo(() => {
-    const alumniWithTracer = mergedData.filter(d => d.status === 'alumni' && d.hasTracerData);
-    const working = alumniWithTracer.filter(d => 
+    
+    const alumniWithData = mergedData.filter(d => d.status === 'alumni' && d.hasTracerData);
+    const working = alumniWithData.filter(d => 
       d.tracerStudy?.careerStatus === 'working' || 
       d.alumniCareerHistory.some(h => h.status === 'bekerja')
     ).length;
-    const entrepreneur = alumniWithTracer.filter(d => 
+    const entrepreneur = alumniWithData.filter(d => 
       d.tracerStudy?.careerStatus === 'entrepreneur' || 
       d.alumniCareerHistory.some(h => h.status === 'wirausaha')
     ).length;
-    const furtherStudy = alumniWithTracer.filter(d => 
-      d.tracerStudy?.careerStatus === 'further_study' || 
-      d.alumniCareerHistory.some(h => h.status === 'studi')
-    ).length;
-    const jobSeeking = alumniWithTracer.filter(d => 
-      d.tracerStudy?.careerStatus === 'job_seeking' || 
-      d.alumniCareerHistory.some(h => h.status === 'mencari')
-    ).length;
-    return { working, entrepreneur, furtherStudy, jobSeeking };
+    
+    return { total, alumni, active, working, entrepreneur };
   }, [mergedData]);
-
-  // Achievement statistics
-  const achievementStats = useMemo(() => getGlobalAchievementStats(), []);
-  const studentsWithAchievements = useMemo(() => getStudentsWithAchievements().length, []);
-
-  // Chart data
-  const statusChartData = [
-    { name: 'Bekerja', value: careerStats.working, color: 'hsl(222, 60%, 35%)' },
-    { name: 'Wirausaha', value: careerStats.entrepreneur, color: 'hsl(145, 65%, 39%)' },
-    { name: 'Studi Lanjut', value: careerStats.furtherStudy, color: 'hsl(199, 89%, 48%)' },
-    { name: 'Mencari Kerja', value: careerStats.jobSeeking, color: 'hsl(38, 92%, 50%)' },
-  ];
-
-  const roleDistributionData = [
-    { name: 'Alumni', value: stats.alumni, color: 'hsl(145, 65%, 39%)' },
-    { name: 'Mhs. Aktif', value: stats.active, color: 'hsl(217, 91%, 60%)' },
-    { name: 'Mhs. Cuti', value: stats.onLeave, color: 'hsl(38, 92%, 50%)' },
-    { name: 'Dropout', value: stats.dropout, color: 'hsl(0, 72%, 51%)' },
-  ];
 
   const selectedStudent = useMemo(() => {
     if (!selectedStudentId) return null;
     return mergedData.find(s => s.id === selectedStudentId) || null;
   }, [selectedStudentId, mergedData]);
+
+  const previewStudent = useMemo(() => {
+    if (!previewStudentId) return null;
+    return mergedData.find(s => s.id === previewStudentId) || null;
+  }, [previewStudentId, mergedData]);
 
   const handleExport = () => {
     const headers = ['Nama', 'NIM', 'Status Mahasiswa', 'Tahun Masuk', 'Tahun Lulus', 'Status Alumni', 'Email', 'No HP'];
@@ -242,290 +233,356 @@ export default function AdminDashboard() {
     }
   };
 
-  // Table columns - READ ONLY
-  const tableColumns = [
-    { 
-      key: 'nama', 
-      header: 'Nama Mahasiswa', 
-      sortable: true,
-      accessor: (row: MergedStudentData) => (
-        <div className="flex items-center gap-2">
-          <span className="font-medium">{row.nama}</span>
-        </div>
-      )
-    },
-    { 
-      key: 'status', 
-      header: 'Status Mahasiswa',
-      accessor: (row: MergedStudentData) => (
-        <StudentStatusBadge status={row.status} size="sm" />
-      )
-    },
-    { 
-      key: 'careerSummary', 
-      header: 'Status Alumni',
-      hideOnMobile: true,
-      accessor: (row: MergedStudentData) => {
-        if (row.status !== 'alumni') {
-          return <span className="text-xs text-muted-foreground">-</span>;
-        }
-        if (!row.hasTracerData) {
-          return <span className="text-xs text-muted-foreground italic">Belum mengisi</span>;
-        }
-        return (
-          <span className="text-sm text-foreground line-clamp-1">
-            {row.careerSummary}
-          </span>
-        );
-      }
-    },
-    { 
-      key: 'ringkasan', 
-      header: 'Ringkasan',
-      hideOnMobile: true,
-      accessor: (row: MergedStudentData) => {
-        const parts: string[] = [];
-        
-        if (row.status === 'alumni' && row.tahunLulus) {
-          parts.push(`Lulus ${row.tahunLulus}`);
-        } else {
-          parts.push(`Masuk ${row.tahunMasuk}`);
-        }
-        
-        if (row.achievementCount > 0) {
-          parts.push(`${row.achievementCount} prestasi`);
-        }
-        
-        return (
-          <span className="text-xs text-muted-foreground">
-            {parts.join(' · ')}
-          </span>
-        );
-      }
-    },
-    { 
-      key: 'aksi', 
-      header: 'Aksi',
-      accessor: (row: MergedStudentData) => (
-        <Button 
-          variant="ghost" 
-          size="sm"
-          className="h-8 px-2 text-primary hover:text-primary"
-          onClick={(e) => {
-            e.stopPropagation();
-            setSelectedStudentId(row.id);
-          }}
-        >
-          <Eye className="w-4 h-4 mr-1" />
-          Lihat
-        </Button>
-      )
-    },
-  ];
+  const getRingkasan = (student: MergedStudentData): string => {
+    const parts: string[] = [];
+    
+    if (student.status === 'alumni' && student.tahunLulus) {
+      parts.push(`Lulus ${student.tahunLulus}`);
+    } else {
+      parts.push(`Masuk ${student.tahunMasuk}`);
+    }
+    
+    if (student.achievementCount > 0) {
+      parts.push(`${student.achievementCount} prestasi`);
+    }
+    
+    return parts.join(' · ');
+  };
+
+  const getInitials = (name: string): string => {
+    return name
+      .split(' ')
+      .slice(0, 2)
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="pt-24 pb-20">
-        <div className="container mx-auto px-4">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 animate-fade-up">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground mb-1">Dashboard Monitoring</h1>
-              <p className="text-muted-foreground">
-                Pusat monitoring data mahasiswa dan alumni ABT Polines.
-                <span className="text-xs ml-2 text-muted-foreground/70">(Read-Only)</span>
-              </p>
+        <div className="container mx-auto px-4 max-w-7xl">
+          {/* Header Section */}
+          <div className="mb-6 animate-fade-up">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              {/* Title & Stats */}
+              <div>
+                <h1 className="text-2xl font-bold text-foreground mb-1">
+                  Dashboard Monitoring
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Pusat monitoring data mahasiswa dan alumni · <span className="text-xs">Read-Only</span>
+                </p>
+              </div>
+
+              {/* Lightweight Stats */}
+              <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Users2 className="w-4 h-4" />
+                  <span className="font-medium text-foreground">{stats.active}</span>
+                  <span>Aktif</span>
+                </div>
+                <div className="w-px h-4 bg-border" />
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <GraduationCap className="w-4 h-4" />
+                  <span className="font-medium text-foreground">{stats.alumni}</span>
+                  <span>Alumni</span>
+                </div>
+                <div className="w-px h-4 bg-border" />
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Briefcase className="w-4 h-4" />
+                  <span className="font-medium text-foreground">{stats.working}</span>
+                  <span>Bekerja</span>
+                </div>
+                <div className="w-px h-4 bg-border" />
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Rocket className="w-4 h-4" />
+                  <span className="font-medium text-foreground">{stats.entrepreneur}</span>
+                  <span>Wirausaha</span>
+                </div>
+              </div>
             </div>
-            <Link to="/admin/ai-insight">
-              <Button size="lg" className="group">
-                <Sparkles className="w-5 h-5 mr-2 group-hover:animate-pulse" />
-                AI Insight
+          </div>
+
+          {/* Search, Filter & Export Bar */}
+          <div className="flex flex-col md:flex-row gap-3 mb-4 animate-fade-up" style={{ animationDelay: '0.05s' }}>
+            {/* Search */}
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Cari nama atau NIM..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="pl-10 h-10 bg-background border-border"
+              />
+            </div>
+
+            {/* Filters */}
+            <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setCurrentPage(1); }}>
+              <SelectTrigger className="w-[160px] h-10">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Status</SelectItem>
+                <SelectItem value="alumni">Alumni</SelectItem>
+                <SelectItem value="active">Mhs. Aktif</SelectItem>
+                <SelectItem value="on_leave">Mhs. Cuti</SelectItem>
+                <SelectItem value="dropout">Dropout</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterTahun} onValueChange={(v) => { setFilterTahun(v); setCurrentPage(1); }}>
+              <SelectTrigger className="w-[140px] h-10">
+                <SelectValue placeholder="Tahun" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Tahun</SelectItem>
+                {tahunLulusList.map(t => (
+                  <SelectItem key={t} value={t.toString()}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Data Count & Export */}
+            <div className="flex items-center gap-3 ml-auto">
+              <Badge variant="secondary" className="h-10 px-4 text-sm font-normal">
+                {filteredData.length} data
+              </Badge>
+              <Button variant="outline" size="sm" className="h-10" onClick={handleExport}>
+                <Download className="w-4 h-4 mr-2" />
+                Export
               </Button>
-            </Link>
-          </div>
-
-          {/* Role Statistics Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8 animate-fade-up" style={{ animationDelay: '0.1s' }}>
-            <StatCard title="Total Mahasiswa" value={stats.total} icon={Users2} color="primary" />
-            <StatCard title="Alumni" value={stats.alumni} icon={GraduationCap} color="success" />
-            <StatCard title="Mhs. Aktif" value={stats.active} icon={UserCheck} color="info" />
-            <StatCard title="Mhs. Cuti" value={stats.onLeave} icon={Clock} color="warning" />
-            <StatCard title="Dropout" value={stats.dropout} icon={UserX} color="destructive" />
-          </div>
-
-          {/* Career Statistics (Alumni) */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 animate-fade-up" style={{ animationDelay: '0.15s' }}>
-            <StatCard title="Bekerja" value={careerStats.working} icon={Briefcase} color="primary" />
-            <StatCard title="Wirausaha" value={careerStats.entrepreneur} icon={Rocket} color="success" />
-            <StatCard title="Studi Lanjut" value={careerStats.furtherStudy} icon={BookOpen} color="info" />
-            <StatCard title="Mencari Kerja" value={careerStats.jobSeeking} icon={Search} color="warning" />
-          </div>
-
-          {/* Achievement Stats Summary */}
-          <div className="glass-card rounded-2xl p-6 mb-8 animate-fade-up" style={{ animationDelay: '0.2s' }}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center">
-                  <Award className="w-5 h-5 text-warning" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Prestasi Non-Akademik</h3>
-                  <p className="text-sm text-muted-foreground">Rekam jejak prestasi mahasiswa & alumni</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-foreground">{achievementStats.total}</p>
-                <p className="text-xs text-muted-foreground">Total Prestasi</p>
-              </div>
             </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-              {(Object.entries(ACHIEVEMENT_CATEGORIES) as [AchievementCategory, typeof ACHIEVEMENT_CATEGORIES[AchievementCategory]][]).map(([key, cat]) => {
-                const count = achievementStats.byCategory[key];
-                const iconMap: Record<AchievementCategory, React.ElementType> = {
-                  lomba: Trophy,
-                  seminar: Mic2,
-                  publikasi: BookOpen,
-                  haki: Shield,
-                  magang: Briefcase,
-                  portofolio: FolderOpen,
-                  wirausaha: Rocket,
-                  pengembangan: GraduationCap,
-                  organisasi: Users2,
-                };
-                const Icon = iconMap[key];
-                return (
-                  <div key={key} className="p-3 rounded-xl bg-muted/50 text-center">
-                    <Icon className="w-5 h-5 text-primary mx-auto mb-1" />
-                    <p className="text-lg font-bold text-foreground">{count}</p>
-                    <p className="text-xs text-muted-foreground truncate">{cat.label}</p>
+          </div>
+
+          {/* Main Table */}
+          <div className="border border-border rounded-xl overflow-hidden bg-card animate-fade-up" style={{ animationDelay: '0.1s' }}>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Nama Mahasiswa
+                    </th>
+                    <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Status Mahasiswa
+                    </th>
+                    <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground uppercase tracking-wide hidden md:table-cell">
+                      Status Alumni
+                    </th>
+                    <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground uppercase tracking-wide hidden lg:table-cell">
+                      Ringkasan
+                    </th>
+                    <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Aksi
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedData.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-12 text-center text-muted-foreground">
+                        Tidak ada data mahasiswa ditemukan
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedData.map((student, idx) => (
+                      <tr 
+                        key={student.id} 
+                        className={cn(
+                          "border-b border-border/50 hover:bg-muted/30 transition-colors",
+                          idx === paginatedData.length - 1 && "border-b-0"
+                        )}
+                      >
+                        {/* Nama Mahasiswa - Clickable for mini preview */}
+                        <td className="py-3 px-4">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  onClick={() => setPreviewStudentId(student.id)}
+                                  className="flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
+                                >
+                                  {/* Avatar with Initials */}
+                                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                    <span className="text-xs font-semibold text-primary">
+                                      {getInitials(student.nama)}
+                                    </span>
+                                  </div>
+                                  <span className="font-medium text-foreground hover:text-primary transition-colors">
+                                    {student.nama}
+                                  </span>
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-xs">
+                                NIM: {student.nim}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </td>
+
+                        {/* Status Mahasiswa */}
+                        <td className="py-3 px-4">
+                          <StudentStatusBadge status={student.status} size="sm" />
+                        </td>
+
+                        {/* Status Alumni */}
+                        <td className="py-3 px-4 hidden md:table-cell">
+                          {student.status !== 'alumni' ? (
+                            <span className="text-sm text-muted-foreground">–</span>
+                          ) : !student.hasTracerData ? (
+                            <span className="text-sm text-muted-foreground italic">Belum diisi</span>
+                          ) : (
+                            <span className="text-sm text-foreground line-clamp-1">
+                              {student.careerSummary}
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Ringkasan */}
+                        <td className="py-3 px-4 hidden lg:table-cell">
+                          <span className="text-xs text-muted-foreground">
+                            {getRingkasan(student)}
+                          </span>
+                        </td>
+
+                        {/* Aksi */}
+                        <td className="py-3 px-4 text-right">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="h-8 px-3 text-primary hover:text-primary hover:bg-primary/10"
+                            onClick={() => setSelectedStudentId(student.id)}
+                          >
+                            <Eye className="w-4 h-4 mr-1.5" />
+                            Lihat
+                          </Button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/20">
+                <p className="text-sm text-muted-foreground">
+                  Menampilkan {((currentPage - 1) * pageSize) + 1}–{Math.min(currentPage * pageSize, filteredData.length)} dari {filteredData.length}
+                </p>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(p => p - 1)}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(page => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1)
+                    .map((page, idx, arr) => (
+                      <span key={page}>
+                        {idx > 0 && arr[idx - 1] !== page - 1 && (
+                          <span className="px-2 text-muted-foreground">...</span>
+                        )}
+                        <Button
+                          variant={page === currentPage ? "default" : "ghost"}
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => setCurrentPage(page)}
+                        >
+                          {page}
+                        </Button>
+                      </span>
+                    ))
+                  }
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(p => p + 1)}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Mini Preview Panel (Sheet - On Name Click) */}
+          <Sheet open={!!previewStudentId} onOpenChange={() => setPreviewStudentId(null)}>
+            <SheetContent side="right" className="w-full sm:max-w-md">
+              <SheetHeader>
+                <SheetTitle className="text-left">Quick Preview</SheetTitle>
+              </SheetHeader>
+              
+              {previewStudent && (
+                <div className="mt-6 space-y-6">
+                  {/* Identity */}
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-lg font-semibold text-primary">
+                        {getInitials(previewStudent.nama)}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground">{previewStudent.nama}</h3>
+                      <p className="text-sm text-muted-foreground">NIM: {previewStudent.nim}</p>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
 
-          {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 animate-fade-up" style={{ animationDelay: '0.25s' }}>
-            <ChartCard title="Distribusi Status Mahasiswa" subtitle="Berdasarkan status akademik">
-              <div className="h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={roleDistributionData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
-                      paddingAngle={4}
-                      dataKey="value"
-                    >
-                      {roleDistributionData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        borderRadius: '12px', 
-                        border: 'none', 
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
-                      }} 
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </ChartCard>
+                  {/* Status Badge */}
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Status Mahasiswa</p>
+                    <StudentStatusBadge status={previewStudent.status} />
+                  </div>
 
-            <ChartCard title="Status Karir Alumni" subtitle="Distribusi status alumni yang sudah mengisi">
-              <div className="h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={statusChartData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
-                      paddingAngle={4}
-                      dataKey="value"
-                    >
-                      {statusChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        borderRadius: '12px', 
-                        border: 'none', 
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
-                      }} 
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </ChartCard>
-          </div>
+                  {/* Alumni Status */}
+                  {previewStudent.status === 'alumni' && (
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Status Alumni</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {previewStudent.hasTracerData ? previewStudent.careerSummary : 'Belum mengisi'}
+                      </p>
+                    </div>
+                  )}
 
-          {/* Filters */}
-          <div className="glass-card rounded-2xl p-6 mb-6 animate-fade-up" style={{ animationDelay: '0.3s' }}>
-            <div className="flex items-center gap-2 mb-4">
-              <Filter className="w-5 h-5 text-primary" />
-              <h3 className="font-semibold text-foreground">Filter Data</h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Cari nama atau NIM..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-11 rounded-xl"
-                />
-              </div>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="h-11 rounded-xl">
-                  <SelectValue placeholder="Status Mahasiswa" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Status</SelectItem>
-                  <SelectItem value="alumni">Alumni</SelectItem>
-                  <SelectItem value="active">Mahasiswa Aktif</SelectItem>
-                  <SelectItem value="on_leave">Mahasiswa Cuti</SelectItem>
-                  <SelectItem value="dropout">Dropout</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filterTahun} onValueChange={setFilterTahun}>
-                <SelectTrigger className="h-11 rounded-xl">
-                  <SelectValue placeholder="Tahun" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Tahun</SelectItem>
-                  {tahunLulusList.map(t => (
-                    <SelectItem key={t} value={t.toString()}>{t}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+                  {/* Prestasi Count */}
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Prestasi</p>
+                    <div className="flex items-center gap-2">
+                      <Trophy className="w-4 h-4 text-warning" />
+                      <span className="text-sm font-medium text-foreground">
+                        {previewStudent.achievementCount} prestasi tercatat
+                      </span>
+                    </div>
+                  </div>
 
-          {/* Data Table - READ ONLY */}
-          <div className="animate-fade-up" style={{ animationDelay: '0.4s' }}>
-            <DataTable
-              data={filteredData}
-              columns={tableColumns}
-              searchPlaceholder="Cari nama atau NIM..."
-              searchKeys={['nama', 'nim']}
-              onRowClick={(row) => setSelectedStudentId(row.id as string)}
-              onExport={handleExport}
-              pageSize={10}
-              emptyMessage="Tidak ada data mahasiswa ditemukan"
-            />
-          </div>
+                  {/* Open Full Portfolio Button */}
+                  <Button 
+                    className="w-full mt-4" 
+                    onClick={() => {
+                      setPreviewStudentId(null);
+                      setSelectedStudentId(previewStudent.id);
+                    }}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Lihat Portfolio Lengkap
+                  </Button>
+                </div>
+              )}
+            </SheetContent>
+          </Sheet>
 
-          {/* Detail Dialog - READ ONLY */}
+          {/* Full Portfolio Dialog (Read-Only) */}
           <Dialog open={!!selectedStudentId} onOpenChange={() => setSelectedStudentId(null)}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
@@ -534,7 +591,7 @@ export default function AdminDashboard() {
                     <User className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <span>Detail Mahasiswa</span>
+                    <span>Portfolio Mahasiswa</span>
                     <span className="text-xs text-muted-foreground ml-2">(Read-Only)</span>
                   </div>
                 </DialogTitle>
@@ -542,26 +599,29 @@ export default function AdminDashboard() {
               
               {selectedStudent && (
                 <div className="space-y-6 mt-4">
-                  {/* Role Badge - PROMINENT */}
-                  <div className="flex items-center justify-center">
-                    <StudentStatusBadge status={selectedStudent.status} size="md" />
+                  {/* Profile Header */}
+                  <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30">
+                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-xl font-semibold text-primary">
+                        {getInitials(selectedStudent.nama)}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-foreground">{selectedStudent.nama}</h3>
+                      <p className="text-sm text-muted-foreground">NIM: {selectedStudent.nim}</p>
+                      <div className="mt-2">
+                        <StudentStatusBadge status={selectedStudent.status} />
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Profile Info */}
+                  {/* Academic Info */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 rounded-xl bg-muted/50">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Nama</p>
-                      <p className="font-semibold text-foreground">{selectedStudent.nama}</p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-muted/50">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">NIM</p>
-                      <p className="font-semibold text-foreground">{selectedStudent.nim}</p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-muted/50">
+                    <div className="p-4 rounded-xl bg-muted/30">
                       <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Tahun Masuk</p>
                       <p className="font-semibold text-foreground">{selectedStudent.tahunMasuk}</p>
                     </div>
-                    <div className="p-4 rounded-xl bg-muted/50">
+                    <div className="p-4 rounded-xl bg-muted/30">
                       <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
                         {selectedStudent.status === 'alumni' ? 'Tahun Lulus' : 'Status'}
                       </p>
@@ -574,7 +634,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  {/* Alumni Status - Only for alumni */}
+                  {/* Alumni Status Section */}
                   {selectedStudent.status === 'alumni' && (
                     <div className="border-t border-border pt-4">
                       <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
@@ -586,28 +646,27 @@ export default function AdminDashboard() {
                         <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
                           <p className="text-foreground font-medium">{selectedStudent.careerSummary}</p>
                           
-                          {/* Detailed info based on tracer study */}
                           {selectedStudent.tracerStudy && (
                             <div className="mt-4 grid grid-cols-2 gap-4">
                               {selectedStudent.tracerStudy.careerStatus === 'working' && 
                                selectedStudent.tracerStudy.employmentData && (
                                 <>
-                                  <div className="flex items-center gap-2">
-                                    <Building2 className="w-4 h-4 text-muted-foreground" />
+                                  <div className="flex items-start gap-2">
+                                    <Building2 className="w-4 h-4 text-muted-foreground mt-0.5" />
                                     <div>
                                       <p className="text-xs text-muted-foreground">Perusahaan</p>
                                       <p className="text-sm">{selectedStudent.tracerStudy.employmentData.namaPerusahaan}</p>
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <User className="w-4 h-4 text-muted-foreground" />
+                                  <div className="flex items-start gap-2">
+                                    <User className="w-4 h-4 text-muted-foreground mt-0.5" />
                                     <div>
                                       <p className="text-xs text-muted-foreground">Jabatan</p>
                                       <p className="text-sm">{selectedStudent.tracerStudy.employmentData.jabatan}</p>
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <MapPin className="w-4 h-4 text-muted-foreground" />
+                                  <div className="flex items-start gap-2">
+                                    <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
                                     <div>
                                       <p className="text-xs text-muted-foreground">Lokasi</p>
                                       <p className="text-sm">{selectedStudent.tracerStudy.employmentData.lokasiPerusahaan}</p>
@@ -619,22 +678,22 @@ export default function AdminDashboard() {
                               {selectedStudent.tracerStudy.careerStatus === 'entrepreneur' && 
                                selectedStudent.tracerStudy.entrepreneurshipData && (
                                 <>
-                                  <div className="flex items-center gap-2">
-                                    <Rocket className="w-4 h-4 text-muted-foreground" />
+                                  <div className="flex items-start gap-2">
+                                    <Rocket className="w-4 h-4 text-muted-foreground mt-0.5" />
                                     <div>
                                       <p className="text-xs text-muted-foreground">Nama Usaha</p>
                                       <p className="text-sm">{selectedStudent.tracerStudy.entrepreneurshipData.namaUsaha}</p>
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <Building2 className="w-4 h-4 text-muted-foreground" />
+                                  <div className="flex items-start gap-2">
+                                    <Building2 className="w-4 h-4 text-muted-foreground mt-0.5" />
                                     <div>
                                       <p className="text-xs text-muted-foreground">Jenis Usaha</p>
                                       <p className="text-sm">{selectedStudent.tracerStudy.entrepreneurshipData.jenisUsaha}</p>
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <MapPin className="w-4 h-4 text-muted-foreground" />
+                                  <div className="flex items-start gap-2">
+                                    <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
                                     <div>
                                       <p className="text-xs text-muted-foreground">Lokasi</p>
                                       <p className="text-sm">{selectedStudent.tracerStudy.entrepreneurshipData.lokasiUsaha}</p>
@@ -646,45 +705,18 @@ export default function AdminDashboard() {
                               {selectedStudent.tracerStudy.careerStatus === 'further_study' && 
                                selectedStudent.tracerStudy.furtherStudyData && (
                                 <>
-                                  <div className="flex items-center gap-2">
-                                    <GraduationCap className="w-4 h-4 text-muted-foreground" />
+                                  <div className="flex items-start gap-2">
+                                    <GraduationCap className="w-4 h-4 text-muted-foreground mt-0.5" />
                                     <div>
                                       <p className="text-xs text-muted-foreground">Kampus</p>
                                       <p className="text-sm">{selectedStudent.tracerStudy.furtherStudyData.namaKampus}</p>
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <BookOpen className="w-4 h-4 text-muted-foreground" />
+                                  <div className="flex items-start gap-2">
+                                    <Award className="w-4 h-4 text-muted-foreground mt-0.5" />
                                     <div>
                                       <p className="text-xs text-muted-foreground">Program Studi</p>
                                       <p className="text-sm">{selectedStudent.tracerStudy.furtherStudyData.programStudi}</p>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Award className="w-4 h-4 text-muted-foreground" />
-                                    <div>
-                                      <p className="text-xs text-muted-foreground">Jenjang</p>
-                                      <p className="text-sm">{selectedStudent.tracerStudy.furtherStudyData.jenjang}</p>
-                                    </div>
-                                  </div>
-                                </>
-                              )}
-                              
-                              {selectedStudent.tracerStudy.careerStatus === 'job_seeking' && 
-                               selectedStudent.tracerStudy.jobSeekingData && (
-                                <>
-                                  <div className="flex items-center gap-2">
-                                    <MapPin className="w-4 h-4 text-muted-foreground" />
-                                    <div>
-                                      <p className="text-xs text-muted-foreground">Lokasi Tujuan</p>
-                                      <p className="text-sm">{selectedStudent.tracerStudy.jobSeekingData.lokasiTujuan}</p>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Briefcase className="w-4 h-4 text-muted-foreground" />
-                                    <div>
-                                      <p className="text-xs text-muted-foreground">Bidang Diincar</p>
-                                      <p className="text-sm">{selectedStudent.tracerStudy.jobSeekingData.bidangDiincar}</p>
                                     </div>
                                   </div>
                                 </>
@@ -693,7 +725,7 @@ export default function AdminDashboard() {
                           )}
                         </div>
                       ) : (
-                        <div className="p-4 rounded-xl bg-muted/50 text-center">
+                        <div className="p-4 rounded-xl bg-muted/30 text-center">
                           <p className="text-muted-foreground text-sm">Belum mengisi data tracer study</p>
                         </div>
                       )}
@@ -728,17 +760,18 @@ export default function AdminDashboard() {
                   )}
 
                   {/* Achievements Summary */}
-                  {selectedStudent.achievementCount > 0 && (
-                    <div className="border-t border-border pt-4">
-                      <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                        <Trophy className="w-4 h-4 text-warning" />
-                        Prestasi
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        {selectedStudent.achievementCount} prestasi tercatat
-                      </p>
-                    </div>
-                  )}
+                  <div className="border-t border-border pt-4">
+                    <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                      <Trophy className="w-4 h-4 text-warning" />
+                      Prestasi Non-Akademik
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedStudent.achievementCount > 0 
+                        ? `${selectedStudent.achievementCount} prestasi tercatat`
+                        : 'Belum ada prestasi tercatat'
+                      }
+                    </p>
+                  </div>
                 </div>
               )}
             </DialogContent>
