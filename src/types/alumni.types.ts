@@ -47,6 +47,8 @@ export interface EmploymentData {
   bidangIndustri: string;
   jabatan: string;
   tahunMulaiKerja: number;
+  tahunSelesaiKerja?: number; // End year - only required if masihAktifKerja is false
+  masihAktifKerja?: boolean; // Active toggle - hides end date when true
   kontakProfesional?: string;
 }
 
@@ -82,6 +84,8 @@ export interface FurtherStudyData {
   jenjang: EducationLevel;
   lokasiKampus: string;
   tahunMulaiStudi: number;
+  tahunSelesaiStudi?: number; // End year - only required if masihAktifStudi is false
+  masihAktifStudi?: boolean; // Active toggle - hides end date when true
 }
 
 /**
@@ -104,7 +108,7 @@ export interface AlumniData extends AlumniContactInfo, AlumniAdditionalInfo {
   tahunPengisian: number;
   createdAt: Date;
   
-  // Active status - indicates if still active in current position
+  // Active status - indicates if still active in current position (legacy)
   isActive?: boolean;
 
   // Status-specific data (only one should be populated based on status)
@@ -114,6 +118,8 @@ export interface AlumniData extends AlumniContactInfo, AlumniAdditionalInfo {
   bidangIndustri?: string;
   jabatan?: string;
   tahunMulaiKerja?: number;
+  tahunSelesaiKerja?: number; // End year - only when masihAktifKerja is false
+  masihAktifKerja?: boolean; // Active toggle - hides end date when true
   kontakProfesional?: string;
 
   // Job Seeking (mencari)
@@ -137,6 +143,8 @@ export interface AlumniData extends AlumniContactInfo, AlumniAdditionalInfo {
   jenjang?: EducationLevel;
   lokasiKampus?: string;
   tahunMulaiStudi?: number;
+  tahunSelesaiStudi?: number; // End year - only when masihAktifStudi is false
+  masihAktifStudi?: boolean; // Active toggle - hides end date when true
 }
 
 // ============ Merged/View Types ============

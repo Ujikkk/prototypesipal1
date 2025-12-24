@@ -163,8 +163,21 @@ export function getLockedCareerHistoryMessage(): {
  * - Display format is LinkedIn-style (text only)
  */
 export function aggregateAlumniStatus(careerHistory: AlumniData[]): AggregatedCareerStatus {
-  // Filter only active entries (isActive = true or most recent if no isActive flag)
-  const activeEntries = careerHistory.filter(entry => entry.isActive !== false);
+  // Filter only active entries based on status-specific active flags
+  const activeEntries = careerHistory.filter(entry => {
+    switch (entry.status) {
+      case 'bekerja':
+        return entry.masihAktifKerja !== false; // Default to true if not set
+      case 'wirausaha':
+        return entry.usahaAktif !== false; // Default to true if not set
+      case 'studi':
+        return entry.masihAktifStudi !== false; // Default to true if not set
+      case 'mencari':
+        return true; // Job seekers are always "active"
+      default:
+        return true;
+    }
+  });
   
   if (activeEntries.length === 0) {
     return {
@@ -185,9 +198,10 @@ export function aggregateAlumniStatus(careerHistory: AlumniData[]): AggregatedCa
       case 'bekerja':
         if (entry.namaPerusahaan) {
           statusParts.push(`Bekerja di ${entry.namaPerusahaan}`);
+          const periodKerja = formatCareerPeriod(entry.tahunMulaiKerja, entry.masihAktifKerja, entry.tahunSelesaiKerja);
           details.push(
             `${entry.jabatan || 'Karyawan'} di ${entry.namaPerusahaan}` +
-            (entry.tahunMulaiKerja ? ` (${entry.tahunMulaiKerja} – Sekarang)` : '')
+            (periodKerja ? ` (${periodKerja})` : '')
           );
         } else {
           statusParts.push('Bekerja');
@@ -197,10 +211,11 @@ export function aggregateAlumniStatus(careerHistory: AlumniData[]): AggregatedCa
       case 'wirausaha':
         if (entry.namaUsaha) {
           statusParts.push(`Wirausaha ${entry.namaUsaha}`);
+          const periodUsaha = formatCareerPeriod(entry.tahunMulaiUsaha, entry.usahaAktif);
           details.push(
             `${entry.namaUsaha}` +
             (entry.jenisUsaha ? ` – ${entry.jenisUsaha}` : '') +
-            (entry.tahunMulaiUsaha ? ` (${entry.tahunMulaiUsaha} – Sekarang)` : '')
+            (periodUsaha ? ` (${periodUsaha})` : '')
           );
         } else {
           statusParts.push('Wirausaha');
@@ -210,10 +225,11 @@ export function aggregateAlumniStatus(careerHistory: AlumniData[]): AggregatedCa
       case 'studi':
         if (entry.namaKampus) {
           statusParts.push(`Studi Lanjut di ${entry.namaKampus}`);
+          const periodStudi = formatCareerPeriod(entry.tahunMulaiStudi, entry.masihAktifStudi, entry.tahunSelesaiStudi);
           details.push(
             `${entry.jenjang || ''} ${entry.programStudi || ''}`.trim() +
             ` di ${entry.namaKampus}` +
-            (entry.tahunMulaiStudi ? ` (${entry.tahunMulaiStudi} – Sekarang)` : '')
+            (periodStudi ? ` (${periodStudi})` : '')
           );
         } else {
           statusParts.push('Melanjutkan Studi');

@@ -42,6 +42,8 @@ export interface AlumniData {
   bidangIndustri?: string;
   jabatan?: string;
   tahunMulaiKerja?: number;
+  tahunSelesaiKerja?: number; // End year - only required if masihAktifKerja is false
+  masihAktifKerja?: boolean; // Active toggle - hides end date when true
   kontakProfesional?: string;
   
   // Data Mencari Kerja
@@ -65,6 +67,8 @@ export interface AlumniData {
   jenjang?: 'S1' | 'S2' | 'S3';
   lokasiKampus?: string;
   tahunMulaiStudi?: number;
+  tahunSelesaiStudi?: number; // End year for study
+  masihAktifStudi?: boolean; // Active toggle for study
   
   // Kontak
   email: string;
@@ -90,6 +94,7 @@ export const alumniFilledData: AlumniData[] = [
     bidangIndustri: "Telekomunikasi",
     jabatan: "Network Engineer",
     tahunMulaiKerja: 2022,
+    masihAktifKerja: true,
     email: "ahmad.rizki@gmail.com",
     noHp: "081234567890",
     linkedin: "linkedin.com/in/ahmadrizki",
@@ -124,6 +129,7 @@ export const alumniFilledData: AlumniData[] = [
     jenjang: "S1",
     lokasiKampus: "Semarang",
     tahunMulaiStudi: 2023,
+    masihAktifStudi: true,
     email: "dewi.lestari@gmail.com",
     noHp: "081234567892",
     bersediaDihubungi: true,
@@ -139,6 +145,7 @@ export const alumniFilledData: AlumniData[] = [
     bidangIndustri: "Manufaktur Otomotif",
     jabatan: "Production Supervisor",
     tahunMulaiKerja: 2021,
+    masihAktifKerja: true,
     email: "fitri.handayani@gmail.com",
     noHp: "081234567893",
     bersediaDihubungi: true,
@@ -167,6 +174,7 @@ export const alumniFilledData: AlumniData[] = [
     bidangIndustri: "Heavy Equipment",
     jabatan: "Mechanical Engineer",
     tahunMulaiKerja: 2022,
+    masihAktifKerja: true,
     email: "kevin.wijaya@gmail.com",
     noHp: "081234567895",
     linkedin: "linkedin.com/in/kevinwijaya",
@@ -183,6 +191,7 @@ export const alumniFilledData: AlumniData[] = [
     bidangIndustri: "Konstruksi",
     jabatan: "Site Engineer",
     tahunMulaiKerja: 2023,
+    masihAktifKerja: true,
     email: "budi.santoso@gmail.com",
     noHp: "081234567896",
     bersediaDihubungi: true,
