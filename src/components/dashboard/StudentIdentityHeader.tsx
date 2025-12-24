@@ -1,7 +1,9 @@
-import { GraduationCap, Building2, Calendar, User } from 'lucide-react';
+import { GraduationCap, Building2, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { StudentStatus, CareerStatus } from '@/types/student.types';
-import { getStudentStatusLabel, getStudentStatusColor } from '@/data/student-seed-data';
+import { StudentStatus } from '@/types/student.types';
+import { RoleBadge } from './RoleBadge';
+import { ROLE_CONFIG, aggregateAlumniStatus } from '@/lib/role-utils';
+import type { AlumniData } from '@/types/alumni.types';
 import {
   Tooltip,
   TooltipContent,
@@ -16,22 +18,9 @@ interface StudentIdentityHeaderProps {
   jurusan: string;
   tahunLulus?: number;
   studentStatus: StudentStatus;
-  careerStatus?: CareerStatus;
+  /** Career history for computing aggregated alumni status */
+  careerHistory?: AlumniData[];
 }
-
-const CAREER_STATUS_LABELS: Record<CareerStatus, string> = {
-  working: 'Bekerja',
-  job_seeking: 'Mencari Kerja',
-  entrepreneur: 'Wirausaha',
-  further_study: 'Studi Lanjut',
-};
-
-const CAREER_STATUS_COLORS: Record<CareerStatus, { bg: string; text: string }> = {
-  working: { bg: 'bg-primary/10', text: 'text-primary' },
-  job_seeking: { bg: 'bg-warning/10', text: 'text-warning' },
-  entrepreneur: { bg: 'bg-success/10', text: 'text-success' },
-  further_study: { bg: 'bg-info/10', text: 'text-info' },
-};
 
 export function StudentIdentityHeader({
   nama,
@@ -40,10 +29,12 @@ export function StudentIdentityHeader({
   jurusan,
   tahunLulus,
   studentStatus,
-  careerStatus,
+  careerHistory = [],
 }: StudentIdentityHeaderProps) {
-  const statusColor = getStudentStatusColor(studentStatus);
-  const statusLabel = getStudentStatusLabel(studentStatus);
+  // Compute aggregated status for alumni
+  const aggregatedStatus = studentStatus === 'alumni' 
+    ? aggregateAlumniStatus(careerHistory) 
+    : null;
 
   return (
     <TooltipProvider>
@@ -53,30 +44,23 @@ export function StudentIdentityHeader({
           <p className="text-sm text-muted-foreground mb-1 tracking-wide">
             Selamat datang kembali
           </p>
+          
+          {/* Name with Prominent Role Badge */}
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">
               {nama}
             </h1>
             
-            {/* Student Status Badge */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className={cn(
-                  'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium',
-                  'border cursor-help transition-all duration-200 hover:shadow-soft',
-                  statusColor.bg,
-                  statusColor.text,
-                  statusColor.border
-                )}>
-                  <User className="w-3.5 h-3.5" />
-                  {statusLabel}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Status mahasiswa saat ini</p>
-              </TooltipContent>
-            </Tooltip>
+            {/* Role Badge - Always Visible, Prominent */}
+            <RoleBadge role={studentStatus} size="md" />
           </div>
+          
+          {/* Aggregated Alumni Status (LinkedIn-style) - Only for Alumni with career data */}
+          {studentStatus === 'alumni' && aggregatedStatus?.hasActiveCareer && (
+            <p className="text-base text-muted-foreground mt-2 font-medium">
+              {aggregatedStatus.primaryText}
+            </p>
+          )}
         </div>
 
         {/* Identity Info Bar */}
@@ -127,24 +111,6 @@ export function StudentIdentityHeader({
               </TooltipTrigger>
               <TooltipContent>
                 <p>Tahun Lulus</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-
-          {/* Career Status (only for alumni with tracer data) */}
-          {studentStatus === 'alumni' && careerStatus && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className={cn(
-                  'flex items-center gap-2 px-3 py-1.5 rounded-full font-medium hover:opacity-90 transition-opacity cursor-help',
-                  CAREER_STATUS_COLORS[careerStatus].bg,
-                  CAREER_STATUS_COLORS[careerStatus].text
-                )}>
-                  <span>{CAREER_STATUS_LABELS[careerStatus]}</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Status Alumni Saat Ini</p>
               </TooltipContent>
             </Tooltip>
           )}
