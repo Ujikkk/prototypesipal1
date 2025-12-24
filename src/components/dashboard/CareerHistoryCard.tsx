@@ -35,6 +35,8 @@ interface CareerHistoryCardProps {
   careerHistory: AlumniData[];
   onViewAll?: () => void;
   onAddNew?: () => void;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
   className?: string;
 }
 
@@ -79,6 +81,8 @@ export function CareerHistoryCard({
   careerHistory,
   onViewAll,
   onAddNew,
+  onEdit,
+  onDelete,
   className,
 }: CareerHistoryCardProps) {
   const hasAccess = hasCareerAccess(studentStatus);
@@ -171,6 +175,8 @@ export function CareerHistoryCard({
       contextText={`Menampilkan ${Math.min(timelineItems.length, 4)} dari ${timelineItems.length} riwayat karir`}
       onViewAll={onViewAll}
       onAddNew={onAddNew}
+      onEdit={onEdit}
+      onDelete={onDelete}
       className={className}
     />
   );
