@@ -63,6 +63,7 @@ export default function FormPage() {
   const [jenisUsaha, setJenisUsaha] = useState('');
   const [lokasiUsaha, setLokasiUsaha] = useState('');
   const [tahunMulaiUsaha, setTahunMulaiUsaha] = useState('');
+  const [tahunSelesaiUsaha, setTahunSelesaiUsaha] = useState('');
   const [punyaKaryawan, setPunyaKaryawan] = useState(false);
   const [jumlahKaryawan, setJumlahKaryawan] = useState('');
   const [usahaAktif, setUsahaAktif] = useState(true);
@@ -138,6 +139,20 @@ export default function FormPage() {
       return;
     }
 
+    // Validate end date is required when wirausaha is not active
+    if (status === 'wirausaha' && !usahaAktif && !tahunSelesaiUsaha) {
+      toast({ title: 'Tanggal berakhir usaha wajib diisi jika status usaha tidak aktif', variant: 'destructive' });
+      return;
+    }
+
+    // Validate end date is not before start date for wirausaha
+    if (status === 'wirausaha' && !usahaAktif && tahunSelesaiUsaha && tahunMulaiUsaha) {
+      if (parseInt(tahunSelesaiUsaha) < parseInt(tahunMulaiUsaha)) {
+        toast({ title: 'Tanggal berakhir tidak boleh lebih awal dari tanggal mulai usaha', variant: 'destructive' });
+        return;
+      }
+    }
+
     const newData: AlumniData = {
       id: `f${Date.now()}`,
       alumniMasterId: selectedAlumni.id,
@@ -177,6 +192,7 @@ export default function FormPage() {
       newData.punyaKaryawan = punyaKaryawan;
       newData.jumlahKaryawan = punyaKaryawan ? parseInt(jumlahKaryawan) : undefined;
       newData.usahaAktif = usahaAktif;
+      newData.tahunSelesaiUsaha = !usahaAktif && tahunSelesaiUsaha ? parseInt(tahunSelesaiUsaha) : undefined;
       newData.sosialMediaUsaha = sosialMediaUsaha.filter(s => s.trim());
     }
 
@@ -421,11 +437,42 @@ export default function FormPage() {
             </div>
             <div>
               <Label className="mb-2 block font-medium">Status Usaha</Label>
-              <div className="flex items-center gap-3 h-12 px-4 rounded-xl bg-muted/50">
-                <Switch checked={usahaAktif} onCheckedChange={setUsahaAktif} />
-                <span className="text-sm">{usahaAktif ? 'Usaha Aktif' : 'Usaha Tidak Aktif'}</span>
+              <div className={cn(
+                "flex items-center gap-3 h-12 px-4 rounded-xl transition-colors",
+                usahaAktif ? "bg-success/10" : "bg-muted/50"
+              )}>
+                <Switch 
+                  checked={usahaAktif} 
+                  onCheckedChange={(checked) => {
+                    setUsahaAktif(checked);
+                    if (checked) {
+                      setTahunSelesaiUsaha('');
+                    }
+                  }} 
+                />
+                <span className={cn(
+                  "text-sm font-medium",
+                  usahaAktif ? "text-success" : "text-muted-foreground"
+                )}>
+                  {usahaAktif ? 'Masih Aktif' : 'Tidak Aktif'}
+                </span>
               </div>
             </div>
+            {!usahaAktif && (
+              <div className="animate-fade-up">
+                <Label className="mb-2 block font-medium">Tanggal Berakhir Usaha *</Label>
+                <Input
+                  type="number"
+                  placeholder="Contoh: 2024"
+                  value={tahunSelesaiUsaha}
+                  onChange={(e) => setTahunSelesaiUsaha(e.target.value)}
+                  className="h-12 rounded-xl"
+                />
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  Isi tanggal ketika usaha ini berhenti beroperasi.
+                </p>
+              </div>
+            )}
             <div>
               <Label className="mb-2 block font-medium">Memiliki Karyawan?</Label>
               <div className="flex items-center gap-3 h-12 px-4 rounded-xl bg-muted/50">
