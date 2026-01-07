@@ -96,7 +96,7 @@ export function CareerHistoryCard({
           </div>
           <div>
             <h3 className="font-semibold text-foreground">Riwayat Karir</h3>
-            <p className="text-sm text-muted-foreground">Tracer study</p>
+            <p className="text-sm text-muted-foreground">Riwayat karir Anda</p>
           </div>
         </div>
         
@@ -131,7 +131,7 @@ export function CareerHistoryCard({
           </div>
           <div>
             <h3 className="font-semibold text-foreground">Riwayat Karir</h3>
-            <p className="text-sm text-muted-foreground">Tracer study Anda</p>
+            <p className="text-sm text-muted-foreground">Riwayat karir Anda</p>
           </div>
         </div>
         

@@ -193,7 +193,7 @@ export default function FormPage() {
     addAlumniData(newData);
     toast({
       title: 'Data berhasil disimpan!',
-      description: 'Terima kasih telah mengisi form tracer study.',
+      description: 'Terima kasih telah mengisi form survey lulusan.',
     });
     navigate('/dashboard');
   };
