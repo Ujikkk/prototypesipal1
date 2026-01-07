@@ -12,6 +12,7 @@ import PrestasiPage from "./pages/PrestasiPage";
 import CareerHistoryPage from "./pages/CareerHistoryPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AIInsightPage from "./pages/AIInsightPage";
+import KepuasanPenggunaPage from "./pages/KepuasanPenggunaPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ function App() {
               <Route path="/riwayat-karir" element={<CareerHistoryPage />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/ai-insight" element={<AIInsightPage />} />
+              <Route path="/kepuasan-pengguna" element={<KepuasanPenggunaPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
