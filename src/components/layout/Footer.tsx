@@ -13,13 +13,13 @@ export function Footer() {
                 <GraduationCap className="w-6 h-6 text-sidebar-primary-foreground" />
               </div>
               <div>
-                <span className="font-bold text-xl text-sidebar-foreground block">SIPAL</span>
+                <span className="font-bold text-xl text-sidebar-foreground block">Survey Lulusan</span>
                 <span className="text-xs text-sidebar-foreground/60">Politeknik Negeri Semarang</span>
               </div>
             </div>
             <p className="text-sidebar-foreground/70 text-sm max-w-md mb-6 leading-relaxed">
-              Sistem Informasi Pelacakan Alumni — Arsip digital resmi Program Studi 
-              Administrasi Bisnis Terapan (ABT). Menghubungkan kampus dengan alumni 
+              Sistem Tracer Study — Arsip digital resmi Program Studi 
+              Administrasi Bisnis Terapan (ABT). Menghubungkan kampus dengan lulusan 
               untuk membangun jejaring profesional yang lebih kuat.
             </p>
             <div className="flex flex-col gap-3 text-sm text-sidebar-foreground/70">
@@ -97,7 +97,7 @@ export function Footer() {
 
         <div className="border-t border-sidebar-border mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-sidebar-foreground/50">
-            © {new Date().getFullYear()} SIPAL — Politeknik Negeri Semarang. Hak cipta dilindungi.
+            © {new Date().getFullYear()} Survey Lulusan — Politeknik Negeri Semarang. Hak cipta dilindungi.
           </p>
           <p className="text-sm text-sidebar-foreground/50">
             Program Studi Administrasi Bisnis Terapan (ABT)
