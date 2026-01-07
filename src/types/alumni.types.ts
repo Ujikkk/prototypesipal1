@@ -69,10 +69,9 @@ export interface EntrepreneurshipData {
   jenisUsaha: string;
   lokasiUsaha: string;
   tahunMulaiUsaha: number;
-  tahunSelesaiUsaha?: number; // End year - only required if usahaAktif is false
   punyaKaryawan: boolean;
   jumlahKaryawan?: number;
-  usahaAktif: boolean; // Active toggle - hides end date when true
+  usahaAktif: boolean;
   sosialMediaUsaha: string[];
 }
 
@@ -133,10 +132,9 @@ export interface AlumniData extends AlumniContactInfo, AlumniAdditionalInfo {
   jenisUsaha?: string;
   lokasiUsaha?: string;
   tahunMulaiUsaha?: number;
-  tahunSelesaiUsaha?: number; // End year - only when usahaAktif is false
   punyaKaryawan?: boolean;
   jumlahKaryawan?: number;
-  usahaAktif?: boolean; // Active toggle - hides end date when true
+  usahaAktif?: boolean;
   sosialMediaUsaha?: string[];
 
   // Further Study (studi)

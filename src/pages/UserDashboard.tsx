@@ -2,9 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { useAlumni } from '@/contexts/AlumniContext';
-import { toast } from '@/hooks/use-toast';
 import { Award } from 'lucide-react';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { 
   StudentIdentityHeader, 
   SummaryCard, 
@@ -22,7 +21,7 @@ import type { StudentStatus } from '@/types/student.types';
 
 export default function UserDashboard() {
   const navigate = useNavigate();
-  const { selectedAlumni, alumniData, deleteAlumniData } = useAlumni();
+  const { selectedAlumni, getAlumniDataByMasterId } = useAlumni();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [stats, setStats] = useState<Record<AchievementCategory, number>>({
     lomba: 0, seminar: 0, publikasi: 0, haki: 0, magang: 0, portofolio: 0, wirausaha: 0, pengembangan: 0, organisasi: 0
@@ -37,12 +36,6 @@ export default function UserDashboard() {
     }
   }, [selectedAlumni, navigate]);
 
-  // Get career history data - REACTIVE to alumniData changes
-  const alumniHistory = useMemo(() => {
-    if (!selectedAlumni) return [];
-    return alumniData.filter((d) => d.alumniMasterId === selectedAlumni.id);
-  }, [alumniData, selectedAlumni]);
-
   if (!selectedAlumni) return null;
 
   // Determine student role - PRIMARY IDENTITY
@@ -50,22 +43,9 @@ export default function UserDashboard() {
   const showCareerHistory = hasCareerAccess(studentStatus);
   const achievementsEditable = canEditAchievements(studentStatus);
 
+  // Get career history data
+  const alumniHistory = getAlumniDataByMasterId(selectedAlumni.id);
   const totalAchievements = Object.values(stats).reduce((a, b) => a + b, 0);
-
-  // Career entry handlers
-  const handleEditCareer = (id: string) => {
-    // Navigate to form with edit mode - store the ID for the form to load
-    sessionStorage.setItem('editCareerEntryId', id);
-    navigate('/form');
-  };
-
-  const handleDeleteCareer = (id: string) => {
-    deleteAlumniData(id);
-    toast({
-      title: 'Riwayat karir dihapus',
-      description: 'Entri riwayat karir berhasil dihapus.',
-    });
-  };
 
   // Get latest achievement for summary card
   const getLatestAchievement = () => {
@@ -147,8 +127,6 @@ export default function UserDashboard() {
                 careerHistory={alumniHistory}
                 onViewAll={() => navigate('/riwayat-karir')}
                 onAddNew={showCareerHistory ? () => navigate('/form') : undefined}
-                onEdit={showCareerHistory ? handleEditCareer : undefined}
-                onDelete={showCareerHistory ? handleDeleteCareer : undefined}
               />
 
               {/* Card 4 - Riwayat Prestasi */}

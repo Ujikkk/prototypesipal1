@@ -211,12 +211,11 @@ export function aggregateAlumniStatus(careerHistory: AlumniData[]): AggregatedCa
       case 'wirausaha':
         if (entry.namaUsaha) {
           statusParts.push(`Wirausaha ${entry.namaUsaha}`);
-          const periodUsaha = formatCareerPeriod(entry.tahunMulaiUsaha, entry.usahaAktif, entry.tahunSelesaiUsaha);
+          const periodUsaha = formatCareerPeriod(entry.tahunMulaiUsaha, entry.usahaAktif);
           details.push(
             `${entry.namaUsaha}` +
             (entry.jenisUsaha ? ` – ${entry.jenisUsaha}` : '') +
-            (periodUsaha ? ` (${periodUsaha})` : '') +
-            (entry.usahaAktif ? ' · Aktif' : ' · Tidak Aktif')
+            (periodUsaha ? ` (${periodUsaha})` : '')
           );
         } else {
           statusParts.push('Wirausaha');

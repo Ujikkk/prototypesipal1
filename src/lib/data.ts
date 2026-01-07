@@ -1,12 +1,3 @@
-/**
- * Legacy Data File
- * 
- * INSTITUTIONAL CONSTRAINT:
- * All students belong to:
- * - Jurusan: Administrasi Bisnis
- * - Prodi: Administrasi Bisnis Terapan
- */
-
 // Master data alumni untuk validasi
 export interface AlumniMaster {
   id: string;
@@ -18,24 +9,24 @@ export interface AlumniMaster {
 }
 
 export const alumniMasterData: AlumniMaster[] = [
-  { id: "1", nama: "Ahmad Rizki Pratama", nim: "20190001", jurusan: "Administrasi Bisnis", prodi: "Administrasi Bisnis Terapan", tahunLulus: 2022 },
-  { id: "2", nama: "Siti Nurhaliza", nim: "20190002", jurusan: "Administrasi Bisnis", prodi: "Administrasi Bisnis Terapan", tahunLulus: 2022 },
-  { id: "3", nama: "Budi Santoso", nim: "20190003", jurusan: "Administrasi Bisnis", prodi: "Administrasi Bisnis Terapan", tahunLulus: 2022 },
-  { id: "4", nama: "Dewi Lestari", nim: "20190004", jurusan: "Administrasi Bisnis", prodi: "Administrasi Bisnis Terapan", tahunLulus: 2022 },
-  { id: "5", nama: "Eko Prasetyo", nim: "20190005", jurusan: "Administrasi Bisnis", prodi: "Administrasi Bisnis Terapan", tahunLulus: 2022 },
-  { id: "6", nama: "Fitri Handayani", nim: "20180001", jurusan: "Administrasi Bisnis", prodi: "Administrasi Bisnis Terapan", tahunLulus: 2021 },
-  { id: "7", nama: "Gunawan Wibowo", nim: "20180002", jurusan: "Administrasi Bisnis", prodi: "Administrasi Bisnis Terapan", tahunLulus: 2022 },
-  { id: "8", nama: "Hana Safira", nim: "20180003", jurusan: "Administrasi Bisnis", prodi: "Administrasi Bisnis Terapan", tahunLulus: 2022 },
-  { id: "9", nama: "Irfan Maulana", nim: "20200001", jurusan: "Administrasi Bisnis", prodi: "Administrasi Bisnis Terapan", tahunLulus: 2023 },
-  { id: "10", nama: "Jasmine Putri", nim: "20200002", jurusan: "Administrasi Bisnis", prodi: "Administrasi Bisnis Terapan", tahunLulus: 2024 },
-  { id: "11", nama: "Kevin Wijaya", nim: "20170001", jurusan: "Administrasi Bisnis", prodi: "Administrasi Bisnis Terapan", tahunLulus: 2021 },
-  { id: "12", nama: "Linda Kusuma", nim: "20170002", jurusan: "Administrasi Bisnis", prodi: "Administrasi Bisnis Terapan", tahunLulus: 2021 },
-  { id: "13", nama: "Muhammad Farhan", nim: "20210001", jurusan: "Administrasi Bisnis", prodi: "Administrasi Bisnis Terapan", tahunLulus: 2024 },
-  { id: "14", nama: "Nadia Rahmawati", nim: "20210002", jurusan: "Administrasi Bisnis", prodi: "Administrasi Bisnis Terapan", tahunLulus: 2024 },
-  { id: "15", nama: "Oscar Tan", nim: "20160001", jurusan: "Administrasi Bisnis", prodi: "Administrasi Bisnis Terapan", tahunLulus: 2019 },
-  { id: "16", nama: "Putri Ayu", nim: "20160002", jurusan: "Administrasi Bisnis", prodi: "Administrasi Bisnis Terapan", tahunLulus: 2019 },
-  { id: "17", nama: "Qori Fadillah", nim: "20220001", jurusan: "Administrasi Bisnis", prodi: "Administrasi Bisnis Terapan", tahunLulus: 2025 },
-  { id: "18", nama: "Rendi Saputra", nim: "20220002", jurusan: "Administrasi Bisnis", prodi: "Administrasi Bisnis Terapan", tahunLulus: 2025 },
+  { id: "1", nama: "Ahmad Rizki Pratama", nim: "20190001", jurusan: "Teknik Elektro", prodi: "D3 Teknik Elektronika", tahunLulus: 2022 },
+  { id: "2", nama: "Siti Nurhaliza", nim: "20190002", jurusan: "Teknik Elektro", prodi: "D3 Teknik Telekomunikasi", tahunLulus: 2022 },
+  { id: "3", nama: "Budi Santoso", nim: "20190003", jurusan: "Teknik Sipil", prodi: "D3 Teknik Konstruksi Gedung", tahunLulus: 2022 },
+  { id: "4", nama: "Dewi Lestari", nim: "20190004", jurusan: "Akuntansi", prodi: "D3 Akuntansi", tahunLulus: 2022 },
+  { id: "5", nama: "Eko Prasetyo", nim: "20190005", jurusan: "Administrasi Bisnis", prodi: "D3 Administrasi Bisnis", tahunLulus: 2022 },
+  { id: "6", nama: "Fitri Handayani", nim: "20180001", jurusan: "Teknik Mesin", prodi: "D3 Teknik Mesin", tahunLulus: 2021 },
+  { id: "7", nama: "Gunawan Wibowo", nim: "20180002", jurusan: "Teknik Elektro", prodi: "D4 Teknik Elektronika", tahunLulus: 2022 },
+  { id: "8", nama: "Hana Safira", nim: "20180003", jurusan: "Akuntansi", prodi: "D4 Akuntansi Manajerial", tahunLulus: 2022 },
+  { id: "9", nama: "Irfan Maulana", nim: "20200001", jurusan: "Teknik Elektro", prodi: "D3 Teknik Komputer", tahunLulus: 2023 },
+  { id: "10", nama: "Jasmine Putri", nim: "20200002", jurusan: "Administrasi Bisnis", prodi: "D4 Manajemen Bisnis", tahunLulus: 2024 },
+  { id: "11", nama: "Kevin Wijaya", nim: "20170001", jurusan: "Teknik Mesin", prodi: "D4 Teknik Mesin Produksi", tahunLulus: 2021 },
+  { id: "12", nama: "Linda Kusuma", nim: "20170002", jurusan: "Teknik Sipil", prodi: "D4 Teknik Perancangan Jalan", tahunLulus: 2021 },
+  { id: "13", nama: "Muhammad Farhan", nim: "20210001", jurusan: "Teknik Elektro", prodi: "D3 Teknik Elektronika", tahunLulus: 2024 },
+  { id: "14", nama: "Nadia Rahmawati", nim: "20210002", jurusan: "Akuntansi", prodi: "D3 Akuntansi", tahunLulus: 2024 },
+  { id: "15", nama: "Oscar Tan", nim: "20160001", jurusan: "Teknik Mesin", prodi: "D3 Teknik Mesin", tahunLulus: 2019 },
+  { id: "16", nama: "Putri Ayu", nim: "20160002", jurusan: "Administrasi Bisnis", prodi: "D3 Administrasi Bisnis", tahunLulus: 2019 },
+  { id: "17", nama: "Qori Fadillah", nim: "20220001", jurusan: "Teknik Elektro", prodi: "D3 Teknik Telekomunikasi", tahunLulus: 2025 },
+  { id: "18", nama: "Rendi Saputra", nim: "20220002", jurusan: "Teknik Sipil", prodi: "D3 Teknik Konstruksi Gedung", tahunLulus: 2025 },
 ];
 
 // Data alumni yang sudah mengisi form
@@ -65,10 +56,9 @@ export interface AlumniData {
   jenisUsaha?: string;
   lokasiUsaha?: string;
   tahunMulaiUsaha?: number;
-  tahunSelesaiUsaha?: number; // End year - only when usahaAktif is false
   punyaKaryawan?: boolean;
   jumlahKaryawan?: number;
-  usahaAktif?: boolean; // Active toggle - hides end date when true
+  usahaAktif?: boolean;
   sosialMediaUsaha?: string[];
   
   // Data Studi
@@ -102,7 +92,7 @@ export const alumniFilledData: AlumniData[] = [
     namaPerusahaan: "PT Telkom Indonesia",
     lokasiPerusahaan: "Jakarta",
     bidangIndustri: "Telekomunikasi",
-    jabatan: "Business Development Officer",
+    jabatan: "Network Engineer",
     tahunMulaiKerja: 2022,
     masihAktifKerja: true,
     email: "ahmad.rizki@gmail.com",
@@ -135,7 +125,7 @@ export const alumniFilledData: AlumniData[] = [
     status: "studi",
     tahunPengisian: 2024,
     namaKampus: "Universitas Diponegoro",
-    programStudi: "Manajemen",
+    programStudi: "Akuntansi",
     jenjang: "S1",
     lokasiKampus: "Semarang",
     tahunMulaiStudi: 2023,
@@ -150,10 +140,10 @@ export const alumniFilledData: AlumniData[] = [
     alumniMasterId: "6",
     status: "bekerja",
     tahunPengisian: 2024,
-    namaPerusahaan: "PT Bank Central Asia",
+    namaPerusahaan: "PT Astra Honda Motor",
     lokasiPerusahaan: "Jakarta",
-    bidangIndustri: "Perbankan & Keuangan",
-    jabatan: "Customer Service Officer",
+    bidangIndustri: "Manufaktur Otomotif",
+    jabatan: "Production Supervisor",
     tahunMulaiKerja: 2021,
     masihAktifKerja: true,
     email: "fitri.handayani@gmail.com",
@@ -167,7 +157,7 @@ export const alumniFilledData: AlumniData[] = [
     status: "mencari",
     tahunPengisian: 2024,
     lokasiTujuan: "Semarang, Yogyakarta",
-    bidangDiincar: "Marketing / Business Development",
+    bidangDiincar: "IT Support / System Administrator",
     lamaMencari: 3,
     email: "irfan.maulana@gmail.com",
     noHp: "081234567894",
@@ -179,10 +169,10 @@ export const alumniFilledData: AlumniData[] = [
     alumniMasterId: "11",
     status: "bekerja",
     tahunPengisian: 2024,
-    namaPerusahaan: "PT Unilever Indonesia",
+    namaPerusahaan: "PT Komatsu Indonesia",
     lokasiPerusahaan: "Jakarta",
-    bidangIndustri: "FMCG",
-    jabatan: "Sales Executive",
+    bidangIndustri: "Heavy Equipment",
+    jabatan: "Mechanical Engineer",
     tahunMulaiKerja: 2022,
     masihAktifKerja: true,
     email: "kevin.wijaya@gmail.com",
@@ -196,10 +186,10 @@ export const alumniFilledData: AlumniData[] = [
     alumniMasterId: "3",
     status: "bekerja",
     tahunPengisian: 2024,
-    namaPerusahaan: "PT Pertamina",
+    namaPerusahaan: "PT Waskita Karya",
     lokasiPerusahaan: "Semarang",
-    bidangIndustri: "BUMN",
-    jabatan: "Administrative Staff",
+    bidangIndustri: "Konstruksi",
+    jabatan: "Site Engineer",
     tahunMulaiKerja: 2023,
     masihAktifKerja: true,
     email: "budi.santoso@gmail.com",
@@ -228,13 +218,20 @@ export const alumniFilledData: AlumniData[] = [
   },
 ];
 
-// Restricted to single department/program for institutional compliance
 export const jurusanList = [
+  "Teknik Elektro",
+  "Teknik Mesin",
+  "Teknik Sipil",
+  "Akuntansi",
   "Administrasi Bisnis",
 ];
 
 export const prodiList: Record<string, string[]> = {
-  "Administrasi Bisnis": ["Administrasi Bisnis Terapan"],
+  "Teknik Elektro": ["D3 Teknik Elektronika", "D3 Teknik Telekomunikasi", "D3 Teknik Komputer", "D4 Teknik Elektronika"],
+  "Teknik Mesin": ["D3 Teknik Mesin", "D4 Teknik Mesin Produksi"],
+  "Teknik Sipil": ["D3 Teknik Konstruksi Gedung", "D4 Teknik Perancangan Jalan"],
+  "Akuntansi": ["D3 Akuntansi", "D4 Akuntansi Manajerial"],
+  "Administrasi Bisnis": ["D3 Administrasi Bisnis", "D4 Manajemen Bisnis"],
 };
 
 export const tahunLulusList = [2019, 2020, 2021, 2022, 2023, 2024, 2025];
@@ -242,13 +239,13 @@ export const tahunLulusList = [2019, 2020, 2021, 2022, 2023, 2024, 2025];
 export const bidangIndustriList = [
   "Telekomunikasi",
   "Manufaktur",
+  "Manufaktur Otomotif",
+  "Konstruksi",
   "Perbankan & Keuangan",
   "IT & Software",
   "E-Commerce",
+  "Heavy Equipment",
   "BUMN",
-  "FMCG",
   "Startup",
-  "Jasa Konsultasi",
-  "Retail",
   "Lainnya",
 ];

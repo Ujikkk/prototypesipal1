@@ -1,17 +1,6 @@
-import { Briefcase, Rocket, GraduationCap, Search, ChevronRight, MapPin, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Briefcase, Rocket, GraduationCap, Search, ChevronRight, MapPin, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 
 interface CareerTimelineItem {
   id: string;
@@ -20,7 +9,6 @@ interface CareerTimelineItem {
   title: string;
   subtitle?: string;
   location?: string;
-  isActive?: boolean;
 }
 
 interface CareerTimelineProps {
@@ -29,8 +17,6 @@ interface CareerTimelineProps {
   contextText?: string;
   onViewAll?: () => void;
   onAddNew?: () => void;
-  onEdit?: (id: string) => void;
-  onDelete?: (id: string) => void;
   className?: string;
 }
 
@@ -69,16 +55,7 @@ const STATUS_CONFIG = {
   },
 };
 
-export function CareerTimeline({ 
-  items, 
-  maxItems = 4, 
-  contextText, 
-  onViewAll, 
-  onAddNew,
-  onEdit,
-  onDelete,
-  className 
-}: CareerTimelineProps) {
+export function CareerTimeline({ items, maxItems = 4, contextText, onViewAll, onAddNew, className }: CareerTimelineProps) {
   const displayItems = items.slice(0, maxItems);
   const hasMore = items.length > maxItems;
 
@@ -117,7 +94,7 @@ export function CareerTimeline({
               <div 
                 key={item.id} 
                 className={cn(
-                  'relative flex gap-4 pb-4 group',
+                  'relative flex gap-4 pb-4',
                   !isLast && 'border-b border-transparent'
                 )}
               >
@@ -131,7 +108,7 @@ export function CareerTimeline({
                 <div 
                   className={cn(
                     'flex-1 p-4 rounded-xl border transition-all duration-200 min-w-0',
-                    'hover:shadow-soft',
+                    'hover:shadow-soft hover:-translate-y-0.5 cursor-pointer',
                     config.bgColor, config.borderColor
                   )}
                 >
@@ -140,67 +117,10 @@ export function CareerTimeline({
                       <Icon className={cn('w-4 h-4', config.color)} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full', config.bgColor, config.color)}>
-                            {config.label}
-                          </span>
-                          {item.isActive && (
-                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-success/20 text-success">
-                              Aktif
-                            </span>
-                          )}
-                        </div>
-                        
-                        {/* Action Buttons */}
-                        {(onEdit || onDelete) && (
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {onEdit && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 rounded-lg hover:bg-background/80"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onEdit(item.id);
-                                }}
-                              >
-                                <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
-                              </Button>
-                            )}
-                            {onDelete && (
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 rounded-lg hover:bg-destructive/10"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Hapus Riwayat Karir?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Apakah Anda yakin ingin menghapus entri "{item.title}"? Tindakan ini tidak dapat dibatalkan.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Batal</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                      onClick={() => onDelete(item.id)}
-                                    >
-                                      Hapus
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            )}
-                          </div>
-                        )}
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full', config.bgColor, config.color)}>
+                          {config.label}
+                        </span>
                       </div>
                       <h4 className="font-semibold text-foreground break-words">{item.title}</h4>
                       {item.subtitle && (
