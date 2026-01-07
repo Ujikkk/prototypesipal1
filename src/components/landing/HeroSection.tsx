@@ -43,16 +43,16 @@ export function HeroSection() {
 
             {/* Main Title */}
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 animate-fade-up" style={{ animationDelay: '0.1s' }}>
-              <span className="gradient-text">SIPAL</span>
+              <span className="gradient-text">Survey Lulusan</span>
             </h1>
             
             <h2 className="text-xl md:text-2xl lg:text-3xl font-semibold text-foreground mb-4 animate-fade-up" style={{ animationDelay: '0.15s' }}>
-              Sistem Informasi Pelacakan Alumni
+              Sistem Tracer Study Polines
             </h2>
             
             <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-fade-up text-balance" style={{ animationDelay: '0.2s' }}>
               Arsip digital resmi & sistem terintegrasi untuk pelacakan karir, 
-              pencatatan prestasi, dan analisis data alumni ABT Polines.
+              pencatatan prestasi, dan analisis data lulusan ABT Polines.
             </p>
 
             {/* CTA Buttons */}
