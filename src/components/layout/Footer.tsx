@@ -54,11 +54,11 @@ export function Footer() {
               <Link to="/validasi" className="text-sm text-sidebar-foreground/70 hover:text-sidebar-primary transition-colors">
                 Input Data Alumni
               </Link>
+              <Link to="/kepuasan-pengguna" className="text-sm text-sidebar-foreground/70 hover:text-sidebar-primary transition-colors">
+                Evaluasi Lulusan
+              </Link>
               <Link to="/admin" className="text-sm text-sidebar-foreground/70 hover:text-sidebar-primary transition-colors">
                 Dashboard Admin
-              </Link>
-              <Link to="/admin/ai-insight" className="text-sm text-sidebar-foreground/70 hover:text-sidebar-primary transition-colors">
-                AI Insight
               </Link>
             </div>
           </div>

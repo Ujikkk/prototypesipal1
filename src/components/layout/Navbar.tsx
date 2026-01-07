@@ -13,6 +13,7 @@ export function Navbar() {
   const navItems = [
     { path: '/', label: 'Beranda' },
     { path: '/validasi', label: 'Input Data' },
+    { path: '/kepuasan-pengguna', label: 'Evaluasi Lulusan' },
     { path: '/admin', label: 'Dashboard' },
   ];
 
