@@ -71,7 +71,7 @@ export function CareerTimeline({ items, maxItems = 4, contextText, onViewAll, on
           </div>
           <div className="min-w-0">
             <h3 className="font-semibold text-foreground truncate">Riwayat Karir</h3>
-            <p className="text-sm text-muted-foreground truncate">Tracer study Anda</p>
+            <p className="text-sm text-muted-foreground truncate">Riwayat karir Anda</p>
           </div>
         </div>
         <span className="text-sm text-muted-foreground px-3 py-1 rounded-full bg-muted flex-shrink-0">

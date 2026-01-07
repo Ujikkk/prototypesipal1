@@ -61,7 +61,7 @@ export default function AIInsightPage() {
       const topJurusan = Object.entries(jurusanBekerja).sort((a, b) => b[1] - a[1])[0];
 
       const generatedInsights = [
-        `## Tingkat Keterserapan Kerja\n\nDari total ${total} alumni yang mengisi tracer study, sebanyak **${bekerjaPercent}%** saat ini berstatus bekerja. Angka ini menunjukkan tingkat employability yang ${bekerjaPercent >= 70 ? 'sangat baik dan sejalan dengan target program studi' : bekerjaPercent >= 50 ? 'cukup baik namun masih perlu ditingkatkan' : 'perlu perhatian khusus dari pihak program studi'}.`,
+        `## Tingkat Keterserapan Kerja\n\nDari total ${total} alumni yang mengisi survey lulusan, sebanyak **${bekerjaPercent}%** saat ini berstatus bekerja. Angka ini menunjukkan tingkat employability yang ${bekerjaPercent >= 70 ? 'sangat baik dan sejalan dengan target program studi' : bekerjaPercent >= 50 ? 'cukup baik namun masih perlu ditingkatkan' : 'perlu perhatian khusus dari pihak program studi'}.`,
         
         `## Tren Kewirausahaan\n\nSebanyak **${wirausahaPercent}%** alumni memilih jalur wirausaha. ${wirausahaPercent >= 20 ? 'Ini menunjukkan jiwa entrepreneurship yang tinggi di kalangan alumni ABT Polines, selaras dengan kurikulum yang menekankan kewirausahaan.' : 'Kampus dapat mempertimbangkan penguatan program inkubasi bisnis dan mentoring kewirausahaan untuk meningkatkan minat berwirausaha di kalangan mahasiswa.'}`,
         
@@ -229,7 +229,7 @@ export default function AIInsightPage() {
                       <p className="font-medium text-foreground mb-1">Catatan Penggunaan</p>
                       <p className="text-sm text-muted-foreground">
                         Insight ini dihasilkan berdasarkan data yang tersedia saat ini. 
-                        Untuk hasil yang lebih akurat, pastikan lebih banyak alumni telah mengisi form tracer study.
+                        Untuk hasil yang lebih akurat, pastikan lebih banyak alumni telah mengisi form survey lulusan.
                         Konten dapat langsung disalin dan digunakan untuk keperluan pelaporan akreditasi.
                       </p>
                     </div>

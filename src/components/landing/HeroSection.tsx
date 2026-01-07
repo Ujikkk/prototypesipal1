@@ -47,7 +47,7 @@ export function HeroSection() {
             </h1>
             
             <h2 className="text-xl md:text-2xl lg:text-3xl font-semibold text-foreground mb-4 animate-fade-up" style={{ animationDelay: '0.15s' }}>
-              Sistem Tracer Study Polines
+              Sistem Informasi Lulusan Polines
             </h2>
             
             <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-fade-up text-balance" style={{ animationDelay: '0.2s' }}>
@@ -100,7 +100,7 @@ export function HeroSection() {
 
           {/* System Features Tags */}
           <div className="flex flex-wrap justify-center gap-3 mt-12 animate-fade-up" style={{ animationDelay: '0.5s' }}>
-            {['Tracer Study', 'Rekam Jejak', 'Prestasi Non-Akademik', 'AI Insight', 'Akreditasi'].map((tag) => (
+            {['Survey Alumni', 'Rekam Jejak', 'Prestasi Non-Akademik', 'AI Insight', 'Akreditasi'].map((tag) => (
               <span 
                 key={tag}
                 className="px-4 py-2 rounded-full bg-card border border-border text-sm font-medium text-muted-foreground hover:border-primary/30 hover:text-foreground transition-colors"

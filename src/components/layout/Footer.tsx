@@ -18,7 +18,7 @@ export function Footer() {
               </div>
             </div>
             <p className="text-sidebar-foreground/70 text-sm max-w-md mb-6 leading-relaxed">
-              Sistem Tracer Study — Arsip digital resmi Program Studi 
+              Sistem Informasi Lulusan — Arsip digital resmi Program Studi 
               Administrasi Bisnis Terapan (ABT). Menghubungkan kampus dengan lulusan 
               untuk membangun jejaring profesional yang lebih kuat.
             </p>

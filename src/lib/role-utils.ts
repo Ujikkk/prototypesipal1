@@ -136,7 +136,7 @@ export function getLockedCareerMessage(status: StudentStatus): {
   
   return {
     title: `Anda saat ini berstatus ${roleLabel}`,
-    message: 'Fitur tracer study alumni akan terbuka setelah Anda menjadi Alumni Politeknik Negeri Semarang.',
+    message: 'Fitur riwayat karir alumni akan terbuka setelah Anda menjadi Alumni Politeknik Negeri Semarang.',
   };
 }
 
