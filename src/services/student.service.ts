@@ -106,6 +106,20 @@ export const saveStudentProfile = async (
   return studentRepository.createStudent(data);
 };
 
+/**
+ * Delete student and all related data
+ */
+export const deleteStudent = async (id: string): Promise<boolean> => {
+  return studentRepository.deleteStudent(id);
+};
+
+/**
+ * Delete achievement
+ */
+export const deleteAchievement = async (id: string): Promise<boolean> => {
+  return studentRepository.deleteAchievement(id);
+};
+
 // ============ Tracer Study Operations ============
 
 /**

@@ -9,9 +9,11 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { AlumniMaster, AlumniData, AlumniDataInput } from '@/types';
+import type { StudentProfile, StudentProfileInput } from '@/types/student.types';
 import * as alumniService from '@/services/alumni.service';
+import * as studentService from '@/services/student.service';
 import { alumniMasterData, alumniFilledData } from '@/data/seed-data';
-
+import { studentProfiles as initialStudentProfiles } from '@/data/student-seed-data';
 // ============ Context Types ============
 
 interface AlumniContextState {
@@ -21,6 +23,7 @@ interface AlumniContextState {
   // Data stores
   alumniData: AlumniData[];
   masterData: AlumniMaster[];
+  studentProfiles: StudentProfile[];
   
   // Theme
   darkMode: boolean;
@@ -39,6 +42,12 @@ interface AlumniContextActions {
   deleteAlumniData: (id: string) => void;
   getAlumniDataByMasterId: (masterId: string) => AlumniData[];
   searchAlumni: (nama: string, tahunLulus: number) => AlumniMaster[];
+  
+  // Student CRUD operations
+  addStudent: (data: Omit<StudentProfile, 'id' | 'createdAt' | 'updatedAt'>) => Promise<StudentProfile>;
+  updateStudent: (id: string, data: Partial<StudentProfile>) => Promise<StudentProfile | null>;
+  deleteStudent: (id: string) => Promise<boolean>;
+  refreshStudentProfiles: () => Promise<void>;
   
   // Theme
   toggleDarkMode: () => void;
@@ -60,6 +69,7 @@ export function AlumniProvider({ children }: AlumniProviderProps) {
   // State
   const [selectedAlumni, setSelectedAlumni] = useState<AlumniMaster | null>(null);
   const [alumniData, setAlumniData] = useState<AlumniData[]>(alumniFilledData);
+  const [studentProfiles, setStudentProfiles] = useState<StudentProfile[]>(initialStudentProfiles);
   const [darkMode, setDarkMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -70,6 +80,12 @@ export function AlumniProvider({ children }: AlumniProviderProps) {
       setDarkMode(true);
       document.documentElement.classList.add('dark');
     }
+  }, []);
+  
+  // Refresh student profiles from repository
+  const refreshStudentProfiles = useCallback(async () => {
+    const profiles = await studentService.getAllStudents();
+    setStudentProfiles(profiles);
   }, []);
 
   // Theme toggle
@@ -128,12 +144,49 @@ export function AlumniProvider({ children }: AlumniProviderProps) {
     []
   );
 
+  // Add student (CRUD)
+  const addStudent = useCallback(
+    async (data: Omit<StudentProfile, 'id' | 'createdAt' | 'updatedAt'>): Promise<StudentProfile> => {
+      const newStudent = await studentService.saveStudentProfile(data as StudentProfileInput);
+      setStudentProfiles((prev) => [...prev, newStudent]);
+      return newStudent;
+    },
+    []
+  );
+
+  // Update student (CRUD)
+  const updateStudent = useCallback(
+    async (id: string, data: Partial<StudentProfile>): Promise<StudentProfile | null> => {
+      const updated = await studentService.saveStudentProfile(data as StudentProfileInput, id);
+      setStudentProfiles((prev) =>
+        prev.map((s) => (s.id === id ? updated : s))
+      );
+      return updated;
+    },
+    []
+  );
+
+  // Delete student (CRUD)
+  const deleteStudent = useCallback(
+    async (id: string): Promise<boolean> => {
+      const success = await studentService.deleteStudent(id);
+      if (success) {
+        setStudentProfiles((prev) => prev.filter((s) => s.id !== id));
+        // Also remove related alumni data
+        setAlumniData((prev) => prev.filter((a) => a.alumniMasterId !== id));
+      }
+      return success;
+    },
+    []
+  );
+
   // Context value
   const contextValue: AlumniContextType = {
     // State
     selectedAlumni,
     alumniData,
     masterData: alumniMasterData,
+    studentProfiles,
     darkMode,
     isLoading,
     
@@ -144,6 +197,10 @@ export function AlumniProvider({ children }: AlumniProviderProps) {
     deleteAlumniData,
     getAlumniDataByMasterId,
     searchAlumni,
+    addStudent,
+    updateStudent,
+    deleteStudent,
+    refreshStudentProfiles,
     toggleDarkMode,
   };
 
