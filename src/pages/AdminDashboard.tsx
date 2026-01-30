@@ -11,11 +11,16 @@ import { jurusanList, prodiList, tahunLulusList } from '@/lib/data';
 import { StatCard, StatusBadge, ChartCard, DataTable } from '@/components/shared';
 import { getGlobalAchievementStats, getStudentsWithAchievements } from '@/services/achievement.service';
 import { ACHIEVEMENT_CATEGORIES, AchievementCategory } from '@/types/achievement.types';
+import { StudentFormModal, DeleteConfirmDialog } from '@/components/admin';
+import type { StudentFormData } from '@/components/admin';
+import type { StudentProfile, StudentStatus } from '@/types/student.types';
+import { toast } from '@/hooks/use-toast';
 import {
   Search, Download, Filter, Users2, Briefcase, Rocket, BookOpen, TrendingUp,
   User, Mail, Phone, Building2, MapPin, Calendar, ExternalLink, Sparkles,
   BarChart3, PieChart as PieChartIcon, LineChart as LineChartIcon, X,
-  Trophy, Shield, FolderOpen, GraduationCap, Award, Mic2
+  Trophy, Shield, FolderOpen, GraduationCap, Award, Mic2,
+  Plus, Pencil, Trash2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -24,29 +29,41 @@ import {
 } from 'recharts';
 
 export default function AdminDashboard() {
-  const { masterData, alumniData } = useAlumni();
+  const { masterData, alumniData, studentProfiles, addStudent, updateStudent, deleteStudent } = useAlumni();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTahun, setFilterTahun] = useState<string>('all');
   const [filterJurusan, setFilterJurusan] = useState<string>('all');
   const [filterProdi, setFilterProdi] = useState<string>('all');
   const [selectedAlumniId, setSelectedAlumniId] = useState<string | null>(null);
+  
+  // CRUD States
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
+  const [editingStudent, setEditingStudent] = useState<StudentProfile | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<StudentProfile | null>(null);
 
-  // Merge master data with filled data
+  // Merge student profiles with alumni data for unified view
   const mergedData = useMemo(() => {
-    return masterData.map(master => {
-      const filled = alumniData.find(d => d.alumniMasterId === master.id);
-      return { ...master, filledData: filled };
+    return studentProfiles.map(student => {
+      const filled = alumniData.find(d => d.alumniMasterId === student.id);
+      return { 
+        ...student, 
+        filledData: filled,
+        // Map student status to display labels
+        statusLabel: getStudentStatusLabel(student.status),
+      };
     });
-  }, [masterData, alumniData]);
+  }, [studentProfiles, alumniData]);
 
   // Filter data
   const filteredData = useMemo(() => {
-    return mergedData.filter(alumni => {
-      const matchSearch = alumni.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        alumni.nim.includes(searchQuery);
-      const matchTahun = filterTahun === 'all' || alumni.tahunLulus === parseInt(filterTahun);
-      const matchJurusan = filterJurusan === 'all' || alumni.jurusan === filterJurusan;
-      const matchProdi = filterProdi === 'all' || alumni.prodi === filterProdi;
+    return mergedData.filter(student => {
+      const matchSearch = student.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        student.nim.includes(searchQuery);
+      const matchTahun = filterTahun === 'all' || student.tahunLulus === parseInt(filterTahun) || student.tahunMasuk === parseInt(filterTahun);
+      const matchJurusan = filterJurusan === 'all' || student.jurusan === filterJurusan;
+      const matchProdi = filterProdi === 'all' || student.prodi === filterProdi;
       return matchSearch && matchTahun && matchJurusan && matchProdi;
     });
   }, [mergedData, searchQuery, filterTahun, filterJurusan, filterProdi]);
@@ -125,10 +142,10 @@ export default function AdminDashboard() {
 
   const selectedAlumniDetail = useMemo(() => {
     if (!selectedAlumniId) return null;
-    const master = masterData.find(m => m.id === selectedAlumniId);
+    const student = studentProfiles.find(s => s.id === selectedAlumniId);
     const filled = alumniData.find(d => d.alumniMasterId === selectedAlumniId);
-    return master ? { ...master, filledData: filled } : null;
-  }, [selectedAlumniId, masterData, alumniData]);
+    return student ? { ...student, filledData: filled } : null;
+  }, [selectedAlumniId, studentProfiles, alumniData]);
 
   const handleExport = () => {
     const headers = ['Nama', 'NIM', 'Jurusan', 'Prodi', 'Tahun Lulus', 'Status', 'Email', 'No HP'];
@@ -162,28 +179,161 @@ export default function AdminDashboard() {
     }
   };
 
-  // Table columns configuration
+  const getStudentStatusLabel = (status: StudentStatus) => {
+    switch (status) {
+      case 'active': return 'Mahasiswa Aktif';
+      case 'alumni': return 'Alumni';
+      case 'on_leave': return 'Cuti';
+      case 'dropout': return 'Dropout';
+      default: return '-';
+    }
+  };
+
+  const getStudentStatusBadgeColor = (status: StudentStatus) => {
+    switch (status) {
+      case 'active': return 'bg-blue-500/10 text-blue-600 border-blue-500/30';
+      case 'alumni': return 'bg-green-500/10 text-green-600 border-green-500/30';
+      case 'on_leave': return 'bg-gray-500/10 text-gray-600 border-gray-500/30';
+      case 'dropout': return 'bg-red-500/10 text-red-600 border-red-500/30';
+      default: return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  // CRUD Handlers
+  const handleAddStudent = () => {
+    setFormMode('create');
+    setEditingStudent(null);
+    setIsFormModalOpen(true);
+  };
+
+  const handleEditStudent = (student: StudentProfile) => {
+    setFormMode('edit');
+    setEditingStudent(student);
+    setIsFormModalOpen(true);
+  };
+
+  const handleDeleteClick = (student: StudentProfile) => {
+    setStudentToDelete(student);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!studentToDelete) return;
+    
+    const success = await deleteStudent(studentToDelete.id);
+    if (success) {
+      toast({
+        title: 'Data Dihapus',
+        description: `Data ${studentToDelete.nama} berhasil dihapus`,
+      });
+    } else {
+      toast({
+        title: 'Gagal Menghapus',
+        description: 'Terjadi kesalahan saat menghapus data',
+        variant: 'destructive',
+      });
+    }
+    setDeleteDialogOpen(false);
+    setStudentToDelete(null);
+  };
+
+  const handleSaveStudent = async (data: StudentFormData) => {
+    if (formMode === 'create') {
+      await addStudent({
+        nama: data.nama,
+        nim: data.nim,
+        email: data.email || undefined,
+        noHp: data.noHp || undefined,
+        status: data.status,
+        tahunMasuk: data.tahunMasuk,
+        tahunLulus: data.tahunLulus,
+        jurusan: 'Administrasi Bisnis',
+        prodi: 'Administrasi Bisnis Terapan',
+      });
+    } else if (editingStudent) {
+      await updateStudent(editingStudent.id, {
+        nama: data.nama,
+        nim: data.nim,
+        email: data.email || undefined,
+        noHp: data.noHp || undefined,
+        status: data.status,
+        tahunMasuk: data.tahunMasuk,
+        tahunLulus: data.tahunLulus,
+      });
+    }
+  };
+
+  const existingNims = useMemo(() => 
+    studentProfiles.map(s => s.nim), 
+    [studentProfiles]
+  );
+
+  // Table columns configuration with actions
   const tableColumns = [
     { key: 'nama', header: 'Nama', sortable: true },
     { key: 'nim', header: 'NIM', sortable: true },
-    { key: 'jurusan', header: 'Jurusan', hideOnMobile: true, sortable: true },
-    { key: 'prodi', header: 'Prodi', hideOnMobile: true, className: 'text-sm max-w-[150px] truncate' },
-    { key: 'tahunLulus', header: 'Tahun', sortable: true },
     { 
       key: 'status', 
-      header: 'Status',
+      header: 'Status Mahasiswa',
+      accessor: (row: typeof filteredData[0]) => (
+        <span className={cn(
+          'inline-flex px-2 py-0.5 text-xs font-medium rounded-full border',
+          getStudentStatusBadgeColor(row.status)
+        )}>
+          {getStudentStatusLabel(row.status)}
+        </span>
+      )
+    },
+    { key: 'tahunMasuk', header: 'Masuk', sortable: true },
+    { key: 'tahunLulus', header: 'Lulus', sortable: true, accessor: (row: typeof filteredData[0]) => row.tahunLulus || '-' },
+    { 
+      key: 'careerStatus', 
+      header: 'Status Karir',
+      hideOnMobile: true,
       accessor: (row: typeof filteredData[0]) => row.filledData ? (
         <StatusBadge status={row.filledData.status} size="sm" />
       ) : (
-        <span className="text-xs text-muted-foreground">Belum Isi</span>
+        <span className="text-xs text-muted-foreground">-</span>
       )
     },
     { 
       key: 'email', 
       header: 'Email', 
       hideOnMobile: true,
-      accessor: (row: typeof filteredData[0]) => row.filledData?.email || '-',
+      accessor: (row: typeof filteredData[0]) => row.email || '-',
       className: 'text-sm'
+    },
+    {
+      key: 'actions',
+      header: 'Aksi',
+      accessor: (row: typeof filteredData[0]) => (
+        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEditStudent(row);
+            }}
+            title="Edit"
+          >
+            <Pencil className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive hover:text-destructive"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteClick(row);
+            }}
+            title="Hapus"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      )
     },
   ];
 
@@ -196,14 +346,20 @@ export default function AdminDashboard() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 animate-fade-up">
             <div>
               <h1 className="text-3xl font-bold text-foreground mb-1">Dashboard Admin</h1>
-              <p className="text-muted-foreground">Kelola dan analisis data alumni ABT Polines.</p>
+              <p className="text-muted-foreground">Kelola dan analisis data mahasiswa & alumni ABT Polines.</p>
             </div>
-            <Link to="/admin/ai-insight">
-              <Button size="lg" className="group">
-                <Sparkles className="w-5 h-5 mr-2 group-hover:animate-pulse" />
-                AI Insight
+            <div className="flex items-center gap-3">
+              <Button onClick={handleAddStudent} variant="outline">
+                <Plus className="w-4 h-4 mr-2" />
+                Tambah Mahasiswa
               </Button>
-            </Link>
+              <Link to="/admin/ai-insight">
+                <Button size="lg" className="group">
+                  <Sparkles className="w-5 h-5 mr-2 group-hover:animate-pulse" />
+                  AI Insight
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Stats Cards */}
@@ -396,10 +552,28 @@ export default function AdminDashboard() {
               onRowClick={(row) => setSelectedAlumniId(row.id)}
               onExport={handleExport}
               pageSize={10}
-              emptyMessage="Tidak ada data alumni ditemukan"
+              emptyMessage="Tidak ada data mahasiswa ditemukan"
             />
           </div>
 
+          {/* Student Form Modal */}
+          <StudentFormModal
+            open={isFormModalOpen}
+            onOpenChange={setIsFormModalOpen}
+            student={editingStudent}
+            alumniData={editingStudent ? alumniData.find(a => a.alumniMasterId === editingStudent.id) : null}
+            mode={formMode}
+            onSave={handleSaveStudent}
+            existingNims={existingNims}
+          />
+
+          {/* Delete Confirmation Dialog */}
+          <DeleteConfirmDialog
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
+            studentName={studentToDelete?.nama || ''}
+            onConfirm={handleConfirmDelete}
+          />
           {/* Detail Dialog */}
           <Dialog open={!!selectedAlumniId} onOpenChange={() => setSelectedAlumniId(null)}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -408,7 +582,7 @@ export default function AdminDashboard() {
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                     <User className="w-5 h-5 text-primary" />
                   </div>
-                  Detail Alumni
+                  Detail Mahasiswa
                 </DialogTitle>
               </DialogHeader>
               
@@ -425,33 +599,32 @@ export default function AdminDashboard() {
                       <p className="font-semibold text-foreground">{selectedAlumniDetail.nim}</p>
                     </div>
                     <div className="p-4 rounded-xl bg-muted/50">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Jurusan</p>
-                      <p className="font-semibold text-foreground">{selectedAlumniDetail.jurusan}</p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-muted/50">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Prodi</p>
-                      <p className="font-semibold text-foreground text-sm">{selectedAlumniDetail.prodi}</p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-muted/50">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Tahun Lulus</p>
-                      <p className="font-semibold text-foreground">{selectedAlumniDetail.tahunLulus}</p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-muted/50">
                       <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Status</p>
-                      {selectedAlumniDetail.filledData ? (
-                        <StatusBadge status={selectedAlumniDetail.filledData.status} size="md" showIcon />
-                      ) : (
-                        <span className="text-muted-foreground">Belum mengisi</span>
-                      )}
+                      <span className={cn(
+                        'inline-flex px-2 py-0.5 text-xs font-medium rounded-full border',
+                        getStudentStatusBadgeColor(selectedAlumniDetail.status)
+                      )}>
+                        {getStudentStatusLabel(selectedAlumniDetail.status)}
+                      </span>
+                    </div>
+                    <div className="p-4 rounded-xl bg-muted/50">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Tahun</p>
+                      <p className="font-semibold text-foreground">
+                        {selectedAlumniDetail.tahunMasuk} - {selectedAlumniDetail.tahunLulus || 'Sekarang'}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Filled Data Details */}
+                  {/* Career Status for Alumni */}
                   {selectedAlumniDetail.filledData && (
                     <>
                       <div className="border-t border-border pt-4">
-                        <h4 className="font-semibold text-foreground mb-4">Detail Status</h4>
+                        <h4 className="font-semibold text-foreground mb-4">Status Karir Alumni</h4>
                         <div className="grid grid-cols-2 gap-4">
+                          <div className="p-4 rounded-xl bg-muted/50">
+                            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Status</p>
+                            <StatusBadge status={selectedAlumniDetail.filledData.status} size="md" showIcon />
+                          </div>
                           {selectedAlumniDetail.filledData.status === 'bekerja' && (
                             <>
                               <div className="flex items-center gap-3">
@@ -468,13 +641,6 @@ export default function AdminDashboard() {
                                   <p className="text-sm font-medium">{selectedAlumniDetail.filledData.jabatan}</p>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-3">
-                                <MapPin className="w-4 h-4 text-muted-foreground" />
-                                <div>
-                                  <p className="text-xs text-muted-foreground">Lokasi</p>
-                                  <p className="text-sm font-medium">{selectedAlumniDetail.filledData.lokasiPerusahaan}</p>
-                                </div>
-                              </div>
                             </>
                           )}
                           {selectedAlumniDetail.filledData.status === 'wirausaha' && (
@@ -484,13 +650,6 @@ export default function AdminDashboard() {
                                 <div>
                                   <p className="text-xs text-muted-foreground">Nama Usaha</p>
                                   <p className="text-sm font-medium">{selectedAlumniDetail.filledData.namaUsaha}</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <Building2 className="w-4 h-4 text-muted-foreground" />
-                                <div>
-                                  <p className="text-xs text-muted-foreground">Jenis Usaha</p>
-                                  <p className="text-sm font-medium">{selectedAlumniDetail.filledData.jenisUsaha}</p>
                                 </div>
                               </div>
                             </>
