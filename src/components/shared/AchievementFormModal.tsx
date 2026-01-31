@@ -5,7 +5,6 @@
  */
 
 import { useState } from 'react';
-import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -129,14 +128,10 @@ export function AchievementFormModal({
 
   const modalContent = (
     <div 
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in pointer-events-auto"
     >
       <div 
-        className="w-full max-w-2xl max-h-[90vh] overflow-auto overscroll-contain touch-pan-y bg-card border border-border rounded-2xl shadow-elevated animate-scale-in pointer-events-auto"
-        // Prevent the parent Radix Dialog (admin modal) from intercepting interactions,
-        // but DO NOT block events on the backdrop so Radix Select/Popover can detect outside clicks.
-        onPointerDownCapture={(e) => e.stopPropagation()}
-        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto overscroll-contain touch-pan-y bg-card border border-border rounded-2xl shadow-elevated animate-scale-in pointer-events-auto"
       >
         {/* Header */}
         <div className="sticky top-0 z-10 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
@@ -216,8 +211,11 @@ export function AchievementFormModal({
     </div>
   );
 
-  // Use Portal to render outside of parent Dialog hierarchy
-  return createPortal(modalContent, document.body);
+  // IMPORTANT: Do not portal to document.body.
+  // When this modal is opened from inside the Admin Radix Dialog,
+  // the parent Dialog's modal layer can disable pointer events for "outside" content.
+  // Rendering inline keeps this modal interactive (scroll, inputs, Select outside-click close).
+  return modalContent;
 }
 
 // ============ Field Components ============
