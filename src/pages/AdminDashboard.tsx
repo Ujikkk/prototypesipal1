@@ -11,11 +11,13 @@ import { jurusanList, prodiList, tahunLulusList } from '@/lib/data';
 import { StatCard, StatusBadge, ChartCard, DataTable } from '@/components/shared';
 import { getGlobalAchievementStats, getStudentsWithAchievements } from '@/services/achievement.service';
 import { ACHIEVEMENT_CATEGORIES, AchievementCategory } from '@/types/achievement.types';
+import { StudentAccountModal, DeleteStudentDialog } from '@/components/admin';
+import type { StudentAccountInput } from '@/types/student.types';
 import {
   Search, Download, Filter, Users2, Briefcase, Rocket, BookOpen, TrendingUp,
   User, Mail, Phone, Building2, MapPin, Calendar, ExternalLink, Sparkles,
   BarChart3, PieChart as PieChartIcon, LineChart as LineChartIcon, X,
-  Trophy, Shield, FolderOpen, GraduationCap, Award, Mic2
+  Trophy, Shield, FolderOpen, GraduationCap, Award, Mic2, UserPlus, Trash2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -24,12 +26,17 @@ import {
 } from 'recharts';
 
 export default function AdminDashboard() {
-  const { masterData, alumniData } = useAlumni();
+  const { masterData, alumniData, studentAccounts, addStudentAccount, deleteStudentAccount } = useAlumni();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTahun, setFilterTahun] = useState<string>('all');
   const [filterJurusan, setFilterJurusan] = useState<string>('all');
   const [filterProdi, setFilterProdi] = useState<string>('all');
   const [selectedAlumniId, setSelectedAlumniId] = useState<string | null>(null);
+  
+  // Modal states for student account management
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; nama: string; nim: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Merge master data with filled data
   const mergedData = useMemo(() => {
@@ -162,7 +169,31 @@ export default function AdminDashboard() {
     }
   };
 
-  // Table columns configuration
+  // Handle add student account
+  const handleAddStudent = async (data: StudentAccountInput) => {
+    const result = await addStudentAccount(data);
+    return result;
+  };
+
+  // Handle delete student account
+  const handleDeleteStudent = async () => {
+    if (!deleteTarget) return;
+    
+    setIsDeleting(true);
+    try {
+      await deleteStudentAccount(deleteTarget.id);
+      setDeleteTarget(null);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Get existing NIMs for validation
+  const existingNims = useMemo(() => {
+    return studentAccounts.map(s => s.nim);
+  }, [studentAccounts]);
+
+  // Table columns configuration with NIM and delete action
   const tableColumns = [
     { key: 'nama', header: 'Nama', sortable: true },
     { key: 'nim', header: 'NIM', sortable: true },
@@ -185,6 +216,27 @@ export default function AdminDashboard() {
       accessor: (row: typeof filteredData[0]) => row.filledData?.email || '-',
       className: 'text-sm'
     },
+    {
+      key: 'actions',
+      header: '',
+      accessor: (row: typeof filteredData[0]) => {
+        const student = studentAccounts.find(s => s.nim === row.nim);
+        if (!student) return null;
+        return (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={(e) => {
+              e.stopPropagation();
+              setDeleteTarget({ id: student.id, nama: student.nama, nim: student.nim });
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        );
+      }
+    },
   ];
 
   return (
@@ -198,12 +250,18 @@ export default function AdminDashboard() {
               <h1 className="text-3xl font-bold text-foreground mb-1">Dashboard Admin</h1>
               <p className="text-muted-foreground">Kelola dan analisis data alumni ABT Polines.</p>
             </div>
-            <Link to="/admin/ai-insight">
-              <Button size="lg" className="group">
-                <Sparkles className="w-5 h-5 mr-2 group-hover:animate-pulse" />
-                AI Insight
+            <div className="flex gap-3">
+              <Button size="lg" variant="outline" onClick={() => setShowAddModal(true)}>
+                <UserPlus className="w-5 h-5 mr-2" />
+                Tambah Mahasiswa
               </Button>
-            </Link>
+              <Link to="/admin/ai-insight">
+                <Button size="lg" className="group">
+                  <Sparkles className="w-5 h-5 mr-2 group-hover:animate-pulse" />
+                  AI Insight
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Stats Cards */}
@@ -523,6 +581,26 @@ export default function AdminDashboard() {
               )}
             </DialogContent>
           </Dialog>
+
+          {/* Add Student Modal */}
+          <StudentAccountModal
+            open={showAddModal}
+            onOpenChange={setShowAddModal}
+            onSubmit={handleAddStudent}
+            existingNims={existingNims}
+          />
+
+          {/* Delete Student Dialog */}
+          {deleteTarget && (
+            <DeleteStudentDialog
+              open={!!deleteTarget}
+              onOpenChange={(open) => !open && setDeleteTarget(null)}
+              studentName={deleteTarget.nama}
+              studentNim={deleteTarget.nim}
+              onConfirm={handleDeleteStudent}
+              isDeleting={isDeleting}
+            />
+          )}
         </div>
       </main>
       <Footer />
