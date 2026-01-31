@@ -2,8 +2,9 @@ import { useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { useAlumni } from '@/contexts/AlumniContext';
-import { Award } from 'lucide-react';
+import { Award, LogOut } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { 
   StudentIdentityHeader, 
   SummaryCard, 
@@ -21,30 +22,34 @@ import type { StudentStatus } from '@/types/student.types';
 
 export default function UserDashboard() {
   const navigate = useNavigate();
-  const { selectedAlumni, getAlumniDataByMasterId } = useAlumni();
+  const { selectedAlumni, loggedInStudent, logout, getAlumniDataByMasterId } = useAlumni();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [stats, setStats] = useState<Record<AchievementCategory, number>>({
     lomba: 0, seminar: 0, publikasi: 0, haki: 0, magang: 0, portofolio: 0, wirausaha: 0, pengembangan: 0, organisasi: 0
   });
 
   useEffect(() => {
-    if (!selectedAlumni) {
+    if (!loggedInStudent && !selectedAlumni) {
       navigate('/validasi');
-    } else {
+    } else if (selectedAlumni) {
       setAchievements(getAchievementsByMasterId(selectedAlumni.id));
       setStats(getAchievementStats(selectedAlumni.id));
     }
-  }, [selectedAlumni, navigate]);
+  }, [loggedInStudent, selectedAlumni, navigate]);
 
-  if (!selectedAlumni) return null;
+  if (!loggedInStudent && !selectedAlumni) return null;
+
+  // Use selectedAlumni for display (legacy compatibility)
+  const displayData = selectedAlumni;
+  if (!displayData) return null;
 
   // Determine student role - PRIMARY IDENTITY
-  const studentStatus: StudentStatus = (selectedAlumni as any).status || 'alumni';
+  const studentStatus: StudentStatus = (displayData as any).status || 'alumni';
   const showCareerHistory = hasCareerAccess(studentStatus);
   const achievementsEditable = canEditAchievements(studentStatus);
 
   // Get career history data
-  const alumniHistory = getAlumniDataByMasterId(selectedAlumni.id);
+  const alumniHistory = getAlumniDataByMasterId(displayData.id);
   const totalAchievements = Object.values(stats).reduce((a, b) => a + b, 0);
 
   // Get latest achievement for summary card
@@ -65,29 +70,40 @@ export default function UserDashboard() {
 
   const latestAchievement = getLatestAchievement();
 
+  const handleLogout = () => {
+    logout();
+    navigate('/validasi');
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="pt-24 pb-20">
         <div className="container mx-auto px-4">
           <div className="max-w-5xl mx-auto">
-            {/* Page Title */}
-            <div className="mb-8 animate-fade-up">
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
-                Dashboard Mahasiswa / Alumni
-              </h1>
-              <p className="text-muted-foreground">
-                Ringkasan akademik dan perjalanan karirmu
-              </p>
+            {/* Page Title with Logout */}
+            <div className="mb-8 animate-fade-up flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
+                  Dashboard Mahasiswa / Alumni
+                </h1>
+                <p className="text-muted-foreground">
+                  Ringkasan akademik dan perjalanan karirmu
+                </p>
+              </div>
+              <Button variant="outline" onClick={handleLogout} className="gap-2 self-start sm:self-auto">
+                <LogOut className="w-4 h-4" />
+                Keluar
+              </Button>
             </div>
 
             {/* Student Identity Header with Role Badge */}
             <StudentIdentityHeader
-              nama={selectedAlumni.nama}
-              nim={selectedAlumni.nim}
-              prodi={selectedAlumni.prodi}
-              jurusan={selectedAlumni.jurusan}
-              tahunLulus={selectedAlumni.tahunLulus}
+              nama={displayData.nama}
+              nim={displayData.nim}
+              prodi={displayData.prodi}
+              jurusan={displayData.jurusan}
+              tahunLulus={displayData.tahunLulus}
               studentStatus={studentStatus}
               careerHistory={alumniHistory}
             />

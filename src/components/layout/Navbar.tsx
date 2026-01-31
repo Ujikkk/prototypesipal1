@@ -10,11 +10,11 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
+  // Remove admin link from student navbar
   const navItems = [
     { path: '/', label: 'Beranda' },
-    { path: '/validasi', label: 'Input Data' },
+    { path: '/validasi', label: 'Masuk' },
     { path: '/kepuasan-pengguna', label: 'Evaluasi Lulusan' },
-    { path: '/admin', label: 'Dashboard' },
   ];
 
   return (
