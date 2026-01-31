@@ -1,164 +1,163 @@
 
+# Plan: Akses Penuh Admin untuk Manajemen Mahasiswa
 
-# Plan: Implementasi Sistem Login Mahasiswa dengan NIM & Password
+## Ringkasan Masalah
 
-## Ringkasan Perubahan
+1. **Beberapa akun tidak bisa dihapus**: Data di tabel menggunakan `masterData` yang berbeda dengan `studentAccounts`. Tombol hapus hanya muncul jika NIM cocok antara kedua sumber data.
 
-Mengubah mekanisme login mahasiswa dari sistem validasi nama + tahun lulus menjadi login dengan NIM (username) dan password. Admin dapat menambah dan menghapus akun mahasiswa.
-
----
-
-## Bagian 1: Perubahan untuk Pengguna
-
-### Apa yang Berubah untuk Mahasiswa?
-- **Sebelumnya**: Masuk dengan nama + tahun lulus, lalu pilih profil dari daftar
-- **Sesudah**: Login langsung dengan NIM dan password, otomatis masuk ke dashboard
-
-### Apa yang Berubah untuk Admin?
-- Tabel mahasiswa menampilkan kolom NIM
-- Tombol baru untuk "Tambah Mahasiswa" dan "Hapus Mahasiswa"
-- Form untuk membuat akun mahasiswa baru dengan NIM sebagai username
+2. **Tidak ada fitur edit untuk admin**: Dialog detail alumni saat ini hanya menampilkan informasi tanpa opsi edit.
 
 ---
 
-## Bagian 2: Detail Teknis
+## Solusi yang Akan Diimplementasikan
 
-### 2.1 Update Tipe Data (StudentProfile)
+### Bagian 1: Perbaikan Sistem Delete
 
-**File**: `src/types/student.types.ts`
+**Pendekatan**: Mengubah tabel agar menggunakan `studentAccounts` sebagai sumber data utama, bukan `masterData`.
 
-Menambahkan field baru:
-```text
-+-------------------+----------+----------------------------+
-| Field             | Tipe     | Keterangan                 |
-+-------------------+----------+----------------------------+
-| passwordHash      | string?  | Hash password (opsional)   |
-| hasCredentials    | boolean  | Sudah punya akun login?    |
-| lastLogin         | Date?    | Waktu login terakhir       |
-+-------------------+----------+----------------------------+
-```
+**Perubahan**:
+- Tabel admin akan menampilkan data dari `studentAccounts`
+- Setiap akun di `studentAccounts` pasti bisa dihapus
+- Semua data terkait (karir, prestasi) akan ikut terhapus (cascade delete)
 
-### 2.2 Halaman Login Baru (Mengganti ValidasiPage)
+### Bagian 2: Fitur Edit Admin yang Komprehensif
 
-**File**: `src/pages/ValidasiPage.tsx`
+**Komponen Baru**: `AdminStudentEditModal.tsx`
 
-Perubahan UI:
-- Form dengan 2 field: NIM dan Password
-- Tombol "Masuk"
-- Pesan error jika login gagal
-- Link ke halaman lupa password (placeholder)
+Modal dengan tab untuk mengedit:
+1. **Tab Profil**: Edit informasi dasar mahasiswa (nama, NIM, email, status, dll)
+2. **Tab Karir**: Daftar riwayat karir dengan opsi edit/hapus per entry
+3. **Tab Prestasi**: Daftar prestasi dengan opsi edit/hapus per entry
 
-Flow:
-1. Mahasiswa memasukkan NIM dan password
-2. Sistem mencari mahasiswa berdasarkan NIM
-3. Validasi password
-4. Jika berhasil, langsung redirect ke dashboard
-5. Jika gagal, tampilkan pesan error
+---
 
-### 2.3 Komponen Admin Baru
+## Detail Teknis
 
-**File Baru**: `src/components/admin/StudentAccountModal.tsx`
-
-Form untuk tambah akun mahasiswa:
-- NIM (auto-generated atau manual, harus unik)
-- Nama Lengkap
-- Password (wajib)
-- Konfirmasi Password
-- Email (opsional)
-- No HP (opsional)
-- Status Mahasiswa (Aktif/Alumni/Cuti/Dropout)
-- Tahun Masuk
-- Tahun Lulus (jika alumni)
-
-**File Baru**: `src/components/admin/DeleteStudentDialog.tsx`
-
-Konfirmasi hapus akun mahasiswa dengan info:
-- Nama dan NIM mahasiswa
-- Peringatan data terkait akan ikut terhapus
-
-### 2.4 Update Admin Dashboard
+### 2.1 Update Admin Dashboard Table
 
 **File**: `src/pages/AdminDashboard.tsx`
 
 Perubahan:
-1. Kolom NIM sudah ada, pastikan ditampilkan
-2. Tambah tombol "Tambah Mahasiswa" di header
-3. Tambah tombol "Hapus" di setiap baris tabel
-4. Integrasi dengan StudentAccountModal dan DeleteStudentDialog
+- Ubah sumber data tabel dari `masterData` menjadi `studentAccounts`
+- Tambah kolom "Aksi" dengan tombol Edit dan Hapus
+- Semua baris akan memiliki tombol hapus (tidak ada lagi yang kosong)
 
-### 2.5 Update Context dan Service
+### 2.2 Komponen Admin Edit Modal
+
+**File Baru**: `src/components/admin/AdminStudentEditModal.tsx`
+
+Struktur:
+```text
++-------------------------------------------+
+|  Edit Data Mahasiswa                      |
++-------------------------------------------+
+| [Profil] [Karir] [Prestasi]               |
++-------------------------------------------+
+| Tab Profil:                               |
+| - Nama Lengkap                            |
+| - NIM                                     |
+| - Email                                   |
+| - No HP                                   |
+| - Status (Aktif/Alumni/Cuti/Dropout)      |
+| - Tahun Masuk / Tahun Lulus               |
+| - Reset Password                          |
++-------------------------------------------+
+| Tab Karir:                                |
+| - List riwayat karir                      |
+| - Tombol Edit/Hapus per entry             |
+| - Tombol Tambah Karir                     |
++-------------------------------------------+
+| Tab Prestasi:                             |
+| - List prestasi                           |
+| - Tombol Edit/Hapus per entry             |
+| - Tombol Tambah Prestasi                  |
++-------------------------------------------+
+```
+
+### 2.3 Update Context
 
 **File**: `src/contexts/AlumniContext.tsx`
 
+Tambah fungsi baru:
+- `updateStudentAccount(studentId, updates)` - Update profil mahasiswa
+- `resetStudentPassword(studentId, newPassword)` - Reset password
+
+### 2.4 Sinkronisasi Data
+
+**File**: `src/services/student.service.ts` (Baru)
+
+Service untuk mengelola data student lintas module:
+- `getStudentCareerHistory(studentId)` - Ambil riwayat karir
+- `getStudentAchievements(studentId)` - Ambil prestasi
+- `deleteStudentWithCascade(studentId)` - Hapus dengan cascade
+
+### 2.5 Update Achievement Service
+
+**File**: `src/services/achievement.service.ts`
+
 Tambah fungsi:
-- `loginWithCredentials(nim: string, password: string)`
-- `addStudentAccount(data: StudentAccountInput)`
-- `deleteStudentAccount(studentId: string)`
-
-**File Baru**: `src/services/auth.service.ts`
-
-Fungsi autentikasi:
-- `verifyPassword(input: string, hash: string)`
-- `hashPassword(password: string)` - untuk demo menggunakan simple hash
-- `authenticateStudent(nim: string, password: string)`
-
-### 2.6 Update Seed Data
-
-**File**: `src/data/student-seed-data.ts`
-
-Tambah password untuk demo:
-- Semua mahasiswa demo mendapat password default: "password123"
+- `getAchievementsByStudentId(studentId)` - Ambil prestasi berdasarkan student ID
+- `deleteAchievementsByStudentId(studentId)` - Hapus semua prestasi student
 
 ---
 
-## Bagian 3: Struktur File
+## Struktur File
 
 ```text
 src/
 ├── components/
 │   └── admin/
-│       ├── StudentAccountModal.tsx    [BARU]
-│       ├── DeleteStudentDialog.tsx    [BARU]
-│       └── index.ts                   [BARU]
+│       ├── StudentAccountModal.tsx      [EXISTING - Untuk tambah akun]
+│       ├── DeleteStudentDialog.tsx      [EXISTING]
+│       ├── AdminStudentEditModal.tsx    [BARU - Modal edit komprehensif]
+│       └── index.ts                     [UPDATE - Export baru]
 ├── services/
-│   └── auth.service.ts                [BARU]
-├── pages/
-│   ├── ValidasiPage.tsx               [UPDATE - Ganti jadi Login Form]
-│   └── AdminDashboard.tsx             [UPDATE - Tambah CRUD mahasiswa]
+│   ├── student.service.ts               [BARU - Student management]
+│   └── achievement.service.ts           [UPDATE - Tambah fungsi]
 ├── contexts/
-│   └── AlumniContext.tsx              [UPDATE - Tambah auth functions]
-├── types/
-│   └── student.types.ts               [UPDATE - Tambah password fields]
-└── data/
-    └── student-seed-data.ts           [UPDATE - Tambah demo passwords]
+│   └── AlumniContext.tsx                [UPDATE - Tambah fungsi edit]
+└── pages/
+    └── AdminDashboard.tsx               [UPDATE - Ubah data source & aksi]
 ```
 
 ---
 
-## Bagian 4: Urutan Implementasi
+## Urutan Implementasi
 
-1. **Update tipe data** - Tambah field password di StudentProfile
-2. **Buat auth service** - Fungsi hash dan validasi password
-3. **Update seed data** - Tambah password demo untuk testing
-4. **Refactor ValidasiPage** - Ubah jadi login form NIM + password
-5. **Buat komponen admin** - Modal tambah dan dialog hapus
-6. **Update AdminDashboard** - Integrasi CRUD mahasiswa
-7. **Update context** - Tambah fungsi login dan manajemen akun
+1. **Update Achievement Service** - Tambah fungsi untuk admin
+2. **Buat Student Service** - Centralized student management  
+3. **Update Context** - Tambah fungsi update dan reset password
+4. **Buat AdminStudentEditModal** - Modal edit dengan 3 tab
+5. **Update AdminDashboard** - Ubah data source dan integrasi modal edit
+6. **Update index exports** - Export komponen baru
 
 ---
 
-## Bagian 5: Catatan Keamanan
+## Fitur Tambahan
 
-> **PENTING**: Implementasi ini adalah untuk **demo/development** saja.
+### Cascade Delete
+Ketika akun mahasiswa dihapus:
+- Semua riwayat karir terkait dihapus
+- Semua prestasi terkait dihapus
+- Session login (jika aktif) di-logout
 
-Untuk production dengan Supabase:
-- Gunakan Supabase Auth untuk autentikasi
-- Password di-hash dengan bcrypt di server
-- Session disimpan dengan secure cookies
-- Implementasi rate limiting untuk login
+### Reset Password
+Admin dapat reset password mahasiswa tanpa perlu tahu password lama.
 
-Batasan demo saat ini:
-- Password disimpan sebagai simple hash di client
-- Session disimpan di localStorage
-- Tidak ada rate limiting
+### Validasi
+- NIM harus tetap unik saat edit
+- Tahun lulus tidak boleh sebelum tahun masuk
+- Nama minimal 3 karakter
 
+---
+
+## Tampilan Akhir Admin Dashboard
+
+Tabel dengan kolom:
+| Nama | NIM | Status | Email | Aksi |
+|------|-----|--------|-------|------|
+| Ahmad Rizki | 20190001 | Alumni | ahmad@... | [Edit] [Hapus] |
+| Siti Nurhaliza | 20190002 | Alumni | siti@... | [Edit] [Hapus] |
+| ... | ... | ... | ... | ... |
+
+Semua baris akan memiliki tombol edit dan hapus yang berfungsi.
