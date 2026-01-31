@@ -20,10 +20,21 @@ import type {
   NonAcademicAchievement,
   StudentStatus,
 } from '@/types/student.types';
-import { hashPassword } from '@/services/auth.service';
+
+// Simple hash function inline to avoid circular dependency with auth.service
+// DO NOT use in production - use bcrypt on server
+function simpleHash(password: string): string {
+  let hash = 0;
+  for (let i = 0; i < password.length; i++) {
+    const char = password.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return `demo_hash_${Math.abs(hash).toString(16)}`;
+}
 
 // Default password hash for demo accounts
-const DEFAULT_PASSWORD_HASH = hashPassword('password123');
+const DEFAULT_PASSWORD_HASH = simpleHash('password123');
 
 // ============ Student Profiles (ABT Students) ============
 // Demo students for each status type

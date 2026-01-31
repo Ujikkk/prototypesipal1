@@ -6,7 +6,6 @@
  * In production, use Supabase Auth with bcrypt hashing server-side.
  */
 
-import { studentProfiles } from '@/data/student-seed-data';
 import type { StudentProfile } from '@/types/student.types';
 
 /**
