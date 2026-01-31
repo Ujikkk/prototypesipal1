@@ -199,6 +199,21 @@ export const getTotalAchievements = (masterId: string): number => {
   return getAchievementsByMasterId(masterId).length;
 };
 
+// ============ Admin Functions ============
+
+// Get achievements by student ID (alias for admin)
+export const getAchievementsByStudentId = (studentId: string): Achievement[] => {
+  return getAchievementsByMasterId(studentId);
+};
+
+// Delete all achievements for a student (cascade delete)
+export const deleteAchievementsByStudentId = (studentId: string): number => {
+  const studentAchievements = achievements.filter(a => a.masterId === studentId);
+  const count = studentAchievements.length;
+  achievements = achievements.filter(a => a.masterId !== studentId);
+  return count;
+};
+
 // Export for testing/seeding
 export const seedAchievements = (data: Achievement[]): void => {
   achievements = [...achievements, ...data];

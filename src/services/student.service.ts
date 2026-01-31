@@ -448,3 +448,156 @@ export const generateTracerCSV = async (): Promise<string> => {
   
   return [headers, ...rows].map((row) => row.join(',')).join('\n');
 };
+
+// ============ Admin Career History Management ============
+
+// In-memory career history storage
+let careerHistoryData: CareerHistoryEntry[] = [];
+
+export interface CareerHistoryEntry {
+  id: string;
+  studentId: string;
+  title: string;
+  subtitle: string;
+  location: string;
+  industry: string;
+  year: number;
+  yearEnd?: number;
+  isActive: boolean;
+  description?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CareerHistoryInput {
+  title: string;
+  subtitle: string;
+  location: string;
+  industry: string;
+  year: number;
+  yearEnd?: number;
+  isActive: boolean;
+  description?: string;
+}
+
+// Initialize sample career data
+const initCareerHistory = () => {
+  if (careerHistoryData.length === 0) {
+    careerHistoryData = [
+      {
+        id: 'ch_1',
+        studentId: 's1',
+        title: 'Marketing Manager',
+        subtitle: 'PT Telkom Indonesia',
+        location: 'Jakarta',
+        industry: 'Telekomunikasi',
+        year: 2022,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 'ch_2',
+        studentId: 's1',
+        title: 'Marketing Staff',
+        subtitle: 'PT Telkom Indonesia',
+        location: 'Semarang',
+        industry: 'Telekomunikasi',
+        year: 2020,
+        yearEnd: 2022,
+        isActive: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 'ch_3',
+        studentId: 's2',
+        title: 'HR Coordinator',
+        subtitle: 'Bank BRI',
+        location: 'Semarang',
+        industry: 'Perbankan',
+        year: 2021,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+  }
+};
+
+initCareerHistory();
+
+export const getStudentCareerHistory = (studentId: string): CareerHistoryEntry[] => {
+  return careerHistoryData
+    .filter(ch => ch.studentId === studentId)
+    .sort((a, b) => b.year - a.year);
+};
+
+export const addCareerHistory = (studentId: string, data: CareerHistoryInput): CareerHistoryEntry => {
+  const entry: CareerHistoryEntry = {
+    id: `ch_${Date.now()}`,
+    studentId,
+    ...data,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  careerHistoryData.push(entry);
+  return entry;
+};
+
+export const updateCareerHistory = (id: string, data: Partial<CareerHistoryInput>): CareerHistoryEntry | null => {
+  const index = careerHistoryData.findIndex(ch => ch.id === id);
+  if (index === -1) return null;
+  
+  careerHistoryData[index] = {
+    ...careerHistoryData[index],
+    ...data,
+    updatedAt: new Date(),
+  };
+  return careerHistoryData[index];
+};
+
+export const deleteCareerHistory = (id: string): boolean => {
+  const index = careerHistoryData.findIndex(ch => ch.id === id);
+  if (index === -1) return false;
+  
+  careerHistoryData.splice(index, 1);
+  return true;
+};
+
+export const deleteCareerHistoryByStudentId = (studentId: string): number => {
+  const count = careerHistoryData.filter(ch => ch.studentId === studentId).length;
+  careerHistoryData = careerHistoryData.filter(ch => ch.studentId !== studentId);
+  return count;
+};
+
+// ============ Admin Cascade Delete ============
+
+import { deleteAchievementsByStudentId } from '@/services/achievement.service';
+import { hashPassword } from '@/services/auth.service';
+
+export const deleteStudentWithCascade = (
+  studentId: string,
+  onLogout?: () => void
+): { 
+  success: boolean; 
+  deletedAchievements: number;
+  deletedCareerHistory: number;
+} => {
+  const deletedAchievements = deleteAchievementsByStudentId(studentId);
+  const deletedCareerHistory = deleteCareerHistoryByStudentId(studentId);
+  
+  if (onLogout) {
+    onLogout();
+  }
+  
+  return {
+    success: true,
+    deletedAchievements,
+    deletedCareerHistory,
+  };
+};
+
+export const generatePasswordHash = (password: string): string => {
+  return hashPassword(password);
+};

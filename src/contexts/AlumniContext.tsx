@@ -48,6 +48,8 @@ interface AlumniContextActions {
   // Student account management (admin)
   addStudentAccount: (data: StudentAccountInput) => Promise<{ success: boolean; error?: string }>;
   deleteStudentAccount: (studentId: string) => Promise<{ success: boolean; error?: string }>;
+  updateStudentAccount: (studentId: string, updates: Partial<StudentProfile>) => Promise<{ success: boolean; error?: string }>;
+  resetStudentPassword: (studentId: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   
   // Data operations
   addAlumniData: (data: AlumniData) => void;
@@ -225,6 +227,71 @@ export function AlumniProvider({ children }: AlumniProviderProps) {
     [studentAccounts, loggedInStudent, logout]
   );
 
+  /**
+   * Update student account (admin only)
+   */
+  const updateStudentAccount = useCallback(
+    async (studentId: string, updates: Partial<StudentProfile>): Promise<{ success: boolean; error?: string }> => {
+      const student = studentAccounts.find(s => s.id === studentId);
+      
+      if (!student) {
+        return { success: false, error: 'Mahasiswa tidak ditemukan' };
+      }
+      
+      // Check NIM uniqueness if NIM is being updated
+      if (updates.nim && updates.nim !== student.nim) {
+        if (studentAccounts.some(s => s.nim === updates.nim)) {
+          return { success: false, error: 'NIM sudah digunakan' };
+        }
+      }
+      
+      // Update student
+      setStudentAccounts(prev => prev.map(s => 
+        s.id === studentId 
+          ? { ...s, ...updates, updatedAt: new Date() }
+          : s
+      ));
+      
+      // If updated student is currently logged in, update session
+      if (loggedInStudent?.id === studentId) {
+        const updatedStudent = { ...loggedInStudent, ...updates, updatedAt: new Date() };
+        setLoggedInStudent(updatedStudent);
+        localStorage.setItem('sipal-student-session', JSON.stringify(updatedStudent));
+      }
+      
+      return { success: true };
+    },
+    [studentAccounts, loggedInStudent]
+  );
+
+  /**
+   * Reset student password (admin only)
+   */
+  const resetStudentPassword = useCallback(
+    async (studentId: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+      const student = studentAccounts.find(s => s.id === studentId);
+      
+      if (!student) {
+        return { success: false, error: 'Mahasiswa tidak ditemukan' };
+      }
+      
+      if (newPassword.length < 6) {
+        return { success: false, error: 'Password minimal 6 karakter' };
+      }
+      
+      // Update password
+      const newPasswordHash = hashPassword(newPassword);
+      setStudentAccounts(prev => prev.map(s => 
+        s.id === studentId 
+          ? { ...s, passwordHash: newPasswordHash, updatedAt: new Date() }
+          : s
+      ));
+      
+      return { success: true };
+    },
+    [studentAccounts]
+  );
+
   // ============ Legacy Functions ============
 
   // Add alumni data
@@ -284,6 +351,8 @@ export function AlumniProvider({ children }: AlumniProviderProps) {
     logout,
     addStudentAccount,
     deleteStudentAccount,
+    updateStudentAccount,
+    resetStudentPassword,
     addAlumniData,
     updateAlumniData,
     deleteAlumniData,

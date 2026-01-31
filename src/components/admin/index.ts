@@ -4,3 +4,4 @@
 
 export { StudentAccountModal } from './StudentAccountModal';
 export { DeleteStudentDialog } from './DeleteStudentDialog';
+export { AdminStudentEditModal } from './AdminStudentEditModal';
