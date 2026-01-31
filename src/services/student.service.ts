@@ -35,6 +35,8 @@ import {
   CAREER_STATUS_COLORS,
   ACHIEVEMENT_CATEGORY_LABELS,
 } from '@/constants/student.constants';
+import { deleteAchievementsByStudentId } from '@/services/achievement.service';
+import { hashPassword } from '@/services/auth.service';
 
 // ============ Student Profile Operations ============
 
@@ -572,9 +574,6 @@ export const deleteCareerHistoryByStudentId = (studentId: string): number => {
 };
 
 // ============ Admin Cascade Delete ============
-
-import { deleteAchievementsByStudentId } from '@/services/achievement.service';
-import { hashPassword } from '@/services/auth.service';
 
 export const deleteStudentWithCascade = (
   studentId: string,
