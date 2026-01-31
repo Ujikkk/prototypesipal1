@@ -11,13 +11,13 @@ import { jurusanList, prodiList, tahunLulusList } from '@/lib/data';
 import { StatCard, StatusBadge, ChartCard, DataTable } from '@/components/shared';
 import { getGlobalAchievementStats, getStudentsWithAchievements } from '@/services/achievement.service';
 import { ACHIEVEMENT_CATEGORIES, AchievementCategory } from '@/types/achievement.types';
-import { StudentAccountModal, DeleteStudentDialog } from '@/components/admin';
-import type { StudentAccountInput } from '@/types/student.types';
+import { StudentAccountModal, DeleteStudentDialog, AdminStudentEditModal } from '@/components/admin';
+import type { StudentAccountInput, StudentProfile } from '@/types/student.types';
 import {
   Search, Download, Filter, Users2, Briefcase, Rocket, BookOpen, TrendingUp,
   User, Mail, Phone, Building2, MapPin, Calendar, ExternalLink, Sparkles,
   BarChart3, PieChart as PieChartIcon, LineChart as LineChartIcon, X,
-  Trophy, Shield, FolderOpen, GraduationCap, Award, Mic2, UserPlus, Trash2
+  Trophy, Shield, FolderOpen, GraduationCap, Award, Mic2, UserPlus, Trash2, Pencil
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -26,7 +26,7 @@ import {
 } from 'recharts';
 
 export default function AdminDashboard() {
-  const { masterData, alumniData, studentAccounts, addStudentAccount, deleteStudentAccount } = useAlumni();
+  const { masterData, alumniData, studentAccounts, addStudentAccount, deleteStudentAccount, updateStudentAccount, resetStudentPassword } = useAlumni();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTahun, setFilterTahun] = useState<string>('all');
   const [filterJurusan, setFilterJurusan] = useState<string>('all');
@@ -37,26 +37,35 @@ export default function AdminDashboard() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; nama: string; nim: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Edit modal state
+  const [editStudent, setEditStudent] = useState<StudentProfile | null>(null);
 
-  // Merge master data with filled data
-  const mergedData = useMemo(() => {
-    return masterData.map(master => {
-      const filled = alumniData.find(d => d.alumniMasterId === master.id);
-      return { ...master, filledData: filled };
+  // Use studentAccounts as the primary data source for the table
+  // This ensures all accounts can be managed (edited/deleted)
+  const tableData = useMemo(() => {
+    return studentAccounts.map(student => {
+      const filled = alumniData.find(d => d.alumniMasterId === student.id);
+      return { 
+        ...student, 
+        filledData: filled,
+        // Add tahunLulus for compatibility
+        tahunLulus: student.tahunLulus || student.tahunMasuk + 4,
+      };
     });
-  }, [masterData, alumniData]);
+  }, [studentAccounts, alumniData]);
 
-  // Filter data
+  // Filter data based on search and filters
   const filteredData = useMemo(() => {
-    return mergedData.filter(alumni => {
-      const matchSearch = alumni.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        alumni.nim.includes(searchQuery);
-      const matchTahun = filterTahun === 'all' || alumni.tahunLulus === parseInt(filterTahun);
-      const matchJurusan = filterJurusan === 'all' || alumni.jurusan === filterJurusan;
-      const matchProdi = filterProdi === 'all' || alumni.prodi === filterProdi;
+    return tableData.filter(student => {
+      const matchSearch = student.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        student.nim.includes(searchQuery);
+      const matchTahun = filterTahun === 'all' || student.tahunLulus === parseInt(filterTahun);
+      const matchJurusan = filterJurusan === 'all' || student.jurusan === filterJurusan;
+      const matchProdi = filterProdi === 'all' || student.prodi === filterProdi;
       return matchSearch && matchTahun && matchJurusan && matchProdi;
     });
-  }, [mergedData, searchQuery, filterTahun, filterJurusan, filterProdi]);
+  }, [tableData, searchQuery, filterTahun, filterJurusan, filterProdi]);
 
   // Statistics
   const stats = useMemo(() => {
@@ -193,7 +202,7 @@ export default function AdminDashboard() {
     return studentAccounts.map(s => s.nim);
   }, [studentAccounts]);
 
-  // Table columns configuration with NIM and delete action
+  // Table columns configuration with NIM and actions (Edit + Delete)
   const tableColumns = [
     { key: 'nama', header: 'Nama', sortable: true },
     { key: 'nim', header: 'NIM', sortable: true },
@@ -203,39 +212,62 @@ export default function AdminDashboard() {
     { 
       key: 'status', 
       header: 'Status',
-      accessor: (row: typeof filteredData[0]) => row.filledData ? (
-        <StatusBadge status={row.filledData.status} size="sm" />
-      ) : (
-        <span className="text-xs text-muted-foreground">Belum Isi</span>
-      )
+      accessor: (row: typeof filteredData[0]) => {
+        // Show student status (active/alumni/etc) instead of career status
+        const statusLabels: Record<string, string> = {
+          'active': 'Aktif',
+          'alumni': 'Alumni',
+          'on_leave': 'Cuti',
+          'dropout': 'Dropout',
+        };
+        return (
+          <span className={`px-2 py-0.5 rounded-full text-xs ${
+            row.status === 'alumni' ? 'bg-primary/10 text-primary' :
+            row.status === 'active' ? 'bg-success/10 text-success' :
+            row.status === 'on_leave' ? 'bg-warning/10 text-warning' :
+            'bg-muted text-muted-foreground'
+          }`}>
+            {statusLabels[row.status] || row.status}
+          </span>
+        );
+      }
     },
     { 
       key: 'email', 
       header: 'Email', 
       hideOnMobile: true,
-      accessor: (row: typeof filteredData[0]) => row.filledData?.email || '-',
+      accessor: (row: typeof filteredData[0]) => row.email || '-',
       className: 'text-sm'
     },
     {
       key: 'actions',
-      header: '',
-      accessor: (row: typeof filteredData[0]) => {
-        const student = studentAccounts.find(s => s.nim === row.nim);
-        if (!student) return null;
-        return (
+      header: 'Aksi',
+      accessor: (row: typeof filteredData[0]) => (
+        <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 text-primary hover:text-primary hover:bg-primary/10"
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditStudent(row);
+            }}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
           <Button
             variant="ghost"
             size="sm"
             className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
             onClick={(e) => {
               e.stopPropagation();
-              setDeleteTarget({ id: student.id, nama: student.nama, nim: student.nim });
+              setDeleteTarget({ id: row.id, nama: row.nama, nim: row.nim });
             }}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
-        );
-      }
+        </div>
+      )
     },
   ];
 
@@ -601,6 +633,16 @@ export default function AdminDashboard() {
               isDeleting={isDeleting}
             />
           )}
+
+          {/* Edit Student Modal */}
+          <AdminStudentEditModal
+            open={!!editStudent}
+            onOpenChange={(open) => !open && setEditStudent(null)}
+            student={editStudent}
+            existingNims={existingNims}
+            onUpdateProfile={updateStudentAccount}
+            onResetPassword={resetStudentPassword}
+          />
         </div>
       </main>
       <Footer />
