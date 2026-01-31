@@ -1,163 +1,157 @@
 
-# Plan: Akses Penuh Admin untuk Manajemen Mahasiswa
+# Pemisahan Akses Admin dan Mahasiswa dengan Role-Based Authentication
 
-## Ringkasan Masalah
+## Ringkasan
+Memisahkan halaman admin dan mahasiswa dengan sistem role-based authentication yang proper. Admin akan memiliki akun terpisah dengan akses penuh untuk mengelola data mahasiswa, sedangkan mahasiswa hanya bisa mengakses dashboard mereka sendiri.
 
-1. **Beberapa akun tidak bisa dihapus**: Data di tabel menggunakan `masterData` yang berbeda dengan `studentAccounts`. Tombol hapus hanya muncul jika NIM cocok antara kedua sumber data.
+## Perubahan Utama
 
-2. **Tidak ada fitur edit untuk admin**: Dialog detail alumni saat ini hanya menampilkan informasi tanpa opsi edit.
+### 1. Unified Login Page
+Satu halaman login di `/validasi` yang akan:
+- Mendeteksi role user (admin atau mahasiswa) setelah login berhasil
+- Redirect otomatis ke dashboard yang sesuai:
+  - Admin → `/admin`
+  - Mahasiswa → `/dashboard`
 
----
+### 2. Admin Account System
+- Tambah field `role` ke dalam data user (`'admin' | 'student'`)
+- Buat akun admin default untuk demo (username: `admin`, password: `admin123`)
+- Admin accounts akan disimpan terpisah dari student accounts
 
-## Solusi yang Akan Diimplementasikan
+### 3. Protected Routes
+- **Dashboard Mahasiswa** (`/dashboard`): Hanya bisa diakses oleh mahasiswa yang sudah login
+- **Dashboard Admin** (`/admin`): Hanya bisa diakses oleh admin yang sudah login
+- Route lain tetap public (landing page, kepuasan pengguna)
 
-### Bagian 1: Perbaikan Sistem Delete
-
-**Pendekatan**: Mengubah tabel agar menggunakan `studentAccounts` sebagai sumber data utama, bukan `masterData`.
-
-**Perubahan**:
-- Tabel admin akan menampilkan data dari `studentAccounts`
-- Setiap akun di `studentAccounts` pasti bisa dihapus
-- Semua data terkait (karir, prestasi) akan ikut terhapus (cascade delete)
-
-### Bagian 2: Fitur Edit Admin yang Komprehensif
-
-**Komponen Baru**: `AdminStudentEditModal.tsx`
-
-Modal dengan tab untuk mengedit:
-1. **Tab Profil**: Edit informasi dasar mahasiswa (nama, NIM, email, status, dll)
-2. **Tab Karir**: Daftar riwayat karir dengan opsi edit/hapus per entry
-3. **Tab Prestasi**: Daftar prestasi dengan opsi edit/hapus per entry
-
----
+### 4. Navbar Conditional
+- **Halaman Admin**: Tidak menampilkan navbar navigasi (mencegah akses tidak sah)
+- **Halaman Mahasiswa**: Menampilkan navbar standar tanpa link ke admin dashboard
+- Tambah tombol Logout di kedua dashboard
 
 ## Detail Teknis
 
-### 2.1 Update Admin Dashboard Table
-
-**File**: `src/pages/AdminDashboard.tsx`
-
-Perubahan:
-- Ubah sumber data tabel dari `masterData` menjadi `studentAccounts`
-- Tambah kolom "Aksi" dengan tombol Edit dan Hapus
-- Semua baris akan memiliki tombol hapus (tidak ada lagi yang kosong)
-
-### 2.2 Komponen Admin Edit Modal
-
-**File Baru**: `src/components/admin/AdminStudentEditModal.tsx`
-
-Struktur:
+### A. Type Updates (`src/types/student.types.ts`)
 ```text
-+-------------------------------------------+
-|  Edit Data Mahasiswa                      |
-+-------------------------------------------+
-| [Profil] [Karir] [Prestasi]               |
-+-------------------------------------------+
-| Tab Profil:                               |
-| - Nama Lengkap                            |
-| - NIM                                     |
-| - Email                                   |
-| - No HP                                   |
-| - Status (Aktif/Alumni/Cuti/Dropout)      |
-| - Tahun Masuk / Tahun Lulus               |
-| - Reset Password                          |
-+-------------------------------------------+
-| Tab Karir:                                |
-| - List riwayat karir                      |
-| - Tombol Edit/Hapus per entry             |
-| - Tombol Tambah Karir                     |
-+-------------------------------------------+
-| Tab Prestasi:                             |
-| - List prestasi                           |
-| - Tombol Edit/Hapus per entry             |
-| - Tombol Tambah Prestasi                  |
-+-------------------------------------------+
+// Tambah role type
+export type UserRole = 'admin' | 'student';
+
+// Update StudentProfile dengan optional role
+export interface StudentProfile {
+  // ... existing fields ...
+  role?: UserRole;  // default 'student'
+}
+
+// Admin profile type
+export interface AdminProfile {
+  id: string;
+  username: string;
+  nama: string;
+  passwordHash: string;
+  role: 'admin';
+  createdAt: Date;
+}
 ```
 
-### 2.3 Update Context
+### B. Auth Service Updates (`src/services/auth.service.ts`)
+- Tambah fungsi `authenticateAdmin()` untuk login admin
+- Update `AuthResult` dengan field `role`
+- Buat fungsi helper `isAdmin()` dan `isStudent()`
 
-**File**: `src/contexts/AlumniContext.tsx`
+### C. Context Updates (`src/contexts/AlumniContext.tsx`)
+- Tambah `adminAccounts` state
+- Tambah `loggedInAdmin` state
+- Tambah fungsi `loginAsAdmin()` dan `logoutAdmin()`
+- Update session storage untuk support admin session
 
-Tambah fungsi baru:
-- `updateStudentAccount(studentId, updates)` - Update profil mahasiswa
-- `resetStudentPassword(studentId, newPassword)` - Reset password
+### D. New Files
 
-### 2.4 Sinkronisasi Data
+**1. AdminNavbar Component** (`src/components/layout/AdminNavbar.tsx`)
+- Header sederhana dengan logo dan tombol logout
+- Tidak ada menu navigasi ke halaman lain
 
-**File**: `src/services/student.service.ts` (Baru)
+**2. ProtectedRoute Component** (`src/components/auth/ProtectedRoute.tsx`)
+- HOC untuk memproteksi route berdasarkan role
+- Redirect ke login jika belum authenticated
 
-Service untuk mengelola data student lintas module:
-- `getStudentCareerHistory(studentId)` - Ambil riwayat karir
-- `getStudentAchievements(studentId)` - Ambil prestasi
-- `deleteStudentWithCascade(studentId)` - Hapus dengan cascade
+### E. Page Updates
 
-### 2.5 Update Achievement Service
+**ValidasiPage.tsx (Login Page)**
+- Tambah toggle/tabs untuk pilih login sebagai Admin atau Mahasiswa
+- Atau: single form yang detect role berdasarkan username format
+- Redirect sesuai role setelah login
 
-**File**: `src/services/achievement.service.ts`
+**AdminDashboard.tsx**
+- Ganti `<Navbar />` dengan `<AdminNavbar />`
+- Tambah check `isAdmin` di useEffect
+- Redirect ke login jika bukan admin
 
-Tambah fungsi:
-- `getAchievementsByStudentId(studentId)` - Ambil prestasi berdasarkan student ID
-- `deleteAchievementsByStudentId(studentId)` - Hapus semua prestasi student
+**UserDashboard.tsx**
+- Update navbar untuk hide link ke admin
+- Tambah tombol logout
+- Redirect ke login jika belum login
 
----
+### F. Routing Updates (`src/App.tsx`)
+- Wrap protected routes dengan `ProtectedRoute`
+- Setup redirect logic berdasarkan role
 
-## Struktur File
+## Flow Diagram
 
 ```text
-src/
-├── components/
-│   └── admin/
-│       ├── StudentAccountModal.tsx      [EXISTING - Untuk tambah akun]
-│       ├── DeleteStudentDialog.tsx      [EXISTING]
-│       ├── AdminStudentEditModal.tsx    [BARU - Modal edit komprehensif]
-│       └── index.ts                     [UPDATE - Export baru]
-├── services/
-│   ├── student.service.ts               [BARU - Student management]
-│   └── achievement.service.ts           [UPDATE - Tambah fungsi]
-├── contexts/
-│   └── AlumniContext.tsx                [UPDATE - Tambah fungsi edit]
-└── pages/
-    └── AdminDashboard.tsx               [UPDATE - Ubah data source & aksi]
++----------------+
+|  Landing Page  |
+|   (Public)     |
++-------+--------+
+        |
+        v
++----------------+
+|  Login Page    |
+|  /validasi     |
++-------+--------+
+        |
+  Login Submit
+        |
+        v
++-------+--------+
+|  Check Role    |
++-------+--------+
+    |       |
+ Admin   Student
+    |       |
+    v       v
++------+  +--------+
+|/admin|  |/dashboard|
++------+  +--------+
+   |          |
+   |    +-----+-----+
+   |    |           |
+   v    v           v
+(Admin    (Student Dashboard)
+Dashboard)   - Prestasi
+ - Manage    - Karir
+   Students  - Form
 ```
 
----
+## Default Admin Account (Demo)
+- **Username**: `admin`
+- **Password**: `admin123`
+- **Role**: `admin`
 
-## Urutan Implementasi
+## Files to Create
+1. `src/components/layout/AdminNavbar.tsx`
+2. `src/components/auth/ProtectedRoute.tsx`
+3. `src/data/admin-seed-data.ts`
 
-1. **Update Achievement Service** - Tambah fungsi untuk admin
-2. **Buat Student Service** - Centralized student management  
-3. **Update Context** - Tambah fungsi update dan reset password
-4. **Buat AdminStudentEditModal** - Modal edit dengan 3 tab
-5. **Update AdminDashboard** - Ubah data source dan integrasi modal edit
-6. **Update index exports** - Export komponen baru
+## Files to Modify
+1. `src/types/student.types.ts` - Add UserRole and AdminProfile types
+2. `src/services/auth.service.ts` - Add admin authentication
+3. `src/contexts/AlumniContext.tsx` - Add admin state and functions
+4. `src/pages/ValidasiPage.tsx` - Add role selection and redirect logic
+5. `src/pages/AdminDashboard.tsx` - Replace Navbar with AdminNavbar
+6. `src/pages/UserDashboard.tsx` - Add logout button, update navbar
+7. `src/components/layout/Navbar.tsx` - Remove admin link for students
+8. `src/App.tsx` - Add protected routes
 
----
-
-## Fitur Tambahan
-
-### Cascade Delete
-Ketika akun mahasiswa dihapus:
-- Semua riwayat karir terkait dihapus
-- Semua prestasi terkait dihapus
-- Session login (jika aktif) di-logout
-
-### Reset Password
-Admin dapat reset password mahasiswa tanpa perlu tahu password lama.
-
-### Validasi
-- NIM harus tetap unik saat edit
-- Tahun lulus tidak boleh sebelum tahun masuk
-- Nama minimal 3 karakter
-
----
-
-## Tampilan Akhir Admin Dashboard
-
-Tabel dengan kolom:
-| Nama | NIM | Status | Email | Aksi |
-|------|-----|--------|-------|------|
-| Ahmad Rizki | 20190001 | Alumni | ahmad@... | [Edit] [Hapus] |
-| Siti Nurhaliza | 20190002 | Alumni | siti@... | [Edit] [Hapus] |
-| ... | ... | ... | ... | ... |
-
-Semua baris akan memiliki tombol edit dan hapus yang berfungsi.
+## Keamanan
+- Session disimpan di localStorage (demo only)
+- Di production, gunakan Supabase Auth dengan HTTP-only cookies
+- Role check dilakukan di client-side (demo) - production harus server-side
