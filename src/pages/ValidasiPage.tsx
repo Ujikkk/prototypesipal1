@@ -6,7 +6,7 @@
  * - Student → /dashboard
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -32,15 +32,14 @@ export default function ValidasiPage() {
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [redirectTarget, setRedirectTarget] = useState<'student' | 'admin'>('student');
 
-  // If already logged in, redirect
-  if (loggedInAdmin) {
-    navigate('/admin');
-    return null;
-  }
-  if (loggedInStudent) {
-    navigate('/dashboard');
-    return null;
-  }
+  // If already logged in, redirect using useEffect
+  useEffect(() => {
+    if (loggedInAdmin) {
+      navigate('/admin', { replace: true });
+    } else if (loggedInStudent) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [loggedInAdmin, loggedInStudent, navigate]);
 
   const handleLogin = async () => {
     // Reset error
