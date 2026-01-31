@@ -152,37 +152,6 @@ export const updateStudent = async (
   return studentStore[index];
 };
 
-/**
- * Delete student profile
- */
-export const deleteStudent = async (id: string): Promise<boolean> => {
-  // Production: return prisma.student.delete({ where: { id } });
-  const index = studentStore.findIndex((s) => s.id === id);
-  if (index === -1) return false;
-  
-  studentStore.splice(index, 1);
-  
-  // Cascade delete: remove related tracer studies
-  tracerStore = tracerStore.filter((t) => t.studentId !== id);
-  
-  // Cascade delete: remove related achievements
-  achievementStore = achievementStore.filter((a) => a.studentId !== id);
-  
-  return true;
-};
-
-/**
- * Delete achievement
- */
-export const deleteAchievement = async (id: string): Promise<boolean> => {
-  // Production: return prisma.achievement.delete({ where: { id } });
-  const index = achievementStore.findIndex((a) => a.id === id);
-  if (index === -1) return false;
-  
-  achievementStore.splice(index, 1);
-  return true;
-};
-
 // ============ Tracer Study Operations ============
 
 /**
