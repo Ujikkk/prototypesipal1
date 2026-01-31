@@ -1,22 +1,30 @@
 /**
  * Alumni Context (Refactored)
- * State management for alumni data
+ * State management for alumni data with NIM + password authentication
  * 
  * ARCHITECTURE NOTE:
- * This context now delegates to the service layer for business logic.
- * UI components should use this context for state, not for data manipulation.
+ * This context now includes authentication functions for student login.
+ * Students log in with NIM (username) and password.
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { AlumniMaster, AlumniData, AlumniDataInput } from '@/types';
-import * as alumniService from '@/services/alumni.service';
+import type { AlumniMaster, AlumniData } from '@/types';
+import type { StudentProfile, StudentAccountInput } from '@/types/student.types';
 import { alumniMasterData, alumniFilledData } from '@/data/seed-data';
+import { studentProfiles as initialStudentProfiles } from '@/data/student-seed-data';
+import { authenticateStudent, hashPassword, type AuthResult } from '@/services/auth.service';
 
 // ============ Context Types ============
 
 interface AlumniContextState {
-  // Selected alumni (validation flow)
+  // Selected alumni (validation flow - legacy)
   selectedAlumni: AlumniMaster | null;
+  
+  // Logged in student (new NIM + password flow)
+  loggedInStudent: StudentProfile | null;
+  
+  // Student accounts (for admin management)
+  studentAccounts: StudentProfile[];
   
   // Data stores
   alumniData: AlumniData[];
@@ -30,8 +38,16 @@ interface AlumniContextState {
 }
 
 interface AlumniContextActions {
-  // Alumni selection
+  // Alumni selection (legacy)
   setSelectedAlumni: (alumni: AlumniMaster | null) => void;
+  
+  // Authentication (new)
+  loginWithCredentials: (nim: string, password: string) => Promise<AuthResult>;
+  logout: () => void;
+  
+  // Student account management (admin)
+  addStudentAccount: (data: StudentAccountInput) => Promise<{ success: boolean; error?: string }>;
+  deleteStudentAccount: (studentId: string) => Promise<{ success: boolean; error?: string }>;
   
   // Data operations
   addAlumniData: (data: AlumniData) => void;
@@ -59,16 +75,29 @@ interface AlumniProviderProps {
 export function AlumniProvider({ children }: AlumniProviderProps) {
   // State
   const [selectedAlumni, setSelectedAlumni] = useState<AlumniMaster | null>(null);
+  const [loggedInStudent, setLoggedInStudent] = useState<StudentProfile | null>(null);
+  const [studentAccounts, setStudentAccounts] = useState<StudentProfile[]>(initialStudentProfiles);
   const [alumniData, setAlumniData] = useState<AlumniData[]>(alumniFilledData);
   const [darkMode, setDarkMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Initialize dark mode from localStorage
+  // Initialize dark mode and session from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('sipal-dark-mode');
-    if (saved === 'true') {
+    const savedDarkMode = localStorage.getItem('sipal-dark-mode');
+    if (savedDarkMode === 'true') {
       setDarkMode(true);
       document.documentElement.classList.add('dark');
+    }
+    
+    // Restore session if exists
+    const savedSession = localStorage.getItem('sipal-student-session');
+    if (savedSession) {
+      try {
+        const student = JSON.parse(savedSession) as StudentProfile;
+        setLoggedInStudent(student);
+      } catch (e) {
+        localStorage.removeItem('sipal-student-session');
+      }
     }
   }, []);
 
@@ -87,6 +116,116 @@ export function AlumniProvider({ children }: AlumniProviderProps) {
       return next;
     });
   }, []);
+
+  // ============ Authentication Functions ============
+
+  /**
+   * Login with NIM and password
+   */
+  const loginWithCredentials = useCallback(
+    async (nim: string, password: string): Promise<AuthResult> => {
+      setIsLoading(true);
+      
+      try {
+        // Simulate network delay for demo
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const result = authenticateStudent(nim, password, studentAccounts);
+        
+        if (result.success && result.student) {
+          // Update student's lastLogin
+          const updatedStudent = { ...result.student, lastLogin: new Date() };
+          setLoggedInStudent(updatedStudent);
+          
+          // Save session to localStorage
+          localStorage.setItem('sipal-student-session', JSON.stringify(updatedStudent));
+          
+          // Also set as selectedAlumni for compatibility with existing dashboard
+          const masterMatch = alumniMasterData.find(m => m.nim === nim);
+          if (masterMatch) {
+            setSelectedAlumni(masterMatch);
+          }
+        }
+        
+        return result;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [studentAccounts]
+  );
+
+  /**
+   * Logout current student
+   */
+  const logout = useCallback(() => {
+    setLoggedInStudent(null);
+    setSelectedAlumni(null);
+    localStorage.removeItem('sipal-student-session');
+  }, []);
+
+  // ============ Admin Functions ============
+
+  /**
+   * Add new student account (admin only)
+   */
+  const addStudentAccount = useCallback(
+    async (data: StudentAccountInput): Promise<{ success: boolean; error?: string }> => {
+      // Check if NIM already exists
+      if (studentAccounts.some(s => s.nim === data.nim)) {
+        return { success: false, error: 'NIM sudah terdaftar' };
+      }
+      
+      // Create new student profile
+      const newStudent: StudentProfile = {
+        id: `s${Date.now()}`,
+        nama: data.nama,
+        nim: data.nim,
+        jurusan: 'Administrasi Bisnis',
+        prodi: 'Administrasi Bisnis Terapan',
+        status: data.status,
+        tahunMasuk: data.tahunMasuk,
+        tahunLulus: data.tahunLulus,
+        email: data.email,
+        noHp: data.noHp,
+        passwordHash: hashPassword(data.password),
+        hasCredentials: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      
+      setStudentAccounts(prev => [...prev, newStudent]);
+      
+      return { success: true };
+    },
+    [studentAccounts]
+  );
+
+  /**
+   * Delete student account (admin only)
+   */
+  const deleteStudentAccount = useCallback(
+    async (studentId: string): Promise<{ success: boolean; error?: string }> => {
+      const student = studentAccounts.find(s => s.id === studentId);
+      
+      if (!student) {
+        return { success: false, error: 'Mahasiswa tidak ditemukan' };
+      }
+      
+      // Remove student
+      setStudentAccounts(prev => prev.filter(s => s.id !== studentId));
+      
+      // If deleted student is currently logged in, log them out
+      if (loggedInStudent?.id === studentId) {
+        logout();
+      }
+      
+      return { success: true };
+    },
+    [studentAccounts, loggedInStudent, logout]
+  );
+
+  // ============ Legacy Functions ============
 
   // Add alumni data
   const addAlumniData = useCallback((data: AlumniData) => {
@@ -115,7 +254,7 @@ export function AlumniProvider({ children }: AlumniProviderProps) {
     [alumniData]
   );
 
-  // Search alumni (delegates to service layer logic)
+  // Search alumni
   const searchAlumni = useCallback(
     (nama: string, tahunLulus: number): AlumniMaster[] => {
       const namaLower = nama.toLowerCase().trim();
@@ -132,6 +271,8 @@ export function AlumniProvider({ children }: AlumniProviderProps) {
   const contextValue: AlumniContextType = {
     // State
     selectedAlumni,
+    loggedInStudent,
+    studentAccounts,
     alumniData,
     masterData: alumniMasterData,
     darkMode,
@@ -139,6 +280,10 @@ export function AlumniProvider({ children }: AlumniProviderProps) {
     
     // Actions
     setSelectedAlumni,
+    loginWithCredentials,
+    logout,
+    addStudentAccount,
+    deleteStudentAccount,
     addAlumniData,
     updateAlumniData,
     deleteAlumniData,
@@ -177,6 +322,14 @@ export function useSelectedAlumni() {
 }
 
 /**
+ * Hook for logged in student
+ */
+export function useLoggedInStudent() {
+  const { loggedInStudent, logout } = useAlumni();
+  return { loggedInStudent, logout };
+}
+
+/**
  * Hook for theme only
  */
 export function useTheme() {
@@ -190,4 +343,12 @@ export function useTheme() {
 export function useAlumniData() {
   const { alumniData, addAlumniData, getAlumniDataByMasterId } = useAlumni();
   return { alumniData, addAlumniData, getAlumniDataByMasterId };
+}
+
+/**
+ * Hook for student account management (admin)
+ */
+export function useStudentAccounts() {
+  const { studentAccounts, addStudentAccount, deleteStudentAccount } = useAlumni();
+  return { studentAccounts, addStudentAccount, deleteStudentAccount };
 }

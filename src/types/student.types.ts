@@ -106,9 +106,28 @@ export interface StudentProfile {
   noHp?: string;
   alamat?: string;
   
+  // Authentication (for NIM + password login)
+  passwordHash?: string; // Hashed password (demo: simple hash)
+  hasCredentials: boolean; // Has login account created by admin
+  lastLogin?: Date; // Last login timestamp
+  
   // Metadata
   createdAt: Date;
   updatedAt: Date;
+}
+
+/**
+ * Input type for creating student account by admin
+ */
+export interface StudentAccountInput {
+  nim: string;
+  nama: string;
+  password: string;
+  email?: string;
+  noHp?: string;
+  status: StudentStatus;
+  tahunMasuk: number;
+  tahunLulus?: number;
 }
 
 /**

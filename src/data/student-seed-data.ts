@@ -10,6 +10,8 @@
  * All data is ABT (Administrasi Bisnis Terapan) focused
  * 
  * DEMO DATA: 4 sample students representing each status type
+ * 
+ * DEFAULT PASSWORD: password123 (for all demo accounts)
  */
 
 import type {
@@ -18,6 +20,10 @@ import type {
   NonAcademicAchievement,
   StudentStatus,
 } from '@/types/student.types';
+import { hashPassword } from '@/services/auth.service';
+
+// Default password hash for demo accounts
+const DEFAULT_PASSWORD_HASH = hashPassword('password123');
 
 // ============ Student Profiles (ABT Students) ============
 // Demo students for each status type
@@ -35,6 +41,8 @@ export const studentProfiles: StudentProfile[] = [
     tahunLulus: 2023,
     email: 'ahmad.rizki@gmail.com',
     noHp: '081234567890',
+    passwordHash: DEFAULT_PASSWORD_HASH,
+    hasCredentials: true,
     createdAt: new Date('2019-08-15'),
     updatedAt: new Date('2024-03-15'),
   },
@@ -49,6 +57,8 @@ export const studentProfiles: StudentProfile[] = [
     tahunMasuk: 2021,
     email: 'eko.prasetyo@student.polines.ac.id',
     noHp: '081234567894',
+    passwordHash: DEFAULT_PASSWORD_HASH,
+    hasCredentials: true,
     createdAt: new Date('2021-08-15'),
     updatedAt: new Date('2024-09-01'),
   },
@@ -63,6 +73,8 @@ export const studentProfiles: StudentProfile[] = [
     tahunMasuk: 2022,
     email: 'hana.safira@student.polines.ac.id',
     noHp: '081234567897',
+    passwordHash: DEFAULT_PASSWORD_HASH,
+    hasCredentials: true,
     createdAt: new Date('2022-08-15'),
     updatedAt: new Date('2024-06-01'),
   },
@@ -77,6 +89,8 @@ export const studentProfiles: StudentProfile[] = [
     tahunMasuk: 2020,
     email: 'rudi.hermawan@gmail.com',
     noHp: '081234567912',
+    passwordHash: DEFAULT_PASSWORD_HASH,
+    hasCredentials: true,
     createdAt: new Date('2020-08-15'),
     updatedAt: new Date('2023-03-01'),
   },
@@ -92,6 +106,8 @@ export const studentProfiles: StudentProfile[] = [
     tahunLulus: 2023,
     email: 'siti.nurhaliza@gmail.com',
     noHp: '081234567891',
+    passwordHash: DEFAULT_PASSWORD_HASH,
+    hasCredentials: true,
     createdAt: new Date('2019-08-15'),
     updatedAt: new Date('2024-02-20'),
   },
@@ -106,6 +122,8 @@ export const studentProfiles: StudentProfile[] = [
     tahunLulus: 2024,
     email: 'budi.santoso@gmail.com',
     noHp: '081234567892',
+    passwordHash: DEFAULT_PASSWORD_HASH,
+    hasCredentials: true,
     createdAt: new Date('2020-08-15'),
     updatedAt: new Date('2024-06-15'),
   },
@@ -120,6 +138,8 @@ export const studentProfiles: StudentProfile[] = [
     tahunLulus: 2024,
     email: 'dewi.lestari@gmail.com',
     noHp: '081234567893',
+    passwordHash: DEFAULT_PASSWORD_HASH,
+    hasCredentials: true,
     createdAt: new Date('2020-08-15'),
     updatedAt: new Date('2024-07-10'),
   },
@@ -133,6 +153,8 @@ export const studentProfiles: StudentProfile[] = [
     tahunMasuk: 2021,
     email: 'fitri.handayani@student.polines.ac.id',
     noHp: '081234567895',
+    passwordHash: DEFAULT_PASSWORD_HASH,
+    hasCredentials: true,
     createdAt: new Date('2021-08-15'),
     updatedAt: new Date('2024-09-01'),
   },
@@ -146,6 +168,8 @@ export const studentProfiles: StudentProfile[] = [
     tahunMasuk: 2022,
     email: 'gunawan.wibowo@student.polines.ac.id',
     noHp: '081234567896',
+    passwordHash: DEFAULT_PASSWORD_HASH,
+    hasCredentials: true,
     createdAt: new Date('2022-08-15'),
     updatedAt: new Date('2024-09-01'),
   },
@@ -159,6 +183,8 @@ export const studentProfiles: StudentProfile[] = [
     tahunMasuk: 2023,
     email: 'irfan.maulana@student.polines.ac.id',
     noHp: '081234567898',
+    passwordHash: DEFAULT_PASSWORD_HASH,
+    hasCredentials: true,
     createdAt: new Date('2023-08-15'),
     updatedAt: new Date('2024-09-01'),
   },
@@ -172,6 +198,8 @@ export const studentProfiles: StudentProfile[] = [
     tahunMasuk: 2023,
     email: 'jasmine.putri@student.polines.ac.id',
     noHp: '081234567899',
+    passwordHash: DEFAULT_PASSWORD_HASH,
+    hasCredentials: true,
     createdAt: new Date('2023-08-15'),
     updatedAt: new Date('2024-09-01'),
   },
@@ -186,6 +214,8 @@ export const studentProfiles: StudentProfile[] = [
     tahunLulus: 2022,
     email: 'kevin.wijaya@gmail.com',
     noHp: '081234567800',
+    passwordHash: DEFAULT_PASSWORD_HASH,
+    hasCredentials: true,
     createdAt: new Date('2018-08-15'),
     updatedAt: new Date('2024-01-20'),
   },
@@ -200,6 +230,8 @@ export const studentProfiles: StudentProfile[] = [
     tahunLulus: 2022,
     email: 'linda.kusuma@gmail.com',
     noHp: '081234567801',
+    passwordHash: DEFAULT_PASSWORD_HASH,
+    hasCredentials: true,
     createdAt: new Date('2018-08-15'),
     updatedAt: new Date('2024-02-15'),
   },
@@ -499,45 +531,51 @@ export const achievementRecords: NonAcademicAchievement[] = [
 // ============ Helper Functions ============
 
 /**
- * Get student status label in Indonesian
+ * Get student by ID
  */
-export function getStudentStatusLabel(status: StudentStatus): string {
-  const labels: Record<StudentStatus, string> = {
-    active: 'Mahasiswa Aktif',
-    on_leave: 'Mahasiswa Cuti',
-    dropout: 'Mahasiswa Dropout',
-    alumni: 'Alumni',
-  };
-  return labels[status];
+export function getStudentById(id: string): StudentProfile | undefined {
+  return studentProfiles.find(s => s.id === id);
 }
 
 /**
- * Get student status color class
+ * Get student by NIM
  */
-export function getStudentStatusColor(status: StudentStatus): {
-  bg: string;
-  text: string;
-  border: string;
-} {
-  const colors: Record<StudentStatus, { bg: string; text: string; border: string }> = {
-    active: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/30' },
-    on_leave: { bg: 'bg-warning/10', text: 'text-warning', border: 'border-warning/30' },
-    dropout: { bg: 'bg-destructive/10', text: 'text-destructive', border: 'border-destructive/30' },
-    alumni: { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/30' },
-  };
-  return colors[status];
+export function getStudentByNim(nim: string): StudentProfile | undefined {
+  return studentProfiles.find(s => s.nim === nim);
 }
 
 /**
- * Check if career history should be visible for a student status
+ * Get tracer study by student ID
+ */
+export function getTracerStudyByStudentId(studentId: string): TracerStudyData | undefined {
+  return tracerStudyRecords.find(t => t.studentId === studentId);
+}
+
+/**
+ * Get achievements by student ID
+ */
+export function getAchievementsByStudentId(studentId: string): NonAcademicAchievement[] {
+  return achievementRecords.filter(a => a.studentId === studentId);
+}
+
+/**
+ * Get all alumni students
+ */
+export function getAlumniStudents(): StudentProfile[] {
+  return studentProfiles.filter(s => s.status === 'alumni');
+}
+
+/**
+ * Get students with credentials
+ */
+export function getStudentsWithCredentials(): StudentProfile[] {
+  return studentProfiles.filter(s => s.hasCredentials);
+}
+
+/**
+ * Check if career history is visible for a student status
+ * Only alumni can view and edit career history
  */
 export function isCareerHistoryVisible(status: StudentStatus): boolean {
   return status === 'alumni';
-}
-
-/**
- * Check if achievements are editable for a student status
- */
-export function isAchievementsEditable(status: StudentStatus): boolean {
-  return status !== 'dropout';
 }
