@@ -12,6 +12,26 @@
  * - NonAcademicAchievement → prisma model Achievement
  */
 
+// ============ Role Types ============
+
+/**
+ * User role for authentication
+ */
+export type UserRole = 'admin' | 'student';
+
+/**
+ * Admin profile for system administrators
+ */
+export interface AdminProfile {
+  id: string;
+  username: string;
+  nama: string;
+  passwordHash: string;
+  role: 'admin';
+  createdAt: Date;
+  lastLogin?: Date;
+}
+
 // ============ Core Enums ============
 
 /**

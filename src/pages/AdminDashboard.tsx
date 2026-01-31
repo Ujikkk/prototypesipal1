@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { Navbar } from '@/components/layout/Navbar';
+import { useState, useMemo, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { AdminNavbar } from '@/components/layout/AdminNavbar';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +26,7 @@ import {
 } from 'recharts';
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const { masterData, alumniData, studentAccounts, addStudentAccount, deleteStudentAccount, updateStudentAccount, resetStudentPassword } = useAlumni();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTahun, setFilterTahun] = useState<string>('all');
@@ -271,9 +272,22 @@ export default function AdminDashboard() {
     },
   ];
 
+  const { loggedInAdmin } = useAlumni();
+
+  // Protect route - redirect if not admin
+  useEffect(() => {
+    if (!loggedInAdmin) {
+      navigate('/validasi');
+    }
+  }, [loggedInAdmin, navigate]);
+
+  if (!loggedInAdmin) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <AdminNavbar />
       <main className="pt-24 pb-20">
         <div className="container mx-auto px-4">
           {/* Header */}

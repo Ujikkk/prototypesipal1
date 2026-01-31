@@ -1,18 +1,16 @@
 /**
  * Alumni Context (Refactored)
  * State management for alumni data with NIM + password authentication
- * 
- * ARCHITECTURE NOTE:
- * This context now includes authentication functions for student login.
- * Students log in with NIM (username) and password.
+ * Supports both admin and student roles
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { AlumniMaster, AlumniData } from '@/types';
-import type { StudentProfile, StudentAccountInput } from '@/types/student.types';
+import type { StudentProfile, StudentAccountInput, AdminProfile } from '@/types/student.types';
 import { alumniMasterData, alumniFilledData } from '@/data/seed-data';
 import { studentProfiles as initialStudentProfiles } from '@/data/student-seed-data';
-import { authenticateStudent, hashPassword, type AuthResult } from '@/services/auth.service';
+import { adminAccounts as initialAdminAccounts } from '@/data/admin-seed-data';
+import { authenticateStudent, authenticateAdmin, hashPassword, type AuthResult } from '@/services/auth.service';
 
 // ============ Context Types ============
 
@@ -23,8 +21,14 @@ interface AlumniContextState {
   // Logged in student (new NIM + password flow)
   loggedInStudent: StudentProfile | null;
   
+  // Logged in admin
+  loggedInAdmin: AdminProfile | null;
+  
   // Student accounts (for admin management)
   studentAccounts: StudentProfile[];
+  
+  // Admin accounts
+  adminAccounts: AdminProfile[];
   
   // Data stores
   alumniData: AlumniData[];
@@ -41,9 +45,13 @@ interface AlumniContextActions {
   // Alumni selection (legacy)
   setSelectedAlumni: (alumni: AlumniMaster | null) => void;
   
-  // Authentication (new)
+  // Student authentication
   loginWithCredentials: (nim: string, password: string) => Promise<AuthResult>;
   logout: () => void;
+  
+  // Admin authentication
+  loginAsAdmin: (username: string, password: string) => Promise<AuthResult>;
+  logoutAdmin: () => void;
   
   // Student account management (admin)
   addStudentAccount: (data: StudentAccountInput) => Promise<{ success: boolean; error?: string }>;
@@ -78,7 +86,9 @@ export function AlumniProvider({ children }: AlumniProviderProps) {
   // State
   const [selectedAlumni, setSelectedAlumni] = useState<AlumniMaster | null>(null);
   const [loggedInStudent, setLoggedInStudent] = useState<StudentProfile | null>(null);
+  const [loggedInAdmin, setLoggedInAdmin] = useState<AdminProfile | null>(null);
   const [studentAccounts, setStudentAccounts] = useState<StudentProfile[]>(initialStudentProfiles);
+  const [adminAccountsState] = useState<AdminProfile[]>(initialAdminAccounts);
   const [alumniData, setAlumniData] = useState<AlumniData[]>(alumniFilledData);
   const [darkMode, setDarkMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -91,14 +101,25 @@ export function AlumniProvider({ children }: AlumniProviderProps) {
       document.documentElement.classList.add('dark');
     }
     
-    // Restore session if exists
-    const savedSession = localStorage.getItem('sipal-student-session');
-    if (savedSession) {
+    // Restore student session if exists
+    const savedStudentSession = localStorage.getItem('sipal-student-session');
+    if (savedStudentSession) {
       try {
-        const student = JSON.parse(savedSession) as StudentProfile;
+        const student = JSON.parse(savedStudentSession) as StudentProfile;
         setLoggedInStudent(student);
       } catch (e) {
         localStorage.removeItem('sipal-student-session');
+      }
+    }
+    
+    // Restore admin session if exists
+    const savedAdminSession = localStorage.getItem('sipal-admin-session');
+    if (savedAdminSession) {
+      try {
+        const admin = JSON.parse(savedAdminSession) as AdminProfile;
+        setLoggedInAdmin(admin);
+      } catch (e) {
+        localStorage.removeItem('sipal-admin-session');
       }
     }
   }, []);
@@ -119,10 +140,10 @@ export function AlumniProvider({ children }: AlumniProviderProps) {
     });
   }, []);
 
-  // ============ Authentication Functions ============
+  // ============ Student Authentication Functions ============
 
   /**
-   * Login with NIM and password
+   * Login with NIM and password (student)
    */
   const loginWithCredentials = useCallback(
     async (nim: string, password: string): Promise<AuthResult> => {
@@ -164,6 +185,46 @@ export function AlumniProvider({ children }: AlumniProviderProps) {
     setLoggedInStudent(null);
     setSelectedAlumni(null);
     localStorage.removeItem('sipal-student-session');
+  }, []);
+
+  // ============ Admin Authentication Functions ============
+
+  /**
+   * Login as admin
+   */
+  const loginAsAdmin = useCallback(
+    async (username: string, password: string): Promise<AuthResult> => {
+      setIsLoading(true);
+      
+      try {
+        // Simulate network delay for demo
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const result = authenticateAdmin(username, password, adminAccountsState);
+        
+        if (result.success && result.admin) {
+          // Update admin's lastLogin
+          const updatedAdmin = { ...result.admin, lastLogin: new Date() };
+          setLoggedInAdmin(updatedAdmin);
+          
+          // Save session to localStorage
+          localStorage.setItem('sipal-admin-session', JSON.stringify(updatedAdmin));
+        }
+        
+        return result;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [adminAccountsState]
+  );
+
+  /**
+   * Logout admin
+   */
+  const logoutAdmin = useCallback(() => {
+    setLoggedInAdmin(null);
+    localStorage.removeItem('sipal-admin-session');
   }, []);
 
   // ============ Admin Functions ============
@@ -339,7 +400,9 @@ export function AlumniProvider({ children }: AlumniProviderProps) {
     // State
     selectedAlumni,
     loggedInStudent,
+    loggedInAdmin,
     studentAccounts,
+    adminAccounts: adminAccountsState,
     alumniData,
     masterData: alumniMasterData,
     darkMode,
@@ -349,6 +412,8 @@ export function AlumniProvider({ children }: AlumniProviderProps) {
     setSelectedAlumni,
     loginWithCredentials,
     logout,
+    loginAsAdmin,
+    logoutAdmin,
     addStudentAccount,
     deleteStudentAccount,
     updateStudentAccount,
@@ -396,6 +461,14 @@ export function useSelectedAlumni() {
 export function useLoggedInStudent() {
   const { loggedInStudent, logout } = useAlumni();
   return { loggedInStudent, logout };
+}
+
+/**
+ * Hook for logged in admin
+ */
+export function useLoggedInAdmin() {
+  const { loggedInAdmin, logoutAdmin } = useAlumni();
+  return { loggedInAdmin, logoutAdmin };
 }
 
 /**

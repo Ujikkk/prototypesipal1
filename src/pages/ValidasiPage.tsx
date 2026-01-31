@@ -1,39 +1,54 @@
 /**
- * Validasi Page - Student Login with NIM + Password
+ * Validasi Page - Unified Login for Admin and Students
  * 
- * Mahasiswa login dengan NIM sebagai username dan password.
- * Setelah login berhasil, langsung redirect ke dashboard.
+ * Single login page that detects user role and redirects accordingly:
+ * - Admin → /admin
+ * - Student → /dashboard
  */
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAlumni } from '@/contexts/AlumniContext';
-import { LogIn, Eye, EyeOff, AlertCircle, Shield, CheckCircle2, HelpCircle } from 'lucide-react';
+import { LogIn, Eye, EyeOff, AlertCircle, Shield, CheckCircle2, HelpCircle, GraduationCap, UserCog } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+type LoginMode = 'student' | 'admin';
 
 export default function ValidasiPage() {
   const navigate = useNavigate();
-  const { loginWithCredentials } = useAlumni();
+  const { loginWithCredentials, loginAsAdmin, loggedInStudent, loggedInAdmin } = useAlumni();
   
-  const [nim, setNim] = useState('');
+  const [mode, setMode] = useState<LoginMode>('student');
+  const [identifier, setIdentifier] = useState(''); // NIM for student, username for admin
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [redirectTarget, setRedirectTarget] = useState<'student' | 'admin'>('student');
+
+  // If already logged in, redirect
+  if (loggedInAdmin) {
+    navigate('/admin');
+    return null;
+  }
+  if (loggedInStudent) {
+    navigate('/dashboard');
+    return null;
+  }
 
   const handleLogin = async () => {
     // Reset error
     setError('');
     
     // Validation
-    if (!nim.trim()) {
-      setError('NIM wajib diisi');
+    if (!identifier.trim()) {
+      setError(mode === 'student' ? 'NIM wajib diisi' : 'Username wajib diisi');
       return;
     }
     
@@ -45,16 +60,30 @@ export default function ValidasiPage() {
     setIsLoading(true);
     
     try {
-      const result = await loginWithCredentials(nim.trim(), password);
-      
-      if (result.success) {
-        setLoginSuccess(true);
-        // Redirect to dashboard after short delay
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1000);
+      if (mode === 'admin') {
+        const result = await loginAsAdmin(identifier.trim(), password);
+        
+        if (result.success) {
+          setLoginSuccess(true);
+          setRedirectTarget('admin');
+          setTimeout(() => {
+            navigate('/admin');
+          }, 1000);
+        } else {
+          setError(result.error || 'Login gagal');
+        }
       } else {
-        setError(result.error || 'Login gagal');
+        const result = await loginWithCredentials(identifier.trim(), password);
+        
+        if (result.success) {
+          setLoginSuccess(true);
+          setRedirectTarget('student');
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 1000);
+        } else {
+          setError(result.error || 'Login gagal');
+        }
       }
     } catch (err) {
       setError('Terjadi kesalahan sistem. Silakan coba lagi.');
@@ -69,6 +98,13 @@ export default function ValidasiPage() {
     }
   };
 
+  const handleModeChange = (newMode: string) => {
+    setMode(newMode as LoginMode);
+    setIdentifier('');
+    setPassword('');
+    setError('');
+  };
+
   const handleContactAdmin = () => {
     alert('Silakan hubungi admin melalui email: prodi-abt@polines.ac.id');
   };
@@ -76,9 +112,8 @@ export default function ValidasiPage() {
   // Success state
   if (loginSuccess) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <main className="pt-24 pb-20">
+      <div className="min-h-screen bg-background flex flex-col">
+        <main className="flex-1 flex items-center justify-center py-20">
           <div className="container mx-auto px-4">
             <div className="max-w-md mx-auto">
               <div className="glass-card rounded-2xl p-8 text-center animate-scale-in">
@@ -89,7 +124,7 @@ export default function ValidasiPage() {
                   Login Berhasil!
                 </h2>
                 <p className="text-muted-foreground mb-4">
-                  Mengarahkan ke dashboard Anda...
+                  Mengarahkan ke {redirectTarget === 'admin' ? 'Dashboard Admin' : 'Dashboard Anda'}...
                 </p>
                 <div className="w-32 h-1 bg-muted rounded-full mx-auto overflow-hidden">
                   <div className="h-full bg-primary animate-shimmer" style={{ width: '100%' }} />
@@ -104,9 +139,8 @@ export default function ValidasiPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <main className="pt-24 pb-20">
+    <div className="min-h-screen bg-background flex flex-col">
+      <main className="flex-1 flex items-center justify-center py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-md mx-auto">
             {/* Header */}
@@ -115,37 +149,59 @@ export default function ValidasiPage() {
                 <Shield className="w-8 h-8 text-primary" />
               </div>
               <h1 className="text-3xl font-bold text-foreground mb-3">
-                Login Mahasiswa
+                Masuk ke SIPAL
               </h1>
               <p className="text-muted-foreground max-w-sm mx-auto">
-                Masuk dengan NIM dan password untuk mengakses dashboard Anda.
+                Sistem Informasi Pelacakan Alumni - ABT Polines
               </p>
             </div>
 
             {/* Login Form */}
             <div className="glass-card rounded-2xl p-6 md:p-8 animate-fade-up">
+              {/* Role Tabs */}
+              <Tabs value={mode} onValueChange={handleModeChange} className="mb-6">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="student" className="gap-2">
+                    <GraduationCap className="w-4 h-4" />
+                    Mahasiswa
+                  </TabsTrigger>
+                  <TabsTrigger value="admin" className="gap-2">
+                    <UserCog className="w-4 h-4" />
+                    Admin
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                   <LogIn className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="font-semibold text-foreground">Masuk ke Akun</h2>
-                  <p className="text-sm text-muted-foreground">Gunakan NIM sebagai username</p>
+                  <h2 className="font-semibold text-foreground">
+                    {mode === 'student' ? 'Login Mahasiswa' : 'Login Admin'}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {mode === 'student' ? 'Gunakan NIM sebagai username' : 'Masukkan kredensial admin'}
+                  </p>
                 </div>
               </div>
 
               <div className="space-y-5">
-                {/* NIM Input */}
+                {/* Identifier Input */}
                 <div>
-                  <Label htmlFor="nim" className="text-foreground font-medium mb-2 block">
-                    NIM (Username)
+                  <Label htmlFor="identifier" className="text-foreground font-medium mb-2 block">
+                    {mode === 'student' ? 'NIM (Username)' : 'Username'}
                   </Label>
                   <Input
-                    id="nim"
-                    placeholder="Masukkan NIM Anda (contoh: 20210001)"
-                    value={nim}
+                    id="identifier"
+                    placeholder={mode === 'student' ? 'Masukkan NIM Anda (contoh: 20210001)' : 'Masukkan username admin'}
+                    value={identifier}
                     onChange={(e) => {
-                      setNim(e.target.value.replace(/\D/g, '').slice(0, 8));
+                      if (mode === 'student') {
+                        setIdentifier(e.target.value.replace(/\D/g, '').slice(0, 8));
+                      } else {
+                        setIdentifier(e.target.value);
+                      }
                       setError('');
                     }}
                     onKeyDown={handleKeyDown}
@@ -201,7 +257,7 @@ export default function ValidasiPage() {
                 {/* Login Button */}
                 <Button
                   onClick={handleLogin}
-                  disabled={isLoading || !nim.trim() || !password}
+                  disabled={isLoading || !identifier.trim() || !password}
                   className="w-full h-12"
                   size="lg"
                 >
@@ -218,24 +274,41 @@ export default function ValidasiPage() {
                   )}
                 </Button>
 
-                {/* Help Section */}
-                <div className="pt-4 border-t border-border">
-                  <button
-                    onClick={handleContactAdmin}
-                    className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
-                  >
-                    <HelpCircle className="w-4 h-4" />
-                    Lupa password atau belum punya akun?
-                  </button>
-                </div>
+                {/* Help Section (only for students) */}
+                {mode === 'student' && (
+                  <div className="pt-4 border-t border-border">
+                    <button
+                      onClick={handleContactAdmin}
+                      className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
+                    >
+                      <HelpCircle className="w-4 h-4" />
+                      Lupa password atau belum punya akun?
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Demo Info */}
             <div className="mt-6 p-4 rounded-xl bg-muted/50 border border-border">
               <p className="text-sm text-center text-muted-foreground">
-                <span className="font-medium text-foreground">Demo:</span> Gunakan NIM <code className="px-1.5 py-0.5 rounded bg-muted font-mono text-xs">20210001</code> dengan password <code className="px-1.5 py-0.5 rounded bg-muted font-mono text-xs">password123</code>
+                {mode === 'student' ? (
+                  <>
+                    <span className="font-medium text-foreground">Demo Mahasiswa:</span> NIM <code className="px-1.5 py-0.5 rounded bg-muted font-mono text-xs">20210001</code> password <code className="px-1.5 py-0.5 rounded bg-muted font-mono text-xs">password123</code>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-medium text-foreground">Demo Admin:</span> Username <code className="px-1.5 py-0.5 rounded bg-muted font-mono text-xs">admin</code> password <code className="px-1.5 py-0.5 rounded bg-muted font-mono text-xs">admin123</code>
+                  </>
+                )}
               </p>
+            </div>
+
+            {/* Back to Home */}
+            <div className="mt-4 text-center">
+              <Button variant="ghost" onClick={() => navigate('/')} className="text-muted-foreground">
+                ← Kembali ke Beranda
+              </Button>
             </div>
           </div>
         </div>

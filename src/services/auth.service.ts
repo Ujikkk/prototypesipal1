@@ -1,12 +1,12 @@
 /**
  * Authentication Service
- * Handles password hashing and verification for student login
+ * Handles password hashing and verification for student and admin login
  * 
  * IMPORTANT: This is a DEMO implementation only!
  * In production, use Supabase Auth with bcrypt hashing server-side.
  */
 
-import type { StudentProfile } from '@/types/student.types';
+import type { StudentProfile, AdminProfile } from '@/types/student.types';
 
 /**
  * Simple hash function for demo purposes
@@ -37,6 +37,8 @@ export function verifyPassword(inputPassword: string, storedHash: string): boole
 export interface AuthResult {
   success: boolean;
   student?: StudentProfile;
+  admin?: AdminProfile;
+  role?: 'admin' | 'student';
   error?: string;
 }
 
@@ -80,7 +82,45 @@ export function authenticateStudent(
     student: {
       ...student,
       lastLogin: new Date()
-    }
+    },
+    role: 'student'
+  };
+}
+
+/**
+ * Authenticate admin with username and password
+ */
+export function authenticateAdmin(
+  username: string,
+  password: string,
+  admins: AdminProfile[]
+): AuthResult {
+  // Find admin by username
+  const admin = admins.find(a => a.username === username);
+  
+  if (!admin) {
+    return {
+      success: false,
+      error: 'Username admin tidak ditemukan'
+    };
+  }
+  
+  // Verify password
+  if (!verifyPassword(password, admin.passwordHash)) {
+    return {
+      success: false,
+      error: 'Password salah. Silakan coba lagi.'
+    };
+  }
+  
+  // Success
+  return {
+    success: true,
+    admin: {
+      ...admin,
+      lastLogin: new Date()
+    },
+    role: 'admin'
   };
 }
 
