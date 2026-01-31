@@ -42,6 +42,12 @@ interface AchievementFormModalProps {
   editData?: Achievement | null;
   onClose: () => void;
   onSuccess: () => void;
+  /**
+   * Rendering mode:
+   * - "fixed": full-viewport overlay (default; used on PrestasiPage)
+   * - "absolute": fill parent container (used when opened inside Admin DialogContent)
+   */
+  layout?: 'fixed' | 'absolute';
 }
 
 const CATEGORY_LABELS: Record<AchievementCategory, string> = {
@@ -62,6 +68,7 @@ export function AchievementFormModal({
   editData,
   onClose,
   onSuccess,
+  layout = 'fixed',
 }: AchievementFormModalProps) {
   const [selectedCategory, setSelectedCategory] = useState<AchievementCategory>(editData?.category || category);
   const [formData, setFormData] = useState<Record<string, any>>(editData || {});
@@ -126,12 +133,21 @@ export function AchievementFormModal({
     setFormData(prev => ({ ...prev, [key]: value }));
   };
 
+  const isAbsolute = layout === 'absolute';
   const modalContent = (
-    <div 
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in pointer-events-auto"
+    <div
+      className={cn(
+        isAbsolute
+          ? 'absolute inset-0 z-[60] flex items-center justify-center p-4'
+          : 'fixed inset-0 z-[100] flex items-center justify-center p-4',
+        'bg-background/80 backdrop-blur-sm animate-fade-in pointer-events-auto',
+      )}
     >
-      <div 
-        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto overscroll-contain touch-pan-y bg-card border border-border rounded-2xl shadow-elevated animate-scale-in pointer-events-auto"
+      <div
+        className={cn(
+          'w-full max-w-2xl overflow-y-auto overscroll-contain touch-pan-y bg-card border border-border rounded-2xl shadow-elevated animate-scale-in pointer-events-auto',
+          isAbsolute ? 'h-full max-h-full' : 'max-h-[90vh]',
+        )}
       >
         {/* Header */}
         <div className="sticky top-0 z-10 bg-card border-b border-border px-6 py-4 flex items-center justify-between">

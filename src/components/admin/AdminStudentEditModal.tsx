@@ -337,7 +337,7 @@ export function AdminStudentEditModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="relative max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -746,6 +746,24 @@ export function AdminStudentEditModal({
               <span className="text-sm">{saveResult.message}</span>
             </div>
           )}
+          {/* Achievement Form Modal (must be inside DialogContent portal layer) */}
+          {achievementFormOpen && (
+            <AchievementFormModal
+              masterId={student.id}
+              category={editingAchievement?.category}
+              editData={editingAchievement}
+              layout="absolute"
+              onClose={() => {
+                setAchievementFormOpen(false);
+                setEditingAchievement(null);
+              }}
+              onSuccess={() => {
+                setAchievementFormOpen(false);
+                setEditingAchievement(null);
+                refreshAchievementData();
+              }}
+            />
+          )}
         </Tabs>
       </DialogContent>
 
@@ -758,23 +776,7 @@ export function AdminStudentEditModal({
         mode={editingCareer ? 'edit' : 'add'}
       />
 
-      {/* Achievement Form Modal */}
-      {achievementFormOpen && (
-        <AchievementFormModal
-          masterId={student.id}
-          category={editingAchievement?.category}
-          editData={editingAchievement}
-          onClose={() => {
-            setAchievementFormOpen(false);
-            setEditingAchievement(null);
-          }}
-          onSuccess={() => {
-            setAchievementFormOpen(false);
-            setEditingAchievement(null);
-            refreshAchievementData();
-          }}
-        />
-      )}
+      {/* Achievement Form Modal is rendered inside DialogContent to avoid being blocked by DialogOverlay */}
 
       {/* Delete Career Dialog */}
       <AlertDialog open={deleteCareerDialogOpen} onOpenChange={setDeleteCareerDialogOpen}>
