@@ -2,12 +2,12 @@
  * Admin Student Edit Modal
  * Comprehensive modal for editing student data including:
  * - Profile information
- * - Career history
- * - Achievements
+ * - Career history (with full status types: bekerja/wirausaha/studi/mencari)
+ * - Achievements (with all 9 categories)
  */
 
-import { useState, useEffect, useMemo } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,21 +16,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   User, Briefcase, Trophy, Eye, EyeOff, Save, Trash2, Plus, 
-  AlertCircle, CheckCircle2, Pencil, X, Building2, MapPin, Calendar
+  AlertCircle, CheckCircle2, Pencil, Building2, MapPin, Calendar,
+  Rocket, GraduationCap, Search
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { StudentProfile, StudentStatus } from '@/types/student.types';
 import type { Achievement } from '@/types/achievement.types';
 import { ACHIEVEMENT_CATEGORIES } from '@/types/achievement.types';
-import {
-  getStudentCareerHistory,
-  addCareerHistory,
-  updateCareerHistory,
-  deleteCareerHistory,
-  type CareerHistoryEntry,
-  type CareerHistoryInput,
-} from '@/services/student.service';
+import type { AlumniData } from '@/types/alumni.types';
+import { useAlumni } from '@/contexts/AlumniContext';
 import { getAchievementsByStudentId, deleteAchievement } from '@/services/achievement.service';
+import { AchievementFormModal, CareerFormModal, CAREER_STATUS_CONFIG, type CareerFormData } from '@/components/shared';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface AdminStudentEditModalProps {
   open: boolean;
@@ -51,6 +57,14 @@ const statusOptions: { value: StudentStatus; label: string }[] = [
   { value: 'dropout', label: 'Dropout' },
 ];
 
+// Career status icons
+const STATUS_ICONS = {
+  bekerja: Briefcase,
+  wirausaha: Rocket,
+  studi: GraduationCap,
+  mencari: Search,
+};
+
 export function AdminStudentEditModal({
   open,
   onOpenChange,
@@ -59,6 +73,8 @@ export function AdminStudentEditModal({
   onUpdateProfile,
   onResetPassword,
 }: AdminStudentEditModalProps) {
+  const { getAlumniDataByMasterId, addAlumniData, updateAlumniData, deleteAlumniData } = useAlumni();
+  
   const [activeTab, setActiveTab] = useState('profile');
   const [isSaving, setIsSaving] = useState(false);
   const [saveResult, setSaveResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -82,20 +98,18 @@ export function AdminStudentEditModal({
   const [showPassword, setShowPassword] = useState(false);
 
   // Career history state
-  const [careerHistory, setCareerHistory] = useState<CareerHistoryEntry[]>([]);
-  const [editingCareer, setEditingCareer] = useState<string | null>(null);
-  const [careerForm, setCareerForm] = useState<CareerHistoryInput>({
-    title: '',
-    subtitle: '',
-    location: '',
-    industry: '',
-    year: currentYear,
-    isActive: true,
-  });
-  const [showAddCareer, setShowAddCareer] = useState(false);
+  const [careerHistory, setCareerHistory] = useState<AlumniData[]>([]);
+  const [careerFormOpen, setCareerFormOpen] = useState(false);
+  const [editingCareer, setEditingCareer] = useState<AlumniData | null>(null);
+  const [deleteCareerDialogOpen, setDeleteCareerDialogOpen] = useState(false);
+  const [careerToDelete, setCareerToDelete] = useState<string | null>(null);
 
   // Achievements state
   const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [achievementFormOpen, setAchievementFormOpen] = useState(false);
+  const [editingAchievement, setEditingAchievement] = useState<Achievement | null>(null);
+  const [deleteAchievementDialogOpen, setDeleteAchievementDialogOpen] = useState(false);
+  const [achievementToDelete, setAchievementToDelete] = useState<string | null>(null);
 
   // Load data when student changes
   useEffect(() => {
@@ -109,7 +123,7 @@ export function AdminStudentEditModal({
         tahunMasuk: student.tahunMasuk,
         tahunLulus: student.tahunLulus,
       });
-      setCareerHistory(getStudentCareerHistory(student.id));
+      setCareerHistory(getAlumniDataByMasterId(student.id));
       setAchievements(getAchievementsByStudentId(student.id));
       setProfileErrors({});
       setSaveResult(null);
@@ -117,7 +131,21 @@ export function AdminStudentEditModal({
       setNewPassword('');
       setConfirmPassword('');
     }
-  }, [student]);
+  }, [student, getAlumniDataByMasterId]);
+
+  // Refresh career data
+  const refreshCareerData = () => {
+    if (student) {
+      setCareerHistory(getAlumniDataByMasterId(student.id));
+    }
+  };
+
+  // Refresh achievement data
+  const refreshAchievementData = () => {
+    if (student) {
+      setAchievements(getAchievementsByStudentId(student.id));
+    }
+  };
 
   // Validate profile
   const validateProfile = (): boolean => {
@@ -206,45 +234,106 @@ export function AdminStudentEditModal({
     }
   };
 
-  // Career history handlers
-  const handleAddCareer = () => {
+  // Career handlers
+  const handleSaveCareer = async (data: CareerFormData) => {
     if (!student) return;
     
-    const entry = addCareerHistory(student.id, careerForm);
-    setCareerHistory([entry, ...careerHistory]);
-    setCareerForm({
-      title: '',
-      subtitle: '',
-      location: '',
-      industry: '',
-      year: currentYear,
-      isActive: true,
-    });
-    setShowAddCareer(false);
+    if (data.id) {
+      // Update existing
+      updateAlumniData(data.id, data);
+    } else {
+      // Add new - create full AlumniData object
+      const newCareerData: AlumniData = {
+        id: `career_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        alumniMasterId: student.id,
+        email: student.email || '',
+        noHp: student.noHp || '',
+        status: data.status,
+        tahunPengisian: data.tahunPengisian,
+        createdAt: new Date(),
+        isActive: data.isActive,
+        // Bekerja fields
+        namaPerusahaan: data.namaPerusahaan,
+        jabatan: data.jabatan,
+        lokasiPerusahaan: data.lokasiPerusahaan,
+        bidangIndustri: data.bidangIndustri,
+        tahunMulaiKerja: data.tahunMulaiKerja,
+        tahunSelesaiKerja: data.tahunSelesaiKerja,
+        masihAktifKerja: data.masihAktifKerja,
+        // Wirausaha fields
+        namaUsaha: data.namaUsaha,
+        jenisUsaha: data.jenisUsaha,
+        lokasiUsaha: data.lokasiUsaha,
+        tahunMulaiUsaha: data.tahunMulaiUsaha,
+        usahaAktif: data.usahaAktif,
+        // Studi fields
+        namaKampus: data.namaKampus,
+        programStudi: data.programStudi,
+        jenjang: data.jenjang,
+        lokasiKampus: data.lokasiKampus,
+        tahunMulaiStudi: data.tahunMulaiStudi,
+        tahunSelesaiStudi: data.tahunSelesaiStudi,
+        masihAktifStudi: data.masihAktifStudi,
+        // Mencari fields
+        bidangDiincar: data.bidangDiincar,
+        lokasiTujuan: data.lokasiTujuan,
+        lamaMencari: data.lamaMencari,
+      };
+      addAlumniData(newCareerData);
+    }
+    refreshCareerData();
   };
 
-  const handleUpdateCareer = (id: string) => {
-    const updated = updateCareerHistory(id, careerForm);
-    if (updated) {
-      setCareerHistory(careerHistory.map(ch => ch.id === id ? updated : ch));
+  const handleDeleteCareer = () => {
+    if (careerToDelete) {
+      deleteAlumniData(careerToDelete);
+      refreshCareerData();
+      setCareerToDelete(null);
     }
-    setEditingCareer(null);
-  };
-
-  const handleDeleteCareer = (id: string) => {
-    if (deleteCareerHistory(id)) {
-      setCareerHistory(careerHistory.filter(ch => ch.id !== id));
-    }
+    setDeleteCareerDialogOpen(false);
   };
 
   // Achievement handlers
-  const handleDeleteAchievement = (id: string) => {
-    if (deleteAchievement(id)) {
-      setAchievements(achievements.filter(a => a.id !== id));
+  const handleDeleteAchievement = () => {
+    if (achievementToDelete) {
+      deleteAchievement(achievementToDelete);
+      refreshAchievementData();
+      setAchievementToDelete(null);
     }
+    setDeleteAchievementDialogOpen(false);
   };
 
   if (!student) return null;
+
+  // Helper to get career display info
+  const getCareerDisplay = (career: AlumniData) => {
+    const config = CAREER_STATUS_CONFIG[career.status];
+    const StatusIcon = STATUS_ICONS[career.status];
+    
+    let title = '';
+    let subtitle = '';
+    let location = '';
+    
+    if (career.status === 'bekerja') {
+      title = career.namaPerusahaan || 'Perusahaan';
+      subtitle = career.jabatan || 'Karyawan';
+      location = career.lokasiPerusahaan || '';
+    } else if (career.status === 'wirausaha') {
+      title = career.namaUsaha || 'Usaha';
+      subtitle = career.jenisUsaha || 'Bisnis';
+      location = career.lokasiUsaha || '';
+    } else if (career.status === 'studi') {
+      title = career.namaKampus || 'Kampus';
+      subtitle = `${career.jenjang || ''} ${career.programStudi || ''}`.trim();
+      location = career.lokasiKampus || '';
+    } else if (career.status === 'mencari') {
+      title = 'Mencari Pekerjaan';
+      subtitle = `Target: ${career.bidangDiincar || 'Berbagai bidang'}`;
+      location = career.lokasiTujuan || '';
+    }
+    
+    return { config, StatusIcon, title, subtitle, location };
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -261,6 +350,9 @@ export function AdminStudentEditModal({
               </p>
             </div>
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Form untuk mengedit profil, riwayat karir, dan prestasi mahasiswa
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col">
@@ -448,105 +540,14 @@ export function AdminStudentEditModal({
                 <Button
                   size="sm"
                   onClick={() => {
-                    setShowAddCareer(true);
-                    setCareerForm({
-                      title: '',
-                      subtitle: '',
-                      location: '',
-                      industry: '',
-                      year: currentYear,
-                      isActive: true,
-                    });
+                    setEditingCareer(null);
+                    setCareerFormOpen(true);
                   }}
                 >
                   <Plus className="w-4 h-4 mr-1" />
                   Tambah
                 </Button>
               </div>
-
-              {/* Add Career Form */}
-              {showAddCareer && (
-                <div className="p-4 rounded-lg border border-border space-y-3">
-                  <div className="flex justify-between items-center">
-                    <h5 className="font-medium text-sm">Tambah Riwayat Karir</h5>
-                    <Button variant="ghost" size="sm" onClick={() => setShowAddCareer(false)}>
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Jabatan *</Label>
-                      <Input
-                        value={careerForm.title}
-                        onChange={(e) => setCareerForm({ ...careerForm, title: e.target.value })}
-                        placeholder="Contoh: Marketing Manager"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Perusahaan *</Label>
-                      <Input
-                        value={careerForm.subtitle}
-                        onChange={(e) => setCareerForm({ ...careerForm, subtitle: e.target.value })}
-                        placeholder="Contoh: PT Telkom Indonesia"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Lokasi *</Label>
-                      <Input
-                        value={careerForm.location}
-                        onChange={(e) => setCareerForm({ ...careerForm, location: e.target.value })}
-                        placeholder="Contoh: Jakarta"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Industri *</Label>
-                      <Input
-                        value={careerForm.industry}
-                        onChange={(e) => setCareerForm({ ...careerForm, industry: e.target.value })}
-                        placeholder="Contoh: Telekomunikasi"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Tahun Mulai *</Label>
-                      <Select
-                        value={careerForm.year.toString()}
-                        onValueChange={(v) => setCareerForm({ ...careerForm, year: parseInt(v) })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {years.map((y) => (
-                            <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Status</Label>
-                      <Select
-                        value={careerForm.isActive ? 'active' : 'ended'}
-                        onValueChange={(v) => setCareerForm({ ...careerForm, isActive: v === 'active' })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="active">Aktif</SelectItem>
-                          <SelectItem value="ended">Selesai</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={handleAddCareer}
-                    disabled={!careerForm.title || !careerForm.subtitle || !careerForm.location || !careerForm.industry}
-                  >
-                    Simpan
-                  </Button>
-                </div>
-              )}
 
               {/* Career List */}
               {careerHistory.length === 0 ? (
@@ -555,51 +556,24 @@ export function AdminStudentEditModal({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {careerHistory.map((career) => (
-                    <div
-                      key={career.id}
-                      className="p-4 rounded-lg border border-border hover:border-primary/30 transition-colors"
-                    >
-                      {editingCareer === career.id ? (
-                        // Edit mode
-                        <div className="space-y-3">
-                          <div className="grid grid-cols-2 gap-3">
-                            <Input
-                              value={careerForm.title}
-                              onChange={(e) => setCareerForm({ ...careerForm, title: e.target.value })}
-                              placeholder="Jabatan"
-                            />
-                            <Input
-                              value={careerForm.subtitle}
-                              onChange={(e) => setCareerForm({ ...careerForm, subtitle: e.target.value })}
-                              placeholder="Perusahaan"
-                            />
-                            <Input
-                              value={careerForm.location}
-                              onChange={(e) => setCareerForm({ ...careerForm, location: e.target.value })}
-                              placeholder="Lokasi"
-                            />
-                            <Input
-                              value={careerForm.industry}
-                              onChange={(e) => setCareerForm({ ...careerForm, industry: e.target.value })}
-                              placeholder="Industri"
-                            />
-                          </div>
-                          <div className="flex gap-2">
-                            <Button size="sm" onClick={() => handleUpdateCareer(career.id)}>
-                              Simpan
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => setEditingCareer(null)}>
-                              Batal
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        // View mode
+                  {careerHistory.map((career) => {
+                    const { config, StatusIcon, title, subtitle, location } = getCareerDisplay(career);
+                    return (
+                      <div
+                        key={career.id}
+                        className="p-4 rounded-lg border border-border hover:border-primary/30 transition-colors"
+                      >
                         <div className="flex justify-between">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                              <h5 className="font-medium">{career.title}</h5>
+                              <span className={cn(
+                                "px-2 py-0.5 rounded-full text-xs flex items-center gap-1",
+                                config.bgColor,
+                                config.color
+                              )}>
+                                <StatusIcon className="w-3 h-3" />
+                                {config.label}
+                              </span>
                               <span className={cn(
                                 "px-2 py-0.5 rounded-full text-xs",
                                 career.isActive 
@@ -609,18 +583,21 @@ export function AdminStudentEditModal({
                                 {career.isActive ? 'Aktif' : 'Selesai'}
                               </span>
                             </div>
+                            <h5 className="font-medium">{title}</h5>
                             <div className="flex items-center gap-3 text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Building2 className="w-3.5 h-3.5" />
-                                {career.subtitle}
+                                {subtitle}
                               </span>
-                              <span className="flex items-center gap-1">
-                                <MapPin className="w-3.5 h-3.5" />
-                                {career.location}
-                              </span>
+                              {location && (
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="w-3.5 h-3.5" />
+                                  {location}
+                                </span>
+                              )}
                               <span className="flex items-center gap-1">
                                 <Calendar className="w-3.5 h-3.5" />
-                                {career.year}{career.yearEnd ? ` - ${career.yearEnd}` : career.isActive ? ' - Sekarang' : ''}
+                                {career.tahunPengisian}
                               </span>
                             </div>
                           </div>
@@ -629,16 +606,8 @@ export function AdminStudentEditModal({
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                setEditingCareer(career.id);
-                                setCareerForm({
-                                  title: career.title,
-                                  subtitle: career.subtitle,
-                                  location: career.location,
-                                  industry: career.industry,
-                                  year: career.year,
-                                  yearEnd: career.yearEnd,
-                                  isActive: career.isActive,
-                                });
+                                setEditingCareer(career);
+                                setCareerFormOpen(true);
                               }}
                             >
                               <Pencil className="w-4 h-4" />
@@ -647,15 +616,18 @@ export function AdminStudentEditModal({
                               variant="ghost"
                               size="sm"
                               className="text-destructive hover:text-destructive"
-                              onClick={() => handleDeleteCareer(career.id)}
+                              onClick={() => {
+                                setCareerToDelete(career.id);
+                                setDeleteCareerDialogOpen(true);
+                              }}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         </div>
-                      )}
-                    </div>
-                  ))}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </TabsContent>
@@ -664,6 +636,16 @@ export function AdminStudentEditModal({
             <TabsContent value="achievements" className="mt-0 space-y-4">
               <div className="flex justify-between items-center">
                 <h4 className="font-medium">Prestasi Non-Akademik</h4>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setEditingAchievement(null);
+                    setAchievementFormOpen(true);
+                  }}
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Tambah
+                </Button>
               </div>
 
               {achievements.length === 0 ? (
@@ -713,16 +695,32 @@ export function AdminStudentEditModal({
                                (achievement as any).mataKuliah ||
                                ''}
                               {(achievement as any).tahun && ` • ${(achievement as any).tahun}`}
+                              {(achievement as any).tahunPengajuan && ` • ${(achievement as any).tahunPengajuan}`}
                             </p>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => handleDeleteAchievement(achievement.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setEditingAchievement(achievement);
+                                setAchievementFormOpen(true);
+                              }}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => {
+                                setAchievementToDelete(achievement.id);
+                                setDeleteAchievementDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -750,6 +748,69 @@ export function AdminStudentEditModal({
           )}
         </Tabs>
       </DialogContent>
+
+      {/* Career Form Modal */}
+      <CareerFormModal
+        open={careerFormOpen}
+        onOpenChange={setCareerFormOpen}
+        editData={editingCareer}
+        onSave={handleSaveCareer}
+        mode={editingCareer ? 'edit' : 'add'}
+      />
+
+      {/* Achievement Form Modal */}
+      {achievementFormOpen && (
+        <AchievementFormModal
+          masterId={student.id}
+          category={editingAchievement?.category}
+          editData={editingAchievement}
+          onClose={() => {
+            setAchievementFormOpen(false);
+            setEditingAchievement(null);
+          }}
+          onSuccess={() => {
+            setAchievementFormOpen(false);
+            setEditingAchievement(null);
+            refreshAchievementData();
+          }}
+        />
+      )}
+
+      {/* Delete Career Dialog */}
+      <AlertDialog open={deleteCareerDialogOpen} onOpenChange={setDeleteCareerDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Riwayat Karir</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus riwayat karir ini? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteCareer} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Achievement Dialog */}
+      <AlertDialog open={deleteAchievementDialogOpen} onOpenChange={setDeleteAchievementDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Prestasi</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus prestasi ini? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteAchievement} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
