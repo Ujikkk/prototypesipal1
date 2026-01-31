@@ -129,27 +129,28 @@ export function AchievementFormModal({
 
   const modalContent = (
     <div 
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in pointer-events-auto"
-      onClick={(e) => {
-        e.stopPropagation();
-        e.preventDefault();
-      }}
-      onPointerDown={(e) => e.stopPropagation()}
-      onKeyDown={(e) => e.stopPropagation()}
-      onMouseDown={(e) => e.stopPropagation()}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in"
     >
       <div 
-        className="w-full max-w-2xl max-h-[90vh] overflow-auto bg-card border border-border rounded-2xl shadow-elevated animate-scale-in pointer-events-auto"
+        className="w-full max-w-2xl max-h-[90vh] overflow-auto overscroll-contain touch-pan-y bg-card border border-border rounded-2xl shadow-elevated animate-scale-in pointer-events-auto"
+        // Prevent the parent Radix Dialog (admin modal) from intercepting interactions,
+        // but DO NOT block events on the backdrop so Radix Select/Popover can detect outside clicks.
+        onPointerDownCapture={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
-        onPointerDown={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="sticky top-0 z-10 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">
             {editData ? 'Edit Prestasi' : 'Tambah Prestasi'}
           </h2>
-          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onClose(); }}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+          >
             <X className="w-5 h-5" />
           </Button>
         </div>
