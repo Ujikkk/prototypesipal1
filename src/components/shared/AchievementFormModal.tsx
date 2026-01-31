@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -126,8 +127,8 @@ export function AchievementFormModal({
     setFormData(prev => ({ ...prev, [key]: value }));
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in">
+  const modalContent = (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in">
       <div className="w-full max-w-2xl max-h-[90vh] overflow-auto bg-card border border-border rounded-2xl shadow-elevated animate-scale-in">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
@@ -199,6 +200,9 @@ export function AchievementFormModal({
       </div>
     </div>
   );
+
+  // Use Portal to render outside of parent Dialog hierarchy
+  return createPortal(modalContent, document.body);
 }
 
 // ============ Field Components ============
